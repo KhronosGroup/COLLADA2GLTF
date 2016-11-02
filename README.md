@@ -1,3 +1,7 @@
+<p align="center">
+<img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png">
+</p>
+
 # COLLADA to glTF converter
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
