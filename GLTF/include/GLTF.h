@@ -1,4 +1,4 @@
-// Copyright (c) Analytical Graphics, Inc.
+// Copyright (c) 2013, Motorola Mobility, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -9,6 +9,9 @@
 //  * Redistributions in binary form must reproduce the above copyright
 //    notice, this list of conditions and the following disclaimer in the
 //    documentation and/or other materials provided with the distribution.
+//  * Neither the name of the Motorola Mobility, Inc. nor the names of its
+//    contributors may be used to endorse or promote products derived from this
+//    software without specific prior written permission.
 //
 //  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -21,18 +24,55 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef __ENCODING_HELPERS__
-#define __ENCODING_HELPERS__
+#ifndef __GLTF_H__
+#define __GLTF_H__
 
+// system & STL headers
+#include <algorithm>
+#include <stack>
+#include <list>
+#include <map>
+#include <set>
 #include <string>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <vector>
+#include "assert.h"
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 
-namespace GLTF
-{
-	std::string base64_encode(const std::string& _data);
-	std::string base64_decode(const std::string& _str);
-	std::string create_dataUri(const std::string& content, const std::string& contentType = "application/octet-stream", bool base64Encode = true);
-    bool is_dataUri(const std::string& _str);
-    std::string decode_dataUri(const std::string& uri);
-}
+#if (defined(WIN32) || defined(_LIBCPP_VERSION) || __cplusplus > 199711L)
+#include <memory>
+#include <unordered_map>
+#else
+#include <tr1/memory>
+#include <tr1/unordered_map>
+#endif
+
+// GLTF headers
+#include "COLLADA2GLTFExport.h"
+#include "GLTFTypesAndConstants.h"
+#include "GLTFProfile.h"
+#include "JSONValue.h"
+#include "JSONNumber.h"
+#include "JSONString.h"
+#include "JSONObject.h"
+#include "JSONArray.h"
+#include "GLTFUtils.h"
+#include "GLTFBuffer.h"
+#include "GLTFAccessor.h"
+#include "GLTFEffect.h"
+#include "GLTFPrimitive.h"
+#include "GLTFMesh.h"
+#include "GLTFSkin.h"
+#include "GLTFAnimation.h"
+#include "GLTFWriter.h"
+#include "GLTFInputStream.h"
+#include "GLTFOutputStream.h"
+#include "GLTFConfig.h"
+#include "GLTFAssetModifier.h"
+#include "GLTFExtras.h"
 
 #endif
