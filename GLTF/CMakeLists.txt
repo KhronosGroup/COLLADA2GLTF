@@ -1,0 +1,6 @@
+cmake_minimum_required (VERSION 3.1.0)
+project (GLTF)
+add_compile_options(-std=c++11)
+include_directories (include)
+file (GLOB SOURCES "src/*.cpp")
+add_library(GLTF ${SOURCES})
