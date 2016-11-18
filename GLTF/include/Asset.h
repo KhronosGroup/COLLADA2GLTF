@@ -1,5 +1,6 @@
 #pragma once
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -13,7 +14,7 @@ namespace GLTF {
     public:
       std::string api;
       std::string version;
-    }
+    };
 
     class Metadata : GLTF::Object {
     public:
@@ -22,12 +23,12 @@ namespace GLTF {
       bool premultipliedAlpha;
       Profile* profile;
       std::string version;
-    }
+    };
 
     Metadata* metadata;
-    set<std::string> extensionsUsed;
+    std::set<std::string> extensionsUsed;
 
-    vector<GLTF::Scene*> scenes;
+    std::vector<GLTF::Scene*> scenes;
     int scene;
-  }
+  };
 }

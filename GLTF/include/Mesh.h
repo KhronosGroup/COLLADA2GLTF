@@ -1,13 +1,13 @@
-#pragma once;
+#pragma once
 
 #include <vector>
 
 #include "Object.h"
+#include "Primitive.h"
 
 namespace GLTF {
-  class Mesh : GLTF::Object {
+  class Mesh : public GLTF::Object {
   public:
-    /* https://github.com/KhronosGroup/glTF/tree/master/specification#mesh */
     std::vector<GLTF::Primitive> primitives;
   };
 }

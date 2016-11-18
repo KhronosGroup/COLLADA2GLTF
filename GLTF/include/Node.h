@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "Animation.h"
 #include "Camera.h"
 #include "Mesh.h"
 #include "Object.h"
@@ -33,15 +32,13 @@ namespace GLTF {
       TransformMatrix* getTransformMatrix();
     };
 
-    /* https://github.com/KhronosGroup/glTF/tree/master/specification#node */
     GLTF::Camera* camera;
     std::vector<GLTF::Node*> children;
     std::vector<GLTF::Skeleton*> skeletons;
     GLTF::Skin* skin;
     std::string jointName;
-    std::vector<GLTF::Mesh*> meshes
+    std::vector<GLTF::Mesh*> meshes;
 
     Transform* transform;
-    std::vector<GLTF::Animation*> animations;
   };
 }

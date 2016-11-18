@@ -7,6 +7,7 @@
 #include "Accessor.h"
 #include "Node.h"
 #include "Object.h"
+#include "Sampler.h"
 
 namespace GLTF {
   class Animation : GLTF::Object {
@@ -22,11 +23,11 @@ namespace GLTF {
           SCALE
         };
         Path path;
-      }
-    }
+      };
+    };
 
     std::vector<Channel*> channels;
-    std::map<std::string, GLTF::Accessor> parameters;
+    std::map<std::string, GLTF::Accessor*> parameters;
     std::vector<GLTF::Sampler*> samplers;
-  }
+  };
 }

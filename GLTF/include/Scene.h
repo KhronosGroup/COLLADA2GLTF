@@ -7,6 +7,7 @@
 
 namespace GLTF {
   class Scene : GLTF::Object {
-    vector<GLTF::Node*> nodes;
+  public:
+    std::vector<GLTF::Node*> nodes;
   };
 }

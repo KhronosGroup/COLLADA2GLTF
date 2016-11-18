@@ -2,19 +2,47 @@
 
 #include <string>
 
+#include "BufferView.h"
+#include "Constants.h"
 #include "Object.h"
 
 namespace GLTF {
-  class Accessor : GLTF::Object {
+  class Accessor : public GLTF::Object {
   public:
-    /* https://github.com/KhronosGroup/glTF/tree/master/specification#reference-accessor */
-    std::string bufferView;
+    enum class Type {
+      SCALAR,
+      VEC2,
+      VEC3,
+      VEC4,
+      MAT2,
+      MAT3,
+      MAT4
+    };
+
+    GLTF::BufferView* bufferView;
     int byteOffset;
     int byteStride;
-    int componentType;
+    GLTF::Constants::WebGL componentType;
     int count;
-    std::string type;
-    int max[];
-    int min[];
+    double* max;
+    double* min;
+    Type type;
+
+    Accessor(GLTF::Accessor::Type type,
+      GLTF::Constants::WebGL componentType
+    ) : type(type), componentType(componentType), byteOffset(0), byteStride(0) {};
+
+    Accessor(GLTF::Accessor::Type type,
+      GLTF::Constants::WebGL componentType,
+      unsigned char* data,
+      int dataLength,
+      GLTF::Constants::WebGL target
+    );
+
+    bool computeMinMax();
+    int getByteStride();
+    bool getComponentAtIndex(int index, double* component);
+    int getComponentByteLength();
+    int getNumberOfComponents();
   };
 };
