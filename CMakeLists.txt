@@ -1,45 +1,45 @@
 cmake_minimum_required (VERSION 3.1.0)
 
-#####################################
-# cmake -Dtest=ON to build with tests
-#####################################
-option(test "Build all tests." OFF)
-
-#####################################
-# Main Libraries and  Executables
-#####################################
 set(PROJECT_NAME COLLADA2GLTF)
+
 project(${PROJECT_NAME})
 add_compile_options(-std=c++11)
 
-include_directories(include)
-include_directories(GLTF/include)
-include_directories(dependencies/OpenCOLLADA/COLLADAFramework/include)
-include_directories(dependencies/OpenCOLLADA/COLLADABaseUtils/include)
+# cmake -Dtest=ON to build with tests
+option(test "Build all tests." OFF)
 
-add_subdirectory(dependencies/OpenCOLLADA)
+# COLLADA2GLTF_lib
+include_directories(include)
+file(GLOB LIB_HEADERS "include/*.h")
+set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp)
+add_library(${PROJECT_NAME}_lib ${LIB_HEADERS} ${LIB_SOURCES})
+
+# GLTF
+include_directories(GLTF/include)
 add_subdirectory(GLTF)
 
-file(GLOB SOURCES "src/*.cpp")
-add_library("${PROJECT_NAME}_lib" ${SOURCES})
-add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib GLTF OpenCOLLADAFramework_static)
+# COLLADABaseUtils/Framework
+include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
+include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
+add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADAFramework)
 
-#####################################
-# Testing
-#####################################
+add_executable(${PROJECT_NAME} src/main.cpp)
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib GLTF COLLADAFramework)
+
 if (test)
-  add_subdirectory(dependencies/googletest)
   enable_testing()
 
-  include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+  # gtest
+  include_directories(dependencies/googletest/googletest/include)
+  add_subdirectory(dependencies/googletest/googletest)
 
-  ####################################
   # Unit Tests
-  ####################################
-  add_executable(runUnitTests test/src/test.cpp)
-  target_link_libraries(runUnitTests gtest gtest_main)
-  target_link_libraries(runUnitTests "${PROJECT_NAME}_lib")
+  include_directories(test/include)
+  file(GLOB TEST_HEADERS "test/include/*.h")
+  file(GLOB TEST_SOURCES "test/src/*.cpp")
+
+  add_executable(runUnitTests ${TEST_HEADERS} ${TEST_SOURCES})
+  target_link_libraries(runUnitTests  ${PROJECT_NAME}_lib gtest)
 
   add_test(GLTFAccessorTest runUnitTests)
   add_test(COLLADA2GLTFWriterTest runUnitTests)

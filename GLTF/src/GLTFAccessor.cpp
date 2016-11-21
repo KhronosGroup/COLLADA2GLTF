@@ -26,7 +26,7 @@ bool GLTF::Accessor::computeMinMax() {
     if (min == NULL) {
       min = new double[numberOfComponents];
     }
-    double component[numberOfComponents];
+    double* component = new double[numberOfComponents];
     this->getComponentAtIndex(0, component);
     for (int i = 0; i < numberOfComponents; i++) {
       min[i] = component[i];
@@ -39,6 +39,7 @@ bool GLTF::Accessor::computeMinMax() {
       }
     }
   }
+  return true;
 }
 
 int GLTF::Accessor::getByteStride() {
