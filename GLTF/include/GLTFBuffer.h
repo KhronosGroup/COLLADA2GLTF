@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Object.h"
+#include "GLTFObject.h"
 
 namespace GLTF {
   class Buffer : public GLTF::Object {

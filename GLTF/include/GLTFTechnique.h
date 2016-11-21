@@ -1,6 +1,6 @@
 #pragma
 
-#include "Object.h"
+#include "GLTFObject.h"
 
 namespace GLTF {
   class Technique {

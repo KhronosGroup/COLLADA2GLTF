@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "Extension.h"
+#include "GLTFExtension.h"
 
 namespace GLTF {
   class Object {

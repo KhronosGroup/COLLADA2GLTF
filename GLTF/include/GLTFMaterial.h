@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "Object.h"
-#include "Technique.h"
-#include "Texture.h"
+#include "GLTFObject.h"
+#include "GLTFTechnique.h"
+#include "GLTFTexture.h"
 
 namespace GLTF {
   class Material : GLTF::Object {

@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "BufferView.h"
-#include "Constants.h"
-#include "Object.h"
+#include "GLTFBufferView.h"
+#include "GLTFConstants.h"
+#include "GLTFObject.h"
 
 namespace GLTF {
   class Accessor : public GLTF::Object {

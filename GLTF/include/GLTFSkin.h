@@ -2,9 +2,9 @@
 
 #include <vector>
 
-#include "Accessor.h"
-#include "Node.h"
-#include "Object.h"
+#include "GLTFAccessor.h"
+#include "GLTFNode.h"
+#include "GLTFObject.h"
 
 namespace GLTF {
   class Node;

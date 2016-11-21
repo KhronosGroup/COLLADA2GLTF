@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Buffer.h"
-#include "Constants.h"
-#include "Object.h"
+#include "GLTFBuffer.h"
+#include "GLTFConstants.h"
+#include "GLTFObject.h"
 
 namespace GLTF {
   class BufferView : public GLTF::Object {

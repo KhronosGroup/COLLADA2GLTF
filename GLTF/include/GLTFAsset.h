@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "Object.h"
-#include "Scene.h"
+#include "GLTFObject.h"
+#include "GLTFScene.h"
 
 namespace GLTF {
   class Asset : GLTF::Object  {

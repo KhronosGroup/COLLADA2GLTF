@@ -3,9 +3,9 @@
 #include <map>
 #include <string>
 
-#include "Accessor.h"
-#include "Material.h"
-#include "Object.h"
+#include "GLTFAccessor.h"
+#include "GLTFMaterial.h"
+#include "GLTFObject.h"
 
 namespace GLTF {
   class Primitive : GLTF::Object {

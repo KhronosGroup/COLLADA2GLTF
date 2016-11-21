@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "Object.h"
-#include "Primitive.h"
+#include "GLTFObject.h"
+#include "GLTFPrimitive.h"
 
 namespace GLTF {
   class Mesh : public GLTF::Object {

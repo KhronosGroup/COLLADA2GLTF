@@ -4,11 +4,11 @@
 #include <string>
 #include <vector>
 
-#include "Camera.h"
-#include "Mesh.h"
-#include "Object.h"
-#include "Skeleton.h"
-#include "Skin.h"
+#include "GLTFCamera.h"
+#include "GLTFMesh.h"
+#include "GLTFObject.h"
+#include "GLTFSkeleton.h"
+#include "GLTFSkin.h"
 
 namespace GLTF {
   class Node : GLTF::Object {

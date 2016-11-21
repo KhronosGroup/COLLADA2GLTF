@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "Node.h"
-#include "Object.h"
+#include "GLTFNode.h"
+#include "GLTFObject.h"
 
 namespace GLTF {
   class Scene : GLTF::Object {

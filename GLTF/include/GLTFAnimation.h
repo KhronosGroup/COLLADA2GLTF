@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "Accessor.h"
-#include "Node.h"
-#include "Object.h"
-#include "Sampler.h"
+#include "GLTFAccessor.h"
+#include "GLTFNode.h"
+#include "GLTFObject.h"
+#include "GLTFSampler.h"
 
 namespace GLTF {
   class Animation : GLTF::Object {

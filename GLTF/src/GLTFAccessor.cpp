@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "../include/Accessor.h"
+#include "GLTFAccessor.h"
 
 GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
   GLTF::Constants::WebGL componentType,

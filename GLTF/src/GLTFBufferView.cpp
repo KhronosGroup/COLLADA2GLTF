@@ -1,4 +1,4 @@
-#include "../include/BufferView.h"
+#include "GLTFBufferView.h"
 
 GLTF::BufferView::BufferView(unsigned char* data,
   int dataLength,
