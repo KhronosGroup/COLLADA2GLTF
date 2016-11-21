@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../dependencies/OpenCOLLADA/COLLADAFramework/include/COLLADAFW.h"
-#include "../GLTF/include/Asset.h"
+#include "COLLADAFW.h"
+#include "GLTFAsset.h"
 
 namespace COLLADA2GLTF {
   class Writer : public COLLADAFW::IWriter {
