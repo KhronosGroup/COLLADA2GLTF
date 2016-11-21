@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gtest.h"
+#include "gtest/gtest.h"
 
 namespace {
   class GLTFAccessorTest : public ::testing::Test {};

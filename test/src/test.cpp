@@ -1,5 +1,5 @@
-#include "../include/GLTFAccessorTest.h"
-#include "../include/COLLADA2GLTFWriterTest.h"
+#include "GLTFAccessorTest.h"
+#include "COLLADA2GLTFWriterTest.h"
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
