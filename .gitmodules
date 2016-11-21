@@ -1,6 +1,6 @@
 [submodule "dependencies/OpenCOLLADA/OpenCOLLADA"]
 	path = dependencies/OpenCOLLADA/OpenCOLLADA
-	url = https://github.com/KhronosGroup/OpenCOLLADA.git
+	url = git@github.com:KhronosGroup/OpenCOLLADA.git
 [submodule "dependencies/rapidjson"]
 	path = dependencies/rapidjson
 	url = https://github.com/miloyip/rapidjson
