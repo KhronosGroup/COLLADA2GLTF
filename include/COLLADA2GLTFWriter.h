@@ -1,12 +1,16 @@
 #pragma once
 
+#include "COLLADABU.h"
 #include "COLLADAFW.h"
 #include "GLTFAsset.h"
 
 namespace COLLADA2GLTF {
   class Writer : public COLLADAFW::IWriter {
   private:
-    GLTF::Asset* _asset;
+	  GLTF::Asset* _asset;
+
+	  bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
+	  bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);
   public:
     Writer(GLTF::Asset* asset) : _asset(asset) {};
 
@@ -80,10 +84,10 @@ namespace COLLADA2GLTF {
 		/** When this method is called, the writer must write the formulas. All the formulas of the entire
          COLLADA file are contained in @a formulas.
          @return The writer should return true, if writing succeeded, false otherwise.*/
-		virtual bool writeFormulas( const COLLADAFW::Formulas* formulas ){return true;}
+		virtual bool writeFormulas(const COLLADAFW::Formulas* formulas);
 
 		/** When this method is called, the writer must write the kinematics scene.
          @return The writer should return true, if writing succeeded, false otherwise.*/
-		virtual bool writeKinematicsScene( const COLLADAFW::KinematicsScene* kinematicsScene ){return true;};
+		virtual bool writeKinematicsScene( const COLLADAFW::KinematicsScene* kinematicsScene );
   };
 }

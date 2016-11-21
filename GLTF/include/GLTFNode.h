@@ -11,7 +11,7 @@
 #include "GLTFSkin.h"
 
 namespace GLTF {
-  class Node : GLTF::Object {
+  class Node : public GLTF::Object {
   public:
     class Transform {
       virtual void concat(Transform* transform);
@@ -33,12 +33,14 @@ namespace GLTF {
     };
 
     GLTF::Camera* camera;
-    std::vector<GLTF::Node*> children;
-    std::vector<GLTF::Skeleton*> skeletons;
+    std::vector<GLTF::Node*>* children;
+    std::vector<GLTF::Skeleton*>* skeletons;
     GLTF::Skin* skin;
     std::string jointName;
-    std::vector<GLTF::Mesh*> meshes;
+    std::vector<GLTF::Mesh*>* meshes;
 
     Transform* transform;
+
+	Node();
   };
 }

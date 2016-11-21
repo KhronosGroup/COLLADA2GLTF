@@ -29,6 +29,8 @@ namespace GLTF {
     std::set<std::string> extensionsUsed;
 
     std::vector<GLTF::Scene*> scenes;
-    int scene;
+	int scene = -1;
+
+	GLTF::Scene* getDefaultScene();
   };
 }

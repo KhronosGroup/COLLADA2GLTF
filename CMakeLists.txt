@@ -11,23 +11,24 @@ endif()
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
 
-# COLLADA2GLTF_lib
-include_directories(include)
-file(GLOB LIB_HEADERS "include/*.h")
-set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp)
-add_library(${PROJECT_NAME}_lib ${LIB_HEADERS} ${LIB_SOURCES})
-
-# GLTF
-include_directories(GLTF/include)
-add_subdirectory(GLTF)
-
 # COLLADABaseUtils/Framework
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
 add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADAFramework)
 
+# GLTF
+include_directories(GLTF/include)
+add_subdirectory(GLTF)
+
+# COLLADA2GLTF_lib
+include_directories(include)
+file(GLOB LIB_HEADERS "include/*.h")
+set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp)
+add_library(${PROJECT_NAME}_lib ${LIB_HEADERS} ${LIB_SOURCES})
+target_link_libraries(${PROJECT_NAME}_lib GLTF COLLADAFramework)
+
 add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib GLTF COLLADAFramework)
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 
 if (test)
   enable_testing()
