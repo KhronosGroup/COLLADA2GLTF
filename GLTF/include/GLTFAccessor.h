@@ -24,8 +24,8 @@ namespace GLTF {
     int byteStride;
     GLTF::Constants::WebGL componentType;
     int count;
-    double* max;
-    double* min;
+	double* max = NULL;
+	double* min = NULL;
     Type type;
 
     Accessor(GLTF::Accessor::Type type,

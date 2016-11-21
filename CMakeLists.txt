@@ -39,7 +39,7 @@ if (test)
   file(GLOB TEST_SOURCES "test/src/*.cpp")
 
   add_executable(runUnitTests ${TEST_HEADERS} ${TEST_SOURCES})
-  target_link_libraries(runUnitTests  ${PROJECT_NAME}_lib gtest)
+  target_link_libraries(runUnitTests  ${PROJECT_NAME}_lib GLTF gtest)
 
   add_test(GLTFAccessorTest runUnitTests)
   add_test(COLLADA2GLTFWriterTest runUnitTests)
