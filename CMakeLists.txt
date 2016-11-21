@@ -4,6 +4,9 @@ set(PROJECT_NAME COLLADA2GLTF)
 
 project(${PROJECT_NAME})
 add_compile_options(-std=c++11)
+if(MSVC)
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+endif()
 
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
