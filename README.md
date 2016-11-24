@@ -6,6 +6,30 @@
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
 
+## Compile from source
+
+1. Clone repository
+ 
+ ```
+git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
+```
+
+2. Install dependencies (packages names for Debian)
+ ```
+apt-get install cmake libxml2-dev libpcre3-dev libpng-dev zlib1g-dev
+```
+
+3. Compile
+ ```
+cd COLLADA2GLTF
+cmake . && make
+```
+
+4. Run
+ ```
+./bin/collada2gltf
+```
+
 ## Usage
 
 ```
