@@ -1,4 +1,3 @@
-#include "GLTFAccessorTest.h"
 #include "COLLADA2GLTFWriterTest.h"
 
 int main(int argc, char **argv) {

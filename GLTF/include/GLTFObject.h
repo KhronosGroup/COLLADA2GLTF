@@ -1,17 +1,19 @@
 #pragma once
 
-#include <map>
 #include <string>
 #include <vector>
 
-#include "GLTFExtension.h"
-
 namespace GLTF {
+  class Extension;
   class Object {
   public:
     std::string id;
     std::string name;
-    std::map<std::string, GLTF::Extension*> extensions;
-    std::map<std::string, void*> extras;
+    std::vector<GLTF::Extension*>* extensions = NULL;
+    std::vector<GLTF::Object*>* extras = NULL;
+
+    void addExtension(GLTF::Extension* extension);
+    void addExtra(GLTF::Object* extra);
+    virtual void writeJSON(void* writer);
   };
 }

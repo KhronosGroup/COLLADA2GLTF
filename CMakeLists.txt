@@ -8,8 +8,8 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
 
-# cmake -Dtest=ON to build with tests
-option(test "Build all tests." OFF)
+# cmake -DCOLLADA2GLTF_TEST=ON to build with tests
+option(COLLADA2GLTF_TEST "Build all tests." OFF)
 
 # COLLADABaseUtils/Framework
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
@@ -30,12 +30,12 @@ target_link_libraries(${PROJECT_NAME}_lib GLTF COLLADAFramework)
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 
-if (test)
+if (COLLADA2GLTF_TEST)
   enable_testing()
 
   # gtest
-  include_directories(dependencies/googletest/googletest/include)
-  add_subdirectory(dependencies/googletest/googletest)
+  include_directories(GLTF/dependencies/googletest/googletest/include)
+  add_subdirectory(GLTF/dependencies/googletest/googletest)
 
   # Unit Tests
   include_directories(test/include)
@@ -45,6 +45,5 @@ if (test)
   add_executable(runUnitTests ${TEST_HEADERS} ${TEST_SOURCES})
   target_link_libraries(runUnitTests  ${PROJECT_NAME}_lib GLTF gtest)
 
-  add_test(GLTFAccessorTest runUnitTests)
   add_test(COLLADA2GLTFWriterTest runUnitTests)
 endif()

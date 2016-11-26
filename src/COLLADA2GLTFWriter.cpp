@@ -101,11 +101,10 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* Controll
 	return true;
 }
 
-bool COLLADA2GLTF::Writer::writeFormulas(const COLLADAFW::Formulas* formulas) { 
-	return true; 
-}
-
-bool COLLADA2GLTF::Writer::writeKinematicsScene(const COLLADAFW::KinematicsScene* kinematicsScene) { 
+bool COLLADA2GLTF::Writer::writeFormulas(const COLLADAFW::Formulas* formulas) {
 	return true;
 }
 
+bool COLLADA2GLTF::Writer::writeKinematicsScene(const COLLADAFW::KinematicsScene* kinematicsScene) {
+	return true;
+}
