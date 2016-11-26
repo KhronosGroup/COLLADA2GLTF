@@ -2,8 +2,8 @@
 	path = dependencies/OpenCOLLADA/OpenCOLLADA
 	url = git@github.com:KhronosGroup/OpenCOLLADA.git
 [submodule "dependencies/rapidjson"]
-	path = dependencies/rapidjson
+	path = GLTF/dependencies/rapidjson
 	url = https://github.com/miloyip/rapidjson
 [submodule "dependencies/googletest"]
-	path = dependencies/googletest
+	path = GLTF/dependencies/googletest
 	url = git@github.com:google/googletest.git
