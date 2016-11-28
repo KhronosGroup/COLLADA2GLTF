@@ -8,6 +8,6 @@
 namespace GLTF {
   class Mesh : public GLTF::Object {
   public:
-    std::vector<GLTF::Primitive> primitives;
+    std::vector<GLTF::Primitive*>* primitives;
   };
 }

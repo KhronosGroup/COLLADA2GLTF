@@ -6,10 +6,8 @@
 #include "GLTFObject.h"
 
 namespace GLTF {
-  class Scene : GLTF::Object {
+  class Scene : public GLTF::Object {
   public:
       std::vector<GLTF::Node*>* nodes;
-
-	  Scene();
   };
 }

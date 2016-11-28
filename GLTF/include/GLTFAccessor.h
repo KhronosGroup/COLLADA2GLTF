@@ -9,6 +9,7 @@
 namespace GLTF {
   class Accessor : public GLTF::Object {
   public:
+    static int INSTANCE_COUNT;
     enum class Type {
       SCALAR,
       VEC2,
@@ -24,19 +25,24 @@ namespace GLTF {
     int byteStride;
     GLTF::Constants::WebGL componentType;
     int count;
-	double* max = NULL;
-	double* min = NULL;
+	  double* max = NULL;
+	  double* min = NULL;
     Type type;
 
-    Accessor(GLTF::Accessor::Type type,
-      GLTF::Constants::WebGL componentType
-    ) : type(type), componentType(componentType), byteOffset(0), byteStride(0) {};
+    Accessor(GLTF::Accessor::Type type, GLTF::Constants::WebGL componentType);
 
     Accessor(GLTF::Accessor::Type type,
       GLTF::Constants::WebGL componentType,
       unsigned char* data,
       int dataLength,
       GLTF::Constants::WebGL target
+    );
+
+    Accessor(GLTF::Accessor::Type type,
+      GLTF::Constants::WebGL componentType,
+      unsigned char* data,
+      int dataLength,
+      GLTF::BufferView* bufferView
     );
 
     bool computeMinMax();

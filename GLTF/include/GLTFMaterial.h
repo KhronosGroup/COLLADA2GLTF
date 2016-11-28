@@ -7,7 +7,7 @@
 #include "GLTFTexture.h"
 
 namespace GLTF {
-  class Material : GLTF::Object {
+  class Material : public GLTF::Object {
   public:
     class Values {
     public:

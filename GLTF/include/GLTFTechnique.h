@@ -1,9 +1,11 @@
 #pragma
 
 #include "GLTFObject.h"
+#include "GLTFProgram.h"
 
 namespace GLTF {
-  class Technique {
+  class Technique : public GLTF::Object {
   public:
+    GLTF::Program* program;
   };
 }

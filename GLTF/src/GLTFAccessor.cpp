@@ -1,9 +1,21 @@
 #include <algorithm>
 #include <limits>
+#include <cstring>
+#include <stdlib.h>
 
 #include <stdio.h>
 
 #include "GLTFAccessor.h"
+
+int GLTF::Accessor::INSTANCE_COUNT = 0;
+
+GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
+  GLTF::Constants::WebGL componentType
+) : type(type), componentType(componentType), byteOffset(0), byteStride(0) {
+  this->id = "accessor_" + std::to_string(GLTF::Accessor::INSTANCE_COUNT);
+  GLTF::Accessor::INSTANCE_COUNT++;
+}
+
 
 GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
   GLTF::Constants::WebGL componentType,
@@ -11,8 +23,28 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
   int dataLength,
   GLTF::Constants::WebGL target
 ) : Accessor(type, componentType) {
-  this->bufferView = new GLTF::BufferView(data, dataLength, target);
+  unsigned char* allocatedData = (unsigned char*)malloc(dataLength);
+  std::memcpy(allocatedData, data, dataLength);
+  this->bufferView = new GLTF::BufferView(allocatedData, dataLength, target);
   this->count = dataLength / this->getComponentByteLength() / this->getNumberOfComponents();
+  this->computeMinMax();
+}
+
+GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
+  GLTF::Constants::WebGL componentType,
+  unsigned char* data,
+  int dataLength,
+  GLTF::BufferView* bufferView
+) : Accessor(type, componentType) {
+  GLTF::Buffer* buffer = bufferView->buffer;
+  this->bufferView = bufferView;
+  this->byteOffset = bufferView->byteLength;
+  this->count = dataLength / this->getComponentByteLength() / this->getNumberOfComponents();
+
+  buffer->data = (unsigned char*)realloc(buffer->data, buffer->byteLength + dataLength);
+  std::memcpy(buffer->data + buffer->byteLength, data, dataLength);
+  buffer->byteLength += dataLength;
+  bufferView->byteLength += dataLength;
   this->computeMinMax();
 }
 

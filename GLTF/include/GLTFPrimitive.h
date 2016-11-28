@@ -8,9 +8,9 @@
 #include "GLTFObject.h"
 
 namespace GLTF {
-  class Primitive : GLTF::Object {
+  class Primitive : public GLTF::Object {
   public:
-    std::map<std::string, GLTF::Accessor*> attributes;
+    std::map<std::string, GLTF::Accessor*>* attributes;
     GLTF::Accessor* indices;
     GLTF::Material* material;
     int mode;
