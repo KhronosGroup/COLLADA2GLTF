@@ -1,5 +1,8 @@
 #pragma once
 
+#include <map>
+#include <vector>
+
 #include "COLLADABU.h"
 #include "COLLADAFW.h"
 #include "GLTFAsset.h"
@@ -8,9 +11,13 @@ namespace COLLADA2GLTF {
   class Writer : public COLLADAFW::IWriter {
   private:
 	  GLTF::Asset* _asset;
+    std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _meshInstances;
 
 	  bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
 	  bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);
+
+    bool writePrimitiveToMesh(GLTF::Mesh* mesh, const COLLADAFW::MeshPrimitive* primitive);
+    bool writeMesh(const COLLADAFW::Mesh* mesh);
   public:
     Writer(GLTF::Asset* asset) : _asset(asset) {};
 

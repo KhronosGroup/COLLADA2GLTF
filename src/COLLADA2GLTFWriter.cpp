@@ -17,10 +17,31 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 }
 
 bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* colladaNode) {
+	GLTF::Asset* asset = this->_asset;
+	std::map<COLLADAFW::UniqueId, GLTF::Mesh*> meshInstances = this->_meshInstances;
 	GLTF::Node* node = new GLTF::Node();
 	node->id = colladaNode->getOriginalId();
 	node->name = colladaNode->getName();
 
+	// Instance Geometries
+	const COLLADAFW::InstanceGeometryPointerArray& instanceGeometries = colladaNode->getInstanceGeometries();
+	size_t count = instanceGeometries.getCount();
+	if (count > 0) {
+		for (size_t i = 0; i < count; i++) {
+			COLLADAFW::InstanceGeometry* instanceGeometry = instanceGeometries[i];
+			const COLLADAFW::UniqueId& objectId = instanceGeometry->getInstanciatedObjectId();
+			std::map<COLLADAFW::UniqueId, GLTF::Mesh*>::iterator iter = meshInstances.find(objectId);
+			if (iter != meshInstances.end()) {
+				GLTF::Mesh* mesh = iter->second;
+				if (!node->meshes) {
+					node->meshes = new std::vector<GLTF::Mesh*>();
+				}
+				node->meshes->push_back(mesh);
+			}
+		}
+	}
+
+	// Add to the group and recurse child nodes
 	group->push_back(node);
 	const COLLADAFW::NodePointerArray& childNodes = colladaNode->getChildNodes();
 	if (childNodes.getCount() > 0) {
@@ -43,7 +64,7 @@ bool COLLADA2GLTF::Writer::writeVisualScene(const COLLADAFW::VisualScene* visual
 	GLTF::Scene* scene;
 	if (asset->scene >= 0) {
 		scene = new GLTF::Scene();
-		asset->scenes.push_back(scene);
+		asset->scenes->push_back(scene);
 	}
 	else {
 		scene = asset->getDefaultScene();
@@ -58,10 +79,55 @@ bool COLLADA2GLTF::Writer::writeScene(const COLLADAFW::Scene* scene) {
 bool COLLADA2GLTF::Writer::writeLibraryNodes(const COLLADAFW::LibraryNodes* libraryNodes) {
 	GLTF::Asset* asset = this->_asset;
 	GLTF::Scene* scene = asset->getDefaultScene();
+	if (!scene->nodes) {
+		scene->nodes = new std::vector<GLTF::Node*>();
+	}
 	return this->writeNodesToGroup(scene->nodes, libraryNodes->getNodes());
 }
 
+bool COLLADA2GLTFWriter::writePrimitiveToMesh(GLTF::Mesh* mesh, const COLLADAFW::MeshPrimitive colladaPrimitive) {
+	GLTF::Primitive* primitive = new GLTF::Primitive();
+	switch(colladaPrimitive->getPrimitiveType()) {
+
+		case COLLADAFW::MeshPrimitive::TRIANGLES: {
+			primitive->mode = GLTF::Primitive::Mode::TRIANGLES;
+			break;
+		}
+		case COLLADAFW::MeshPrimitive::POLYLIST:
+			primitive->mode = GLTF::Primitive::Mode::
+		case COLLADAFW::MeshPrimitive::POLYGONS:
+		case COLLADAFW::MeshPrimitive::LINES:
+	}
+}
+
+bool COLLADA2GLTFWriter::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
+	GLTF::Mesh* mesh = new GLTF::Mesh();
+	mesh->id = colladaMesh->getOriginalId();
+	mesh->name = colladaMesh->getName();
+
+	const COLLADAFW::MeshPrimitiveArray& primitives = colladaMesh->getMeshPrimitives();
+	size_t primitivesCount = primitives.getCount();
+	for (size_t i = 0; i < primitivesCount; i++) {
+		if (!this->writePrimitiveToMesh(mesh, primitives[i])) {
+			return false;
+		}
+	}
+	return true;
+}
+
 bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
+	switch (geometry->getType()) {
+		case Geometry::GEO_TYPE_MESH: {
+			const COLLADAFW::Mesh* mesh = (COLLADAFW::Mesh*)geometry;
+			if (!writeMesh(mesh)) {
+				return false;
+			}
+			break;
+		}
+		default: {
+			return false;
+		}
+	}
 	return true;
 }
 

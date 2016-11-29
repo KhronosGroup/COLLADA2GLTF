@@ -22,7 +22,7 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_SingleNode) {
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
 	std::vector<GLTF::Node*>* sceneNodes = scene->nodes;
-	ASSERT_EQ(sceneNodes->size(), 1);
+	EXPECT_EQ(sceneNodes->size(), 1);
 }
 
 TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MultipleNodes) {
@@ -35,5 +35,23 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MultipleNodes) {
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
 	std::vector<GLTF::Node*>* sceneNodes = scene->nodes;
-	ASSERT_EQ(sceneNodes->size(), 2);
+	EXPECT_EQ(sceneNodes->size(), 2);
+}
+
+TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesNotExist) {
+	COLLADAFW::LibraryNodes* nodes = new COLLADAFW::LibraryNodes();
+	COLLADAFW::Node* node = new COLLADAFW::Node(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::NODE, 0, 0));
+	COLLADAFW::InstanceGeometry* instanceGeometry = new COLLADAFW::InstanceGeometry(
+		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 0, 0),
+		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 1, 0)
+	);
+	nodes->getNodes().append(node);
+	this->writer->writeLibraryNodes(nodes);
+	GLTF::Scene* scene = this->asset->getDefaultScene();
+	ASSERT_TRUE(scene != NULL);
+	std::vector<GLTF::Node*>* sceneNodes = scene->nodes;
+	ASSERT_EQ(sceneNodes->size(), 1);
+	GLTF::Node* sceneNode = sceneNodes->at(0);
+	std::vector<GLTF::Mesh*>* meshes = sceneNode->meshes;
+	EXPECT_TRUE(meshes == NULL);
 }
