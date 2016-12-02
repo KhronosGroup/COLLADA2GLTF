@@ -20,7 +20,7 @@ namespace GLTF {
 			TRIANGLE_STRIP = 5,
 			TRIANGLE_FAN = 6,
 		};
-		std::map<std::string, GLTF::Accessor*>* attributes = NULL;
+		std::map<std::string, GLTF::Accessor*> attributes;
 		GLTF::Accessor* indices = NULL;
 		GLTF::Material* material = NULL;
 		Mode mode = Mode::UNKNOWN;

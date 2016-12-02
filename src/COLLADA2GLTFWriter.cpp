@@ -23,7 +23,6 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 
 bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* colladaNode) {
 	GLTF::Asset* asset = this->_asset;
-	std::map<COLLADAFW::UniqueId, GLTF::Mesh*> meshInstances = this->_meshInstances;
 	GLTF::Node* node = new GLTF::Node();
 	node->id = colladaNode->getOriginalId();
 	node->name = colladaNode->getName();
@@ -34,14 +33,25 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	if (count > 0) {
 		for (int i = 0; i < count; i++) {
 			COLLADAFW::InstanceGeometry* instanceGeometry = instanceGeometries[i];
+			COLLADAFW::MaterialBindingArray& materialBindings = instanceGeometry->getMaterialBindings();
 			const COLLADAFW::UniqueId& objectId = instanceGeometry->getUniqueId();
-			std::map<COLLADAFW::UniqueId, GLTF::Mesh*>::iterator iter = meshInstances.find(objectId);
-			if (iter != meshInstances.end()) {
+			std::map<COLLADAFW::UniqueId, GLTF::Mesh*>::iterator iter = _meshInstances.find(objectId);
+			if (iter != _meshInstances.end()) {
 				GLTF::Mesh* mesh = iter->second;
-				if (!node->meshes) {
-					node->meshes = new std::vector<GLTF::Mesh*>();
+				int materialBindingsCount = materialBindings.getCount();
+				if (materialBindingsCount > 0) {
+					for (int j = 0; j < materialBindingsCount; j++) {
+						COLLADAFW::MaterialBinding materialBinding = materialBindings[j];
+						GLTF::Primitive* primitive = mesh->primitives[j];
+						GLTF::Material* material = _materialInstances[materialBinding.getReferencedMaterial()];
+						if (primitive->material != NULL && primitive->material != material) {
+							// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
+							// TODO: add clone to GLTF::Object
+						}
+						primitive->material = material;
+					}
 				}
-				node->meshes->push_back(mesh);
+				node->meshes.push_back(mesh);
 			}
 		}
 	}
@@ -50,7 +60,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	group->push_back(node);
 	const COLLADAFW::NodePointerArray& childNodes = colladaNode->getChildNodes();
 	if (childNodes.getCount() > 0) {
-		return this->writeNodesToGroup(node->children, childNodes);
+		return this->writeNodesToGroup(&node->children, childNodes);
 	}
 	return true;
 }
@@ -69,12 +79,12 @@ bool COLLADA2GLTF::Writer::writeVisualScene(const COLLADAFW::VisualScene* visual
 	GLTF::Scene* scene;
 	if (asset->scene >= 0) {
 		scene = new GLTF::Scene();
-		asset->scenes->push_back(scene);
+		asset->scenes.push_back(scene);
 	}
 	else {
 		scene = asset->getDefaultScene();
 	}
-	return this->writeNodesToGroup(scene->nodes, visualScene->getRootNodes());
+	return this->writeNodesToGroup(&scene->nodes, visualScene->getRootNodes());
 }
 
 bool COLLADA2GLTF::Writer::writeScene(const COLLADAFW::Scene* scene) {
@@ -84,10 +94,7 @@ bool COLLADA2GLTF::Writer::writeScene(const COLLADAFW::Scene* scene) {
 bool COLLADA2GLTF::Writer::writeLibraryNodes(const COLLADAFW::LibraryNodes* libraryNodes) {
 	GLTF::Asset* asset = this->_asset;
 	GLTF::Scene* scene = asset->getDefaultScene();
-	if (!scene->nodes) {
-		scene->nodes = new std::vector<GLTF::Node*>();
-	}
-	return this->writeNodesToGroup(scene->nodes, libraryNodes->getNodes());
+	return this->writeNodesToGroup(&scene->nodes, libraryNodes->getNodes());
 }
 
 void mapAttributeIndices(const unsigned int* rootIndices, const unsigned* indices, int count, std::string semantic, std::map<std::string, GLTF::Accessor*>* attributes, std::map<std::string, std::map<int, int>>* indicesMapping) {
@@ -162,7 +169,6 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	int meshPrimitivesCount = meshPrimitives.getCount();
 	std::map<std::string, std::map<int, int>> indicesMapping;
 	if (meshPrimitivesCount > 0) {
-		std::vector<GLTF::Primitive*>* primitives = new std::vector<GLTF::Primitive*>();
 		// Create primitive indices accessor and mappings
 		for (int i = 0; i < meshPrimitivesCount; i++) {
 			COLLADAFW::MeshPrimitive* colladaPrimitive = meshPrimitives[i];
@@ -198,29 +204,26 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			std::map<std::string, GLTF::Accessor*>* attributes = new std::map<std::string, GLTF::Accessor*>();
 			attributes->emplace("POSITION", (GLTF::Accessor*)NULL);
 			if (colladaPrimitive->hasNormalIndices()) {
-				mapAttributeIndices(indices, colladaPrimitive->getNormalIndices().getData(), count, "NORMAL", attributes, &indicesMapping);
+				mapAttributeIndices(indices, colladaPrimitive->getNormalIndices().getData(), count, "NORMAL", &primitive->attributes, &indicesMapping);
 			}
 			if (colladaPrimitive->hasBinormalIndices()) {
-				mapAttributeIndices(indices, colladaPrimitive->getBinormalIndices().getData(), count, "BINORMAL", attributes, &indicesMapping);
+				mapAttributeIndices(indices, colladaPrimitive->getBinormalIndices().getData(), count, "BINORMAL", &primitive->attributes, &indicesMapping);
 			}
 			if (colladaPrimitive->hasTangentIndices()) {
-				mapAttributeIndices(indices, colladaPrimitive->getTangentIndices().getData(), count, "TANGENT", attributes, &indicesMapping);
+				mapAttributeIndices(indices, colladaPrimitive->getTangentIndices().getData(), count, "TANGENT", &primitive->attributes, &indicesMapping);
 			}
 			if (colladaPrimitive->hasUVCoordIndices()) {
-				mapAttributeIndicesArray(indices, colladaPrimitive->getUVCoordIndicesArray(), count, "TEXCOORD", attributes, &indicesMapping);
+				mapAttributeIndicesArray(indices, colladaPrimitive->getUVCoordIndicesArray(), count, "TEXCOORD", &primitive->attributes, &indicesMapping);
 			}
 			if (colladaPrimitive->hasColorIndices()) {
-				mapAttributeIndicesArray(indices, colladaPrimitive->getColorIndicesArray(), count, "COLOR", attributes, &indicesMapping);
+				mapAttributeIndicesArray(indices, colladaPrimitive->getColorIndicesArray(), count, "COLOR", &primitive->attributes, &indicesMapping);
 			}
-			primitive->attributes = attributes;
-			primitives->push_back(primitive);
+			mesh->primitives.push_back(primitive);
 		}
 		// Create mesh attribute accessors and use the indices mapping to move attributes as necessary to unify the indices
 		std::map<std::string, GLTF::Accessor*> meshAttributes;
-		int primitivesSize = primitives->size();
-		for (int i = 0; i < primitivesSize; i++) {
-			GLTF::Primitive* primitive = primitives->at(i);
-			for (auto const& attribute : *primitive->attributes) {
+		for (GLTF::Primitive* primitive : mesh->primitives) {
+			for (auto const& attribute : primitive->attributes) {
 				std::string semantic = attribute.first;
 				if (meshAttributes.find(semantic) == meshAttributes.end()) {
 					if (semantic == "POSITION") {
@@ -242,10 +245,9 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				if (meshAttributes[semantic] == NULL) {
 					return false;
 				}
-				primitive->attributes->emplace(semantic, meshAttributes[semantic]);
+				primitive->attributes.emplace(semantic, meshAttributes[semantic]);
 			}
 		}
-		mesh->primitives = primitives;
 	}
 	this->_meshInstances[colladaMesh->getUniqueId()] = mesh;
 	return true;
@@ -265,6 +267,7 @@ bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
 }
 
 bool COLLADA2GLTF::Writer::writeMaterial(const COLLADAFW::Material* material) {
+
 	return true;
 }
 

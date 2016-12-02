@@ -21,8 +21,8 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_SingleNode) {
 	this->writer->writeLibraryNodes(nodes);
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
-	std::vector<GLTF::Node*>* sceneNodes = scene->nodes;
-	EXPECT_EQ(sceneNodes->size(), 1);
+	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
+	EXPECT_EQ(sceneNodes.size(), 1);
 }
 
 TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MultipleNodes) {
@@ -34,8 +34,8 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MultipleNodes) {
 	this->writer->writeLibraryNodes(nodes);
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
-	std::vector<GLTF::Node*>* sceneNodes = scene->nodes;
-	EXPECT_EQ(sceneNodes->size(), 2);
+	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
+	EXPECT_EQ(sceneNodes.size(), 2);
 }
 
 TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesNotExist) {
@@ -50,11 +50,11 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesNotExist) {
 	this->writer->writeLibraryNodes(nodes);
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
-	std::vector<GLTF::Node*>* sceneNodes = scene->nodes;
-	ASSERT_EQ(sceneNodes->size(), 1);
-	GLTF::Node* sceneNode = sceneNodes->at(0);
-	std::vector<GLTF::Mesh*>* meshes = sceneNode->meshes;
-	ASSERT_TRUE(meshes == NULL);
+	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
+	ASSERT_EQ(sceneNodes.size(), 1);
+	GLTF::Node* sceneNode = sceneNodes[0];
+	std::vector<GLTF::Mesh*> meshes = sceneNode->meshes;
+	ASSERT_EQ(meshes.size(), 0);
 }
 
 TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesExist) {
@@ -71,9 +71,9 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesExist) {
 	this->writer->writeLibraryNodes(nodes);
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
-	std::vector<GLTF::Node*>* sceneNodes = scene->nodes;
-	ASSERT_EQ(sceneNodes->size(), 1);
-	GLTF::Node* sceneNode = sceneNodes->at(0);
-	std::vector<GLTF::Mesh*>* meshes = sceneNode->meshes;
-	ASSERT_EQ(meshes->size(), 1);
+	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
+	ASSERT_EQ(sceneNodes.size(), 1);
+	GLTF::Node* sceneNode = sceneNodes[0];
+	std::vector<GLTF::Mesh*> meshes = sceneNode->meshes;
+	ASSERT_EQ(meshes.size(), 1);
 }

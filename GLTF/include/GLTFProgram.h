@@ -9,8 +9,8 @@
 namespace GLTF {
   class Program : public GLTF::Object {
   public:
-    std::vector<std::string>* attributes;
-    GLTF::Shader* fragmentShader;
-    GLTF::Shader* vertexShader;
+    std::vector<std::string> attributes;
+	GLTF::Shader* fragmentShader = NULL;
+	GLTF::Shader* vertexShader = NULL;
   };
 }

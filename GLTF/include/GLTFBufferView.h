@@ -5,16 +5,16 @@
 #include "GLTFObject.h"
 
 namespace GLTF {
-  class BufferView : public GLTF::Object {
-  public:
-    GLTF::Buffer* buffer;
-    int byteOffset;
-    int byteLength;
-    GLTF::Constants::WebGL target;
+	class BufferView : public GLTF::Object {
+	public:
+		GLTF::Buffer* buffer = NULL;
+		int byteOffset = 0;
+		int byteLength = 0;
+		GLTF::Constants::WebGL target;
 
-    BufferView(unsigned char* data,
-      int dataLength,
-      GLTF::Constants::WebGL target
-    );
-  };
+		BufferView(unsigned char* data,
+			int dataLength,
+			GLTF::Constants::WebGL target
+		);
+	};
 };

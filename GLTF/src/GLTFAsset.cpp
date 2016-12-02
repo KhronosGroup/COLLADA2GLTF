@@ -47,14 +47,11 @@ GLTF::Scene* GLTF::Asset::getDefaultScene() {
 	GLTF::Scene* scene;
 	if (this->scene < 0) {
 		scene = new GLTF::Scene();
-		if (!this->scenes) {
-			this->scenes = new std::vector<GLTF::Scene*>();
-		}
-		this->scenes->push_back(scene);
+		this->scenes.push_back(scene);
 		this->scene = 0;
 	}
 	else {
-		scene = this->scenes->at(this->scene);
+		scene = this->scenes[this->scene];
 	}
 	return scene;
 }
@@ -71,21 +68,19 @@ void GLTF::Asset::writeJSON(void* writer) {
 
 	// Write scene
 	if (this->scene > 0) {
-		GLTF::Scene* scene = this->scenes->at(this->scene);
+		GLTF::Scene* scene = this->scenes[this->scene];
 		jsonWriter->Key("scene");
 		jsonWriter->String(scene->id.c_str());
 	}
 
 	// Write scenes and build node hash
 	std::map<std::string, GLTF::Node*> nodes;
-	if (this->scenes) {
+	if (this->scenes.size() > 0) {
 		jsonWriter->Key("scenes");
 		jsonWriter->StartObject();
-		for (GLTF::Scene* scene : *this->scenes) {
-			if (scene->nodes) {
-				for (GLTF::Node* node : *scene->nodes) {
-					nodes[node->id] = node;
-				}
+		for (GLTF::Scene* scene : this->scenes) {
+			for (GLTF::Node* node : scene->nodes) {
+				nodes[node->id] = node;
 			}
 			jsonWriter->Key(scene->id.c_str());
 			jsonWriter->StartObject();
@@ -103,10 +98,8 @@ void GLTF::Asset::writeJSON(void* writer) {
 		for (auto const& nodeMapEntry : nodes) {
 			std::string nodeId = nodeMapEntry.first;
 			GLTF::Node* node = nodeMapEntry.second;
-			if (node->meshes) {
-				for (GLTF::Mesh* mesh : *node->meshes) {
-					meshes[mesh->id] = mesh;
-				}
+			for (GLTF::Mesh* mesh : node->meshes) {
+				meshes[mesh->id] = mesh;
 			}
 			jsonWriter->Key(nodeId.c_str());
 			jsonWriter->StartObject();
@@ -126,22 +119,18 @@ void GLTF::Asset::writeJSON(void* writer) {
 		for (auto const& meshMapEntry : meshes) {
 			std::string meshId = meshMapEntry.first;
 			GLTF::Mesh* mesh = meshMapEntry.second;
-			if (mesh->primitives) {
-				for (GLTF::Primitive* primitive : *mesh->primitives) {
-					if (primitive->material) {
-						GLTF::Material* material = primitive->material;
-						materials[material->id] = material;
-					}
-					if (primitive->indices) {
-						GLTF::Accessor* indices = primitive->indices;
-						accessors[indices->id] = indices;
-					}
-					if (primitive->attributes) {
-						for (auto const& primitiveAttribute : *primitive->attributes) {
-							GLTF::Accessor* attribute = primitiveAttribute.second;
-							accessors[attribute->id] = attribute;
-						}
-					}
+			for (GLTF::Primitive* primitive : mesh->primitives) {
+				if (primitive->material) {
+					GLTF::Material* material = primitive->material;
+					materials[material->id] = material;
+				}
+				if (primitive->indices) {
+					GLTF::Accessor* indices = primitive->indices;
+					accessors[indices->id] = indices;
+				}
+				for (auto const& primitiveAttribute : primitive->attributes) {
+					GLTF::Accessor* attribute = primitiveAttribute.second;
+					accessors[attribute->id] = attribute;
 				}
 			}
 			jsonWriter->Key(meshId.c_str());
@@ -175,7 +164,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 	accessors.clear();
 
 	// Write materials and build technique hash
-	std::map<std::string, GLTF::Technique*> techniques;
+	/*std::map<std::string, GLTF::Technique*> techniques;
 	if (materials.size() > 0) {
 		jsonWriter->Key("materials");
 		jsonWriter->StartObject();
@@ -214,7 +203,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 		}
 		jsonWriter->EndObject();
 	}
-	techniques.clear();
+	techniques.clear();*/
 
 	GLTF::Object::writeJSON(writer);
 }

@@ -7,11 +7,16 @@
 #include "GLTFObject.h"
 
 namespace GLTF {
-  class Node;
-  class Skin : GLTF::Object {
-  public:
-    int bindShapeMatrix[16];
-    GLTF::Accessor* inverseBindMatrices;
-    std::vector<GLTF::Node*> joints;
-  };
+	class Node;
+	class Skin : GLTF::Object {
+	public:
+		float bindShapeMatrix[16] = {
+			1.0, 0.0, 0.0, 0.0,
+			0.0, 1.0, 0.0, 0.0,
+			0.0, 0.0, 1.0, 0.0,
+			0.0, 0.0, 0.0, 1.0
+		};
+		GLTF::Accessor* inverseBindMatrices = NULL;
+		std::vector<GLTF::Node*> joints;
+	};
 }

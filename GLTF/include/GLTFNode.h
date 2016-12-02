@@ -11,36 +11,36 @@
 #include "GLTFSkin.h"
 
 namespace GLTF {
-  class Node : public GLTF::Object {
-  public:
-    class Transform {
-      virtual void concat(Transform* transform);
-    };
+	class Node : public GLTF::Object {
+	public:
+		class Transform {
+			virtual void concat(Transform* transform);
+		};
 
-    class TransformTRS;
-    class TransformMatrix : Transform {
-      int matrix[4][4];
+		class TransformTRS;
+		class TransformMatrix : Transform {
+			int matrix[4][4];
 
-      TransformTRS* getTransformTRS();
-    };
+			TransformTRS* getTransformTRS();
+		};
 
-    class TransformTRS : Transform {
-      int translation[3];
-      int rotation[3];
-      int scale[3];
+		class TransformTRS : Transform {
+			int translation[3];
+			int rotation[3];
+			int scale[3];
 
-      TransformMatrix* getTransformMatrix();
-    };
+			TransformMatrix* getTransformMatrix();
+		};
 
-    GLTF::Camera* camera;
-	std::vector<GLTF::Node*>* children = NULL;
-	std::vector<GLTF::Skeleton*>* skeletons = NULL;
-    GLTF::Skin* skin;
-    std::string jointName;
-	std::vector<GLTF::Mesh*>* meshes = NULL;
+		GLTF::Camera* camera;
+		std::vector<GLTF::Node*> children;
+		std::vector<GLTF::Skeleton*> skeletons;
+		GLTF::Skin* skin;
+		std::string jointName;
+		std::vector<GLTF::Mesh*> meshes;
 
-    Transform* transform;
+		Transform* transform;
 
-	Node();
-  };
+		Node();
+	};
 }
