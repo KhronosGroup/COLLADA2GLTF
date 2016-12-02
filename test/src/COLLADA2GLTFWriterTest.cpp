@@ -45,6 +45,7 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesNotExist) {
 		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 0, 0),
 		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 1, 0)
 	);
+	node->getInstanceGeometries().append(instanceGeometry);
 	nodes->getNodes().append(node);
 	this->writer->writeLibraryNodes(nodes);
 	GLTF::Scene* scene = this->asset->getDefaultScene();

@@ -3,13 +3,15 @@ cmake_minimum_required (VERSION 3.1.0)
 set(PROJECT_NAME COLLADA2GLTF)
 
 project(${PROJECT_NAME})
-add_compile_options(-std=c++11)
 if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  add_compile_options(-std=c++11)
 endif()
 
-# cmake -DCOLLADA2GLTF_TEST=ON to build with tests
-option(COLLADA2GLTF_TEST "Build all tests." OFF)
+# cmake -Dtest=ON to build with tests
+option(test "Build all tests." OFF)
 
 # COLLADABaseUtils/Framework
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
@@ -30,10 +32,11 @@ target_link_libraries(${PROJECT_NAME}_lib GLTF COLLADAFramework)
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 
-if (COLLADA2GLTF_TEST)
+if(test)
   enable_testing()
 
   # gtest
+  set(GTEST_LINKED 1)
   include_directories(GLTF/dependencies/googletest/googletest/include)
   add_subdirectory(GLTF/dependencies/googletest/googletest)
 
@@ -42,8 +45,8 @@ if (COLLADA2GLTF_TEST)
   file(GLOB TEST_HEADERS "test/include/*.h")
   file(GLOB TEST_SOURCES "test/src/*.cpp")
 
-  add_executable(runUnitTests ${TEST_HEADERS} ${TEST_SOURCES})
-  target_link_libraries(runUnitTests  ${PROJECT_NAME}_lib GLTF gtest)
+  add_executable(${PROJECT_NAME}_TEST ${TEST_HEADERS} ${TEST_SOURCES})
+  target_link_libraries(${PROJECT_NAME}_TEST  ${PROJECT_NAME}_lib GLTF gtest)
 
-  add_test(COLLADA2GLTFWriterTest runUnitTests)
+  add_test(COLLADA2GLTFWriterTest ${PROJECT_NAME}_TEST)
 endif()

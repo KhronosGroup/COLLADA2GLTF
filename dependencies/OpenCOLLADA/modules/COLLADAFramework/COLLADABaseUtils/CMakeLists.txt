@@ -22,8 +22,9 @@ file(GLOB UTF_HEADERS "${BASE_PATH}/Externals/UTF/include/*.h")
 file(GLOB UTF_SOURCES "${BASE_PATH}/Externals/UTF/src/*.c")
 
 # PCRE
+add_definitions(-DPCRE_STATIC)
 include_directories(${BASE_PATH}/Externals/pcre/include)
-file(GLOB PCRE_HEADERS "${BASE_PATH}/Externals/pcre/include/*.h")
-file(GLOB PCRE_SOURCES "${BASE_PATH}/Externals/pcre/src/*.c")
+add_subdirectory(pcre)
 
-add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES} ${MATH_HEADERS} ${MATH_SOURCES} ${UTF_HEADERS} ${UTF_SOURCES} ${PCRE_HEADERS} ${PCRE_SOURCES})
+add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES} ${MATH_HEADERS} ${MATH_SOURCES} ${UTF_HEADERS} ${UTF_SOURCES})
+target_link_libraries(${PROJECT_NAME} pcre)

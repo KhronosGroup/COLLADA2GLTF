@@ -3,10 +3,12 @@ cmake_minimum_required(VERSION 3.1.0)
 set(PROJECT_NAME GLTF)
 
 project(${PROJECT_NAME})
-add_compile_options(-std=c++11)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  add_compile_options(-std=c++11)
+endif()
 
-# cmake -DGLTF_TEST=ON to build with tests
-option(GLTF_TEST "Build all tests." OFF)
+# cmake -Dtest=ON to build with tests
+option(test "Build all tests." OFF)
 
 # RapidJSON
 include_directories(dependencies/rapidjson/include)
@@ -19,21 +21,23 @@ file(GLOB SOURCES "src/*.cpp")
 add_library(GLTF ${HEADERS} ${SOURCES})
 target_link_libraries(${PROJECT_NAME})
 
-if (GLTF_TEST)
+if (test)
   enable_testing()
 
   # gtest
-  include_directories(dependencies/googletest/googletest/include)
-  add_subdirectory(dependencies/googletest/googletest)
+  if(!GTEST_LINKED)
+    include_directories(dependencies/googletest/googletest/include)
+    add_subdirectory(dependencies/googletest/googletest)
+  endif()
 
   # Unit Tests
   include_directories(test/include)
   file(GLOB TEST_HEADERS "test/include/*.h")
   file(GLOB TEST_SOURCES "test/src/*.cpp")
 
-  add_executable(runUnitTests ${TEST_HEADERS} ${TEST_SOURCES})
-  target_link_libraries(runUnitTests ${PROJECT_NAME} gtest)
+  add_executable(${PROJECT_NAME}_TEST ${TEST_HEADERS} ${TEST_SOURCES})
+  target_link_libraries(${PROJECT_NAME}_TEST ${PROJECT_NAME} gtest)
 
-  add_test(GLTFAccessorTest runUnitTests)
-  add_test(GLTFObjectTest runUnitTests)
+  add_test(GLTFAccessorTest ${PROJECT_NAME}_TEST)
+  add_test(GLTFObjectTest ${PROJECT_NAME}_TEST)
 endif()

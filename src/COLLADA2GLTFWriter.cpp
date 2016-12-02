@@ -85,22 +85,21 @@ bool COLLADA2GLTF::Writer::writeLibraryNodes(const COLLADAFW::LibraryNodes* libr
 	return this->writeNodesToGroup(scene->nodes, libraryNodes->getNodes());
 }
 
-bool COLLADA2GLTFWriter::writePrimitiveToMesh(GLTF::Mesh* mesh, const COLLADAFW::MeshPrimitive colladaPrimitive) {
+bool COLLADA2GLTF::Writer::writePrimitiveToMesh(GLTF::Mesh* mesh, const COLLADAFW::MeshPrimitive* colladaPrimitive) {
 	GLTF::Primitive* primitive = new GLTF::Primitive();
-	switch(colladaPrimitive->getPrimitiveType()) {
-
-		case COLLADAFW::MeshPrimitive::TRIANGLES: {
-			primitive->mode = GLTF::Primitive::Mode::TRIANGLES;
-			break;
-		}
-		case COLLADAFW::MeshPrimitive::POLYLIST:
-			primitive->mode = GLTF::Primitive::Mode::
-		case COLLADAFW::MeshPrimitive::POLYGONS:
-		case COLLADAFW::MeshPrimitive::LINES:
+	switch (colladaPrimitive->getPrimitiveType()) {
+	case COLLADAFW::MeshPrimitive::TRIANGLES: {
+		primitive->mode = GLTF::Primitive::Mode::TRIANGLES;
+		break;
 	}
+	case COLLADAFW::MeshPrimitive::POLYLIST: {}
+	case COLLADAFW::MeshPrimitive::POLYGONS: {}
+	case COLLADAFW::MeshPrimitive::LINES: {}
+	}
+	return true;
 }
 
-bool COLLADA2GLTFWriter::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
+bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	GLTF::Mesh* mesh = new GLTF::Mesh();
 	mesh->id = colladaMesh->getOriginalId();
 	mesh->name = colladaMesh->getName();
@@ -117,17 +116,16 @@ bool COLLADA2GLTFWriter::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 
 bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
 	switch (geometry->getType()) {
-		case Geometry::GEO_TYPE_MESH: {
-			const COLLADAFW::Mesh* mesh = (COLLADAFW::Mesh*)geometry;
-			if (!writeMesh(mesh)) {
-				return false;
-			}
-			break;
-		}
-		default: {
+	case COLLADAFW::Geometry::GEO_TYPE_MESH: {
+		const COLLADAFW::Mesh* mesh = (COLLADAFW::Mesh*)geometry;
+		if (!writeMesh(mesh)) {
 			return false;
 		}
+		break;
 	}
+	default: {
+		return false;
+	}}
 	return true;
 }
 
