@@ -18,8 +18,7 @@ TEST(GLTFAccessorTest, CreateFromData) {
   float points[12] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
   GLTF::Accessor* accessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3,
     GLTF::Constants::WebGL::FLOAT,
-    (unsigned char*)points,
-    12 * sizeof(float),
+    (unsigned char*)points, 4,
     GLTF::Constants::WebGL::ARRAY_BUFFER
   );
   double* min = accessor->min;
@@ -49,15 +48,14 @@ TEST(GLTFAccessorTest, CreateOnBuffer) {
   GLTF::Accessor* accessorFromData = new GLTF::Accessor(GLTF::Accessor::Type::VEC3,
     GLTF::Constants::WebGL::FLOAT,
     (unsigned char*)pointsBuffer,
-    12 * sizeof(float),
+    4,
     GLTF::Constants::WebGL::ARRAY_BUFFER
   );
   GLTF::BufferView* bufferView = accessorFromData->bufferView;
   float points[6] = {13.0, 14.0, 15.0, 16.0, 17.0, 18.0};
   GLTF::Accessor* accessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3,
     GLTF::Constants::WebGL::FLOAT,
-    (unsigned char*)points,
-    6 * sizeof(float),
+    (unsigned char*)points, 2,
     bufferView
   );
 

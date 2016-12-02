@@ -34,21 +34,23 @@ namespace GLTF {
     Accessor(GLTF::Accessor::Type type,
       GLTF::Constants::WebGL componentType,
       unsigned char* data,
-      int dataLength,
+      int count,
       GLTF::Constants::WebGL target
     );
 
     Accessor(GLTF::Accessor::Type type,
       GLTF::Constants::WebGL componentType,
       unsigned char* data,
-      int dataLength,
+      int count,
       GLTF::BufferView* bufferView
     );
 
     bool computeMinMax();
     int getByteStride();
     bool getComponentAtIndex(int index, double* component);
+	static int getComponentByteLength(GLTF::Constants::WebGL componentType);
     int getComponentByteLength();
+	static int getNumberOfComponents(GLTF::Accessor::Type type);
     int getNumberOfComponents();
   };
 };
