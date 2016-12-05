@@ -6,7 +6,8 @@
 
 COLLADA2GLTFWriterTest::COLLADA2GLTFWriterTest() {
 	asset = new GLTF::Asset();
-	writer = new COLLADA2GLTF::Writer(asset);
+	options = new COLLADA2GLTF::Options();
+	writer = new COLLADA2GLTF::Writer(asset, options);
 }
 
 COLLADA2GLTFWriterTest::~COLLADA2GLTFWriterTest() {
