@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1.0)
 
 set(PROJECT_NAME COLLADABaseUtils)
-set(BASE_PATH ../../../OpenCOLLADA)
+set(BASE_PATH ../../../../OpenCOLLADA)
 set(PROJECT_PATH ${BASE_PATH}/COLLADABaseUtils)
 
 project(${PROJECT_NAME})
@@ -21,7 +21,7 @@ include_directories(${BASE_PATH}/Externals/UTF/include)
 file(GLOB UTF_HEADERS "${BASE_PATH}/Externals/UTF/include/*.h")
 file(GLOB UTF_SOURCES "${BASE_PATH}/Externals/UTF/src/*.c")
 
-# PCRE
+# pcre
 add_definitions(-DPCRE_STATIC)
 include_directories(${BASE_PATH}/Externals/pcre/include)
 add_subdirectory(pcre)

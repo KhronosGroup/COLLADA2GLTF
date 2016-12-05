@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1.0)
 
 set(PROJECT_NAME pcre)
-set(BASE_PATH ../../../../OpenCOLLADA)
+set(BASE_PATH ../../../../../OpenCOLLADA)
 set(PROJECT_PATH ${BASE_PATH}/Externals/pcre)
 
 project(${PROJECT_NAME})
