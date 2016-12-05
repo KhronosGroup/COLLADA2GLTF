@@ -46,12 +46,16 @@ namespace GLTF {
 			GLTF::BufferView* bufferView
 		);
 
+		static int getComponentByteLength(GLTF::Constants::WebGL componentType);
+		static int getNumberOfComponents(GLTF::Accessor::Type type);
+
+		virtual void writeJSON(void* writer);
+
 		bool computeMinMax();
 		int getByteStride();
 		bool getComponentAtIndex(int index, double* component);
-		static int getComponentByteLength(GLTF::Constants::WebGL componentType);
 		int getComponentByteLength();
-		static int getNumberOfComponents(GLTF::Accessor::Type type);
 		int getNumberOfComponents();
+		const char* getTypeName();
 	};
 };

@@ -24,5 +24,8 @@ namespace GLTF {
 		GLTF::Accessor* indices = NULL;
 		GLTF::Material* material = NULL;
 		Mode mode = Mode::UNKNOWN;
+
+		virtual GLTF::Object* clone();
+		virtual void writeJSON(void* writer);
 	};
 }

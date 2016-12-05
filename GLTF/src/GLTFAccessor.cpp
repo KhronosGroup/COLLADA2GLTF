@@ -3,9 +3,10 @@
 #include <cstring>
 #include <stdlib.h>
 
-#include <stdio.h>
-
 #include "GLTFAccessor.h"
+
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
 
 int GLTF::Accessor::INSTANCE_COUNT = 0;
 
@@ -15,7 +16,6 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	this->id = "accessor_" + std::to_string(GLTF::Accessor::INSTANCE_COUNT);
 	GLTF::Accessor::INSTANCE_COUNT++;
 }
-
 
 GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	GLTF::Constants::WebGL componentType,
@@ -69,6 +69,7 @@ bool GLTF::Accessor::computeMinMax() {
 		for (int i = 1; i < this->count; i++) {
 			this->getComponentAtIndex(i, component);
 			for (int j = 0; j < numberOfComponents; j++) {
+				min[j] = std::min(component[j], min[j]);
 				max[j] = std::max(component[j], max[j]);
 			}
 		}
@@ -156,4 +157,58 @@ int GLTF::Accessor::getNumberOfComponents(GLTF::Accessor::Type type) {
 
 int GLTF::Accessor::getNumberOfComponents() {
 	return GLTF::Accessor::getNumberOfComponents(this->type);
+}
+
+const char* GLTF::Accessor::getTypeName() {
+	switch (this->type) {
+	case GLTF::Accessor::Type::SCALAR:
+		return "SCALAR";
+	case GLTF::Accessor::Type::VEC2:
+		return "VEC2";
+	case GLTF::Accessor::Type::VEC3:
+		return "VEC3";
+	case GLTF::Accessor::Type::VEC4:
+		return "VEC4";
+	case GLTF::Accessor::Type::MAT2:
+		return "MAT2";
+	case GLTF::Accessor::Type::MAT3:
+		return "MAT3";
+	case GLTF::Accessor::Type::MAT4:
+		return "MAT4";
+	}
+	return "";
+}
+
+void GLTF::Accessor::writeJSON(void* writer) {
+	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+	if (this->bufferView) {
+		jsonWriter->Key("bufferView");
+		jsonWriter->String(this->bufferView->id.c_str());
+	}
+	jsonWriter->Key("byteOffset");
+	jsonWriter->Int(this->byteOffset);
+	jsonWriter->Key("byteStride");
+	jsonWriter->Int(this->byteStride);
+	jsonWriter->Key("componentType");
+	jsonWriter->Int((int)this->componentType);
+	jsonWriter->Key("count");
+	jsonWriter->Int(this->count);
+	if (this->max) {
+		jsonWriter->Key("max");
+		jsonWriter->StartArray();
+		for (int i = 0; i < this->getNumberOfComponents(); i++) {
+			jsonWriter->Double(this->max[i]);
+		}
+		jsonWriter->EndArray();
+	}
+	if (this->min) {
+		jsonWriter->Key("min");
+		jsonWriter->StartArray();
+		for (int i = 0; i < this->getNumberOfComponents(); i++) {
+			jsonWriter->Double(this->min[i]);
+		}
+		jsonWriter->EndArray();
+	}
+	jsonWriter->Key("type");
+	jsonWriter->String(this->getTypeName());
 }

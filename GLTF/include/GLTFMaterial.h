@@ -10,8 +10,8 @@ namespace GLTF {
 	class Material : public GLTF::Object {
 	public:
 		enum Type {
-			TECHNIQUE,
-			COMMON,
+			MATERIAL,
+			MATERIAL_COMMON,
 			UNKNOWN
 		};
 
@@ -23,33 +23,34 @@ namespace GLTF {
 			float emission[4] = { 0.0, 0.0, 0.0, 1.0 };
 			float shininess[1] = { 0.0 };
 			float specular[4] = { 0.0, 0.0, 0.0, 1.0 };
+
+			void writeJSON(void* writer);
 		};
 
+		GLTF::Technique* technique = NULL;
 		Type type = Type::UNKNOWN;
 		Values* values = NULL;
+
+		virtual void writeJSON(void* writer);
 	};
 
-	class MaterialTechnique : public GLTF::Material {
-	public:
-		GLTF::Technique* technique = NULL;
-	};
 
 	class MaterialCommon : public GLTF::Material {
 	public:
-		enum Shader {
+		enum Technique {
 			BLINN,
 			PHONG,
 			LAMBERT,
 			CONSTANT
 		};
 
-		class ValuesCommon : Values {
-		public:
-			bool doubleSided = false;
-			int jointCount = 0;
-			bool transparent = false;
-		};
+		bool doubleSided = false;
+		int jointCount = 0;
+		bool transparent = false;
 
-		Shader shader;
+		Technique technique;
+
+		const char* getTechniqueName();
+		virtual void writeJSON(void* writer);
 	};
 }

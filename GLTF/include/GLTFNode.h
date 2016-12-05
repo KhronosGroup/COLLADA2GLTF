@@ -32,6 +32,8 @@ namespace GLTF {
 			TransformMatrix* getTransformMatrix();
 		};
 
+		static int INSTANCE_COUNT;
+
 		GLTF::Camera* camera;
 		std::vector<GLTF::Node*> children;
 		std::vector<GLTF::Skeleton*> skeletons;
@@ -42,5 +44,8 @@ namespace GLTF {
 		Transform* transform;
 
 		Node();
+		Node(std::string id);
+
+		virtual void writeJSON(void* writer);
 	};
 }

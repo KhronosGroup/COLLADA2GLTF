@@ -67,7 +67,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 	}
 
 	// Write scene
-	if (this->scene > 0) {
+	if (this->scene >= 0) {
 		GLTF::Scene* scene = this->scenes[this->scene];
 		jsonWriter->Key("scene");
 		jsonWriter->String(scene->id.c_str());
@@ -163,17 +163,56 @@ void GLTF::Asset::writeJSON(void* writer) {
 	}
 	accessors.clear();
 
+	// Write bufferViews and build buffer hash
+	std::map<std::string, GLTF::Buffer*> buffers;
+	if (bufferViews.size() > 0) {
+		jsonWriter->Key("bufferViews");
+		jsonWriter->StartObject();
+		for (auto const& bufferViewMapEntry : bufferViews) {
+			std::string bufferViewId = bufferViewMapEntry.first;
+			GLTF::BufferView* bufferView = bufferViewMapEntry.second;
+			if (bufferView->buffer) {
+				GLTF::Buffer* buffer = bufferView->buffer;
+				buffers[buffer->id] = buffer;
+			}
+			jsonWriter->Key(bufferViewId.c_str());
+			jsonWriter->StartObject();
+			bufferView->writeJSON(writer);
+			jsonWriter->EndObject();
+		}
+		jsonWriter->EndObject();
+	}
+	bufferViews.clear();
+
+	// Write buffers
+	if (buffers.size() > 0) {
+		jsonWriter->Key("buffers");
+		jsonWriter->StartObject();
+		for (auto const& bufferMapEntry : buffers) {
+			std::string bufferId = bufferMapEntry.first;
+			GLTF::Buffer* buffer = bufferMapEntry.second;
+			jsonWriter->Key(bufferId.c_str());
+			jsonWriter->StartObject();
+			buffer->writeJSON(writer);
+			jsonWriter->EndObject();
+		}
+		jsonWriter->EndObject();
+	}
+	buffers.clear();
+
 	// Write materials and build technique hash
-	/*std::map<std::string, GLTF::Technique*> techniques;
+	std::map<std::string, GLTF::Technique*> techniques;
 	if (materials.size() > 0) {
 		jsonWriter->Key("materials");
 		jsonWriter->StartObject();
 		for (auto const& materialMapEntry : materials) {
 			std::string materialId = materialMapEntry.first;
 			GLTF::Material* material = materialMapEntry.second;
-			if (material->technique) {
+			if (material->type == GLTF::Material::Type::MATERIAL) {
 				GLTF::Technique* technique = material->technique;
-				techniques[technique->id] = technique;
+				if (technique) {
+					techniques[technique->id] = technique;
+				}
 			}
 			jsonWriter->Key(materialId.c_str());
 			jsonWriter->StartObject();
@@ -203,7 +242,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 		}
 		jsonWriter->EndObject();
 	}
-	techniques.clear();*/
+	techniques.clear();
 
 	GLTF::Object::writeJSON(writer);
 }
