@@ -1,6 +1,6 @@
 #include "COLLADA2GLTFWriter.h"
 
-COLLADA2GLTF::Writer::Writer(GLTF::Asset * asset) : _asset(asset) {
+COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options) : _asset(asset) {
 	_indicesBufferView = new GLTF::BufferView(NULL, 0, GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
 	_attributesBufferView = new GLTF::BufferView(NULL, 0, GLTF::Constants::WebGL::ARRAY_BUFFER);
 }
@@ -34,7 +34,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 		for (int i = 0; i < count; i++) {
 			COLLADAFW::InstanceGeometry* instanceGeometry = instanceGeometries[i];
 			COLLADAFW::MaterialBindingArray& materialBindings = instanceGeometry->getMaterialBindings();
-			const COLLADAFW::UniqueId& objectId = instanceGeometry->getUniqueId();
+			const COLLADAFW::UniqueId& objectId = instanceGeometry->getInstanciatedObjectId();
 			std::map<COLLADAFW::UniqueId, GLTF::Mesh*>::iterator iter = _meshInstances.find(objectId);
 			if (iter != _meshInstances.end()) {
 				GLTF::Mesh* mesh = iter->second;
@@ -46,7 +46,8 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 						GLTF::Material* material = _materialInstances[materialBinding.getReferencedMaterial()];
 						if (primitive->material != NULL && primitive->material != material) {
 							// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
-							// TODO: add clone to GLTF::Object
+							mesh = (GLTF::Mesh*)mesh->clone();
+							primitive = mesh->primitives[j];
 						}
 						primitive->material = material;
 					}
@@ -98,11 +99,12 @@ bool COLLADA2GLTF::Writer::writeLibraryNodes(const COLLADAFW::LibraryNodes* libr
 }
 
 void mapAttributeIndices(const unsigned int* rootIndices, const unsigned* indices, int count, std::string semantic, std::map<std::string, GLTF::Accessor*>* attributes, std::map<std::string, std::map<int, int>>* indicesMapping) {
+	indicesMapping->emplace(semantic, std::map<int, int>());
 	for (int i = 0; i < count; i++) {
 		unsigned int rootIndex = rootIndices[i];
 		unsigned int index = indices[i];
 		if (rootIndex != index) {
-			indicesMapping->at(semantic)[index] = rootIndex;
+			indicesMapping->at(semantic).emplace(rootIndex, index);
 		}
 	}
 	attributes->emplace(semantic, (GLTF::Accessor*)NULL);
@@ -124,32 +126,48 @@ GLTF::Accessor* bufferAndMapVertexData(GLTF::BufferView* bufferView, GLTF::Acces
 	float* floatBuffer = new float[count];
 	COLLADAFW::FloatOrDoubleArray::DataType dataType = vertexData.getType();
 	for (int i = 0; i < count; i++) {
-		int index = i;
-		std::map<int, int>::iterator mappedIndex = indicesMapping.find(index);
-		if (mappedIndex != indicesMapping.end()) {
-			index = mappedIndex->second;
-		}
-		switch (dataType) {
-		case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE:
-			floatBuffer[index] = (float)(vertexData.getDoubleValues()->getData()[i]);
-			break;
-		case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_FLOAT:
-			floatBuffer[index] = vertexData.getFloatValues()->getData()[i];
-			break;
-		default:
-			free(floatBuffer);
-			return NULL;
-		}
+int index = i;
+std::map<int, int>::iterator mappedIndex = indicesMapping.find(index);
+if (mappedIndex != indicesMapping.end()) {
+	index = mappedIndex->second;
+}
+switch (dataType) {
+case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE:
+	floatBuffer[index] = (float)(vertexData.getDoubleValues()->getData()[i]);
+	break;
+case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_FLOAT:
+	floatBuffer[index] = vertexData.getFloatValues()->getData()[i];
+	break;
+default:
+	free(floatBuffer);
+	return NULL;
+}
 	}
 	GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)floatBuffer, count / GLTF::Accessor::getNumberOfComponents(type), bufferView);
 	free(floatBuffer);
 	return accessor;
 }
 
+float getMeshVertexDataAtIndex(const COLLADAFW::MeshVertexData& data, int index) {
+	COLLADAFW::FloatOrDoubleArray::DataType type = data.getType();
+	if (type == COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE) {
+		return (float)data.getDoubleValues()->getData()[index];
+	}
+	return data.getFloatValues()->getData()[index];
+}
+
+std::string buildAttributeId(const COLLADAFW::MeshVertexData& data, int index, int count) {
+	std::string id;
+	for (int i = 0; i < count; i++) {
+		id += std::to_string(getMeshVertexDataAtIndex(data, index + i)) + ":";
+	}
+	return id;
+}
+
 /**
  * Converts and writes a <COLLADAFW::Mesh> to a <GLTF::Mesh>.
  * The produced meshes are stored in `this->_meshInstances` indexed by their <COLLADAFW::UniqueId>.
- * 
+ *
  * COLLADA has different sets of indices per-primitive for each attribute, and glTF only has a single
  * set of indices for a primitive. The indices for POSITION are used, and any other attributes
  * are re-mapped to align with those indices in the glTF.
@@ -167,10 +185,12 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 
 	const COLLADAFW::MeshPrimitiveArray& meshPrimitives = colladaMesh->getMeshPrimitives();
 	int meshPrimitivesCount = meshPrimitives.getCount();
-	std::map<std::string, std::map<int, int>> indicesMapping;
+	std::map<std::string, std::vector<float>> buildAttributes;
+	std::map<std::string, unsigned short> attributeIndicesMapping;
 	if (meshPrimitivesCount > 0) {
-		// Create primitive indices accessor and mappings
+		// Create primitives
 		for (int i = 0; i < meshPrimitivesCount; i++) {
+			std::vector<unsigned short> buildIndices;
 			COLLADAFW::MeshPrimitive* colladaPrimitive = meshPrimitives[i];
 			GLTF::Primitive* primitive = new GLTF::Primitive();
 			COLLADAFW::MeshPrimitive::PrimitiveType type = colladaPrimitive->getPrimitiveType();
@@ -197,57 +217,115 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				continue;
 			}
 			int count = colladaPrimitive->getPositionIndices().getCount();
-			const unsigned int* indices = colladaPrimitive->getPositionIndices().getData();
-			GLTF::Accessor* indicesAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)indices, count, this->_indicesBufferView);
-			primitive->indices = indicesAccessor;
-
-			std::map<std::string, GLTF::Accessor*>* attributes = new std::map<std::string, GLTF::Accessor*>();
-			attributes->emplace("POSITION", (GLTF::Accessor*)NULL);
+			std::map<std::string, const unsigned int*> semanticIndices;
+			std::map<std::string, const COLLADAFW::MeshVertexData*> semanticData;
+			std::string semantic = "POSITION";
+			buildAttributes[semantic] = std::vector<float>();
+			semanticIndices[semantic] = colladaPrimitive->getPositionIndices().getData();
+			semanticData[semantic] = &colladaMesh->getPositions();
+			primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
 			if (colladaPrimitive->hasNormalIndices()) {
-				mapAttributeIndices(indices, colladaPrimitive->getNormalIndices().getData(), count, "NORMAL", &primitive->attributes, &indicesMapping);
+				semantic = "NORMAL";
+				buildAttributes[semantic] = std::vector<float>();
+				semanticIndices[semantic] = colladaPrimitive->getNormalIndices().getData();
+				semanticData[semantic] = &colladaMesh->getNormals();
+				primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
 			}
 			if (colladaPrimitive->hasBinormalIndices()) {
-				mapAttributeIndices(indices, colladaPrimitive->getBinormalIndices().getData(), count, "BINORMAL", &primitive->attributes, &indicesMapping);
+				semantic = "BINORMAL";
+				buildAttributes[semantic] = std::vector<float>();
+				semanticIndices[semantic] = colladaPrimitive->getBinormalIndices().getData();
+				semanticData[semantic] = &colladaMesh->getBinormals();
+				primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
 			}
 			if (colladaPrimitive->hasTangentIndices()) {
-				mapAttributeIndices(indices, colladaPrimitive->getTangentIndices().getData(), count, "TANGENT", &primitive->attributes, &indicesMapping);
+				semantic = "TANGENT";
+;				buildAttributes[semantic] = std::vector<float>();
+				semanticIndices[semantic] = colladaPrimitive->getTangentIndices().getData();
+				semanticData[semantic] = &colladaMesh->getTangents();
+				primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
 			}
 			if (colladaPrimitive->hasUVCoordIndices()) {
-				mapAttributeIndicesArray(indices, colladaPrimitive->getUVCoordIndicesArray(), count, "TEXCOORD", &primitive->attributes, &indicesMapping);
+				COLLADAFW::IndexListArray& uvCoordIndicesArray = colladaPrimitive->getUVCoordIndicesArray();
+				int uvCoordIndicesArrayCount = uvCoordIndicesArray.getCount();
+				for (int j = 0; j < uvCoordIndicesArrayCount; j++) {
+					semantic = "TEXCOORD";
+					if (uvCoordIndicesArrayCount > 1) {
+						semantic = semantic + "_" + std::to_string(j);
+					}
+					buildAttributes[semantic] = std::vector<float>();
+					semanticIndices[semantic] = uvCoordIndicesArray[j]->getIndices().getData();
+					semanticData[semantic] = &colladaMesh->getUVCoords();
+					primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
+				}
 			}
 			if (colladaPrimitive->hasColorIndices()) {
-				mapAttributeIndicesArray(indices, colladaPrimitive->getColorIndicesArray(), count, "COLOR", &primitive->attributes, &indicesMapping);
+				COLLADAFW::IndexListArray& colorIndicesArray = colladaPrimitive->getColorIndicesArray();
+				int colorIndicesArrayCount = colorIndicesArray.getCount();
+				for (int j = 0; j < colorIndicesArrayCount; j++) {
+					semantic = "COLOR";
+					if (colorIndicesArrayCount > 1) {
+						semantic = semantic + "_" + std::to_string(j);
+					}
+					buildAttributes[semantic] = std::vector<float>();
+					semanticIndices[semantic] = colorIndicesArray[j]->getIndices().getData();
+					semanticData[semantic] = &colladaMesh->getColors();
+					primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
+				}
 			}
+			int index = 0;
+			for (int j = 0; j < count; j++) {
+				std::string attributeId;
+				for (const auto& entry : semanticIndices) {
+					semantic = entry.first;
+					int numberOfComponents = 3;
+					if (semantic.find("TEXCOORD") == 0) {
+						numberOfComponents = 2;
+					}
+					attributeId += buildAttributeId(*semanticData[semantic], semanticIndices[semantic][j], numberOfComponents);
+				}
+				std::map<std::string, unsigned short>::iterator search = attributeIndicesMapping.find(attributeId);
+				if (search != attributeIndicesMapping.end()) {
+					buildIndices.push_back(search->second);
+				}
+				else {
+					for (const auto& entry : buildAttributes) {
+						semantic = entry.first;
+						int numberOfComponents = 3;
+						if (semantic.find("TEXCOORD") == 0) {
+							numberOfComponents = 2;
+						}
+						for (int k = 0; k < numberOfComponents; k++) {
+							buildAttributes[semantic].push_back(getMeshVertexDataAtIndex(*semanticData[semantic], semanticIndices[semantic][j + k]));
+						}
+					}
+					attributeIndicesMapping[attributeId] = index;
+					buildIndices.push_back(index);
+					index++;
+				}
+			}
+			// Create indices accessor
+			primitive->indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0], buildIndices.size(), this->_indicesBufferView);
 			mesh->primitives.push_back(primitive);
 		}
-		// Create mesh attribute accessors and use the indices mapping to move attributes as necessary to unify the indices
-		std::map<std::string, GLTF::Accessor*> meshAttributes;
-		for (GLTF::Primitive* primitive : mesh->primitives) {
-			for (auto const& attribute : primitive->attributes) {
-				std::string semantic = attribute.first;
-				if (meshAttributes.find(semantic) == meshAttributes.end()) {
-					if (semantic == "POSITION") {
-						meshAttributes[semantic] = bufferAndMapVertexData(this->_attributesBufferView, GLTF::Accessor::Type::VEC3, colladaMesh->getPositions(), indicesMapping[semantic]);
-					}
-					else if (semantic == "NORMAL") {
-						meshAttributes[semantic] = bufferAndMapVertexData(this->_attributesBufferView, GLTF::Accessor::Type::VEC3, colladaMesh->getNormals(), indicesMapping[semantic]);
-					}
-					else if (semantic == "TANGENT") {
-						meshAttributes[semantic] = bufferAndMapVertexData(this->_attributesBufferView, GLTF::Accessor::Type::VEC3, colladaMesh->getTangents(), indicesMapping[semantic]);
-					}
-					else if (semantic.find("TEXCOORD") == 0) {
-						meshAttributes[semantic] = bufferAndMapVertexData(this->_attributesBufferView, GLTF::Accessor::Type::VEC2, colladaMesh->getUVCoords(), indicesMapping[semantic]);
-					}
-					else if (semantic.find("COLOR") == 0) {
-						meshAttributes[semantic] = bufferAndMapVertexData(this->_attributesBufferView, GLTF::Accessor::Type::VEC3, colladaMesh->getColors(), indicesMapping[semantic]);
-					}
+		// Create attribute accessors
+		for (const auto& entry : buildAttributes) {
+			std::string semantic = entry.first;
+			std::vector<float> attributeData = entry.second;
+			GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC3;
+			if (semantic.find("TEXCOORD") == 0) {
+				type = GLTF::Accessor::Type::VEC2;
+			}
+			GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)&attributeData[0], attributeData.size() / GLTF::Accessor::getNumberOfComponents(type), this->_attributesBufferView);
+			for (GLTF::Primitive* primitive : mesh->primitives) {
+				std::map<std::string, GLTF::Accessor*>::iterator search = primitive->attributes.find(semantic);
+				if (search != primitive->attributes.end()) {
+					// Only apply if this primitive uses this particular semantic
+					primitive->attributes[semantic] = accessor;
 				}
-				if (meshAttributes[semantic] == NULL) {
-					return false;
-				}
-				primitive->attributes.emplace(semantic, meshAttributes[semantic]);
 			}
 		}
+		
 	}
 	this->_meshInstances[colladaMesh->getUniqueId()] = mesh;
 	return true;
@@ -255,12 +333,12 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 
 bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
 	switch (geometry->getType()) {
-	case COLLADAFW::Geometry::GEO_TYPE_MESH: 
+	case COLLADAFW::Geometry::GEO_TYPE_MESH:
 		if (!this->writeMesh((COLLADAFW::Mesh*)geometry)) {
 			return false;
 		}
 		break;
-	default: 
+	default:
 		return false;
 	}
 	return true;

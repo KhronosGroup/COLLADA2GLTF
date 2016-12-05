@@ -6,11 +6,13 @@
 #include "COLLADABU.h"
 #include "COLLADAFW.h"
 #include "GLTFAsset.h"
+#include "COLLADA2GLTFOptions.h"
 
 namespace COLLADA2GLTF {
 	class Writer : public COLLADAFW::IWriter {
 	private:
 		GLTF::Asset* _asset;
+		COLLADA2GLTF::Options* _options;
 		GLTF::BufferView* _indicesBufferView = NULL;
 		GLTF::BufferView* _attributesBufferView = NULL;
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _meshInstances;
@@ -19,9 +21,8 @@ namespace COLLADA2GLTF {
 		bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
 		bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);
 
-		bool writeMesh(const COLLADAFW::Mesh* mesh);
 	public:
-		Writer(GLTF::Asset* asset);
+		Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options);
 
 		/** Deletes the entire scene.
 			 @param errorMessage A message containing informations about the error that occurred.
@@ -49,6 +50,8 @@ namespace COLLADA2GLTF {
 		/** Handles all nodes in the library nodes.
 		 @return True on succeeded, false otherwise.*/
 		virtual bool writeLibraryNodes(const COLLADAFW::LibraryNodes* libraryNodes);
+
+		bool writeMesh(const COLLADAFW::Mesh* mesh);
 
 		/** Writes the geometry.
 		 @return True on succeeded, false otherwise.*/

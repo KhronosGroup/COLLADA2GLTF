@@ -13,10 +13,14 @@ endif()
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
 
-# COLLADABaseUtils/Framework
+# RapidJSON
+include_directories(GLTF/dependencies/rapidjson/include)
+
+# COLLADASaxFrameworkLoader/BaseUtils/Framework
+include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADASaxFrameworkLoader/include)
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
-add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADAFramework)
+add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
 
 # GLTF
 include_directories(GLTF/include)
@@ -27,7 +31,7 @@ include_directories(include)
 file(GLOB LIB_HEADERS "include/*.h")
 set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp)
 add_library(${PROJECT_NAME}_lib ${LIB_HEADERS} ${LIB_SOURCES})
-target_link_libraries(${PROJECT_NAME}_lib GLTF COLLADAFramework)
+target_link_libraries(${PROJECT_NAME}_lib GLTF COLLADASaxFrameworkLoader)
 
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
