@@ -11,8 +11,8 @@
 int main(int argc, char **argv) {
 	GLTF::Asset* asset = new GLTF::Asset();
 	COLLADA2GLTF::Options* options = new COLLADA2GLTF::Options();
-	options->inputPath = "../input/Box.dae";
-	options->outputPath = "../output/Box.gltf";
+	options->inputPath = "../input/BoxTextured.dae";
+	options->outputPath = "../output/BoxTextured.gltf";
 
 	COLLADA2GLTF::Writer* writer = new COLLADA2GLTF::Writer(asset, options);
 

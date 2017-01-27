@@ -200,8 +200,9 @@ void GLTF::Asset::writeJSON(void* writer) {
 	}
 	buffers.clear();
 
-	// Write materials and build technique hash
+	// Write materials and build technique and texture hash
 	std::map<std::string, GLTF::Technique*> techniques;
+	std::map<std::string, GLTF::Texture*> textures;
 	if (materials.size() > 0) {
 		jsonWriter->Key("materials");
 		jsonWriter->StartObject();
@@ -219,6 +220,10 @@ void GLTF::Asset::writeJSON(void* writer) {
 				this->extensionsUsed.insert("KHR_materials_common");
 				usesMaterialsCommon = true;
 			}
+			GLTF::Texture* diffuseTexture = material->values->diffuseTexture;
+			if (diffuseTexture) {
+				textures[diffuseTexture->id] = diffuseTexture;
+			}
 			jsonWriter->Key(materialId.c_str());
 			jsonWriter->StartObject();
 			material->writeJSON(writer);
@@ -227,6 +232,61 @@ void GLTF::Asset::writeJSON(void* writer) {
 		jsonWriter->EndObject();
 	}
 	materials.clear();
+
+	// Write textures and build sampler and image hash
+	std::map<std::string, GLTF::Sampler*> samplers;
+	std::map<std::string, GLTF::Image*> images;
+	if (textures.size() > 0) {
+		jsonWriter->Key("textures");
+		jsonWriter->StartObject();
+		for (auto const& textureMapEntry : textures) {
+			std::string textureId = textureMapEntry.first;
+			GLTF::Texture* texture = textureMapEntry.second;
+			GLTF::Sampler* sampler = texture->sampler;
+			if (sampler) {
+				samplers[sampler->id] = sampler;
+			}
+			GLTF::Image* source = texture->source;
+			if (source) {
+				images[source->id] = source;
+			}
+			jsonWriter->Key(textureId.c_str());
+			jsonWriter->StartObject();
+			texture->writeJSON(writer);
+			jsonWriter->EndObject();
+		}
+	}
+	textures.clear();
+
+	// Write images
+	if (images.size() > 0) {
+		jsonWriter->Key("images");
+		jsonWriter->StartObject();
+		for (auto const& imageMapEntry : images) {
+			std::string imageId = imageMapEntry.first;
+			GLTF::Image* image = imageMapEntry.second;
+			jsonWriter->Key(imageId.c_str());
+			jsonWriter->StartObject();
+			image->writeJSON(writer);
+			jsonWriter->EndObject();
+		}
+	}
+	images.clear();
+
+	// Write samplers
+	if (samplers.size() > 0) {
+		jsonWriter->Key("samplers");
+		jsonWriter->StartObject();
+		for (auto const& samplerMapEntry : samplers) {
+			std::string samplerId = samplerMapEntry.first;
+			GLTF::Sampler* sampler = samplerMapEntry.second;
+			jsonWriter->Key(samplerId.c_str());
+			jsonWriter->StartObject();
+			sampler->writeJSON(writer);
+			jsonWriter->EndObject();
+		}
+	}
+	samplers.clear();
 
 	// Write techniques and build program hash
 	std::map<std::string, GLTF::Program*> programs;
