@@ -15,8 +15,9 @@ namespace COLLADA2GLTF {
 		COLLADA2GLTF::Options* _options;
 		GLTF::BufferView* _indicesBufferView = NULL;
 		GLTF::BufferView* _attributesBufferView = NULL;
+		std::map<COLLADAFW::UniqueId, COLLADAFW::UniqueId> _materialEffects;
+		std::map<COLLADAFW::UniqueId, GLTF::Material*> _effectInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _meshInstances;
-		std::map<COLLADAFW::UniqueId, GLTF::Material*> _materialInstances;
 
 		bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
 		bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);

@@ -31,6 +31,7 @@ namespace GLTF {
 		Type type = Type::UNKNOWN;
 		Values* values = NULL;
 
+		Material();
 		virtual void writeJSON(void* writer);
 	};
 
@@ -41,15 +42,17 @@ namespace GLTF {
 			BLINN,
 			PHONG,
 			LAMBERT,
-			CONSTANT
+			CONSTANT,
+			UNKNOWN
 		};
 
 		bool doubleSided = false;
 		int jointCount = 0;
 		bool transparent = false;
 
-		Technique technique;
+		MaterialCommon::Technique technique = MaterialCommon::Technique::UNKNOWN;
 
+		MaterialCommon();
 		const char* getTechniqueName();
 		virtual void writeJSON(void* writer);
 	};

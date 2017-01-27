@@ -3,6 +3,11 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+GLTF::Material::Material() {
+	this->values = new GLTF::Material::Values();
+	this->type = GLTF::Material::MATERIAL;
+}
+
 void GLTF::Material::Values::writeJSON(void* writer) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	jsonWriter->Key("ambient");
@@ -57,6 +62,11 @@ void GLTF::Material::writeJSON(void* writer) {
 		jsonWriter->String(this->technique->id.c_str());
 	}
 	GLTF::Object::writeJSON(writer);
+}
+
+GLTF::MaterialCommon::MaterialCommon() {
+	this->values = new GLTF::Material::Values();
+	this->type = GLTF::Material::MATERIAL_COMMON;
 }
 
 void GLTF::MaterialCommon::writeJSON(void* writer) {

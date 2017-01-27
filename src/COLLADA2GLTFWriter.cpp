@@ -43,7 +43,10 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					for (int j = 0; j < materialBindingsCount; j++) {
 						COLLADAFW::MaterialBinding materialBinding = materialBindings[j];
 						GLTF::Primitive* primitive = mesh->primitives[j];
-						GLTF::Material* material = _materialInstances[materialBinding.getReferencedMaterial()];
+						COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
+						COLLADAFW::UniqueId effectId = this->_materialEffects[materialId];
+						GLTF::Material* material = _effectInstances[effectId];
+						material->id = materialBinding.getName();
 						if (primitive->material != NULL && primitive->material != material) {
 							// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
 							mesh = (GLTF::Mesh*)mesh->clone();
@@ -193,6 +196,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			std::vector<unsigned short> buildIndices;
 			COLLADAFW::MeshPrimitive* colladaPrimitive = meshPrimitives[i];
 			GLTF::Primitive* primitive = new GLTF::Primitive();
+
 			COLLADAFW::MeshPrimitive::PrimitiveType type = colladaPrimitive->getPrimitiveType();
 			switch (colladaPrimitive->getPrimitiveType()) {
 			case COLLADAFW::MeshPrimitive::LINES:
@@ -249,10 +253,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				COLLADAFW::IndexListArray& uvCoordIndicesArray = colladaPrimitive->getUVCoordIndicesArray();
 				int uvCoordIndicesArrayCount = uvCoordIndicesArray.getCount();
 				for (int j = 0; j < uvCoordIndicesArrayCount; j++) {
-					semantic = "TEXCOORD";
-					if (uvCoordIndicesArrayCount > 1) {
-						semantic = semantic + "_" + std::to_string(j);
-					}
+					semantic = "TEXCOORD_" + std::to_string(j);
 					buildAttributes[semantic] = std::vector<float>();
 					semanticIndices[semantic] = uvCoordIndicesArray[j]->getIndices().getData();
 					semanticData[semantic] = &colladaMesh->getUVCoords();
@@ -263,10 +264,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				COLLADAFW::IndexListArray& colorIndicesArray = colladaPrimitive->getColorIndicesArray();
 				int colorIndicesArrayCount = colorIndicesArray.getCount();
 				for (int j = 0; j < colorIndicesArrayCount; j++) {
-					semantic = "COLOR";
-					if (colorIndicesArrayCount > 1) {
-						semantic = semantic + "_" + std::to_string(j);
-					}
+					semantic = "COLOR_" + std::to_string(j);
 					buildAttributes[semantic] = std::vector<float>();
 					semanticIndices[semantic] = colorIndicesArray[j]->getIndices().getData();
 					semanticData[semantic] = &colladaMesh->getColors();
@@ -296,7 +294,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 							numberOfComponents = 2;
 						}
 						for (int k = 0; k < numberOfComponents; k++) {
-							buildAttributes[semantic].push_back(getMeshVertexDataAtIndex(*semanticData[semantic], semanticIndices[semantic][j + k]));
+							buildAttributes[semantic].push_back(getMeshVertexDataAtIndex(*semanticData[semantic], semanticIndices[semantic][j] * numberOfComponents + k));
 						}
 					}
 					attributeIndicesMapping[attributeId] = index;
@@ -345,11 +343,70 @@ bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
 }
 
 bool COLLADA2GLTF::Writer::writeMaterial(const COLLADAFW::Material* material) {
-
+	this->_materialEffects[material->getUniqueId()] = material->getInstantiatedEffect();
 	return true;
 }
 
+void packColladaColor(COLLADAFW::Color color, float* packArray) {
+	packArray[0] = color.getRed();
+	packArray[1] = color.getGreen();
+	packArray[2] = color.getBlue();
+	packArray[3] = color.getAlpha();
+}
+
 bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
+	const COLLADAFW::CommonEffectPointerArray& commonEffects = effect->getCommonEffects();
+	if (commonEffects.getCount() > 0) {
+		GLTF::MaterialCommon* material = new GLTF::MaterialCommon();
+
+		// One effect makes one template material, it really isn't possible to process more than one of these
+		const COLLADAFW::EffectCommon* effectCommon = commonEffects[0];
+		switch (effectCommon->getShaderType()) {
+		case COLLADAFW::EffectCommon::SHADER_BLINN: 
+			material->technique = GLTF::MaterialCommon::BLINN;
+			break;
+		case COLLADAFW::EffectCommon::SHADER_CONSTANT: 
+			material->technique = GLTF::MaterialCommon::CONSTANT;
+			break;
+		case COLLADAFW::EffectCommon::SHADER_PHONG: 
+			material->technique = GLTF::MaterialCommon::PHONG;
+			break;
+		case COLLADAFW::EffectCommon::SHADER_LAMBERT: 
+			material->technique = GLTF::MaterialCommon::LAMBERT;
+			break;
+		}
+
+		COLLADAFW::ColorOrTexture ambient = effectCommon->getAmbient();
+		if (ambient.isColor()) {
+			packColladaColor(ambient.getColor(), material->values->ambient);
+		}
+
+		COLLADAFW::ColorOrTexture diffuse = effectCommon->getDiffuse();
+		if (diffuse.isTexture()) {
+			// material->values->diffuseTexture = diffuse.getTexture();
+		}
+		else if (diffuse.isColor()) {
+			packColladaColor(diffuse.getColor(), material->values->diffuse);
+		}
+
+		COLLADAFW::ColorOrTexture emission = effectCommon->getEmission();
+		if (emission.isColor()) {
+			packColladaColor(emission.getColor(), material->values->emission);
+		}
+
+		COLLADAFW::ColorOrTexture specular = effectCommon->getSpecular();
+		if (specular.isColor()) {
+			packColladaColor(specular.getColor(), material->values->specular);
+		}
+
+		COLLADAFW::FloatOrParam shininess = effectCommon->getShininess();
+		if (shininess.getType() == COLLADAFW::FloatOrParam::FLOAT) {
+			material->values->shininess[0] = shininess.getFloatValue();
+		}
+
+		this->_effectInstances[effect->getUniqueId()] = material;
+	}
+
 	return true;
 }
 
