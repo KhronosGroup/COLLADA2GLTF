@@ -348,10 +348,10 @@ bool COLLADA2GLTF::Writer::writeMaterial(const COLLADAFW::Material* material) {
 }
 
 void packColladaColor(COLLADAFW::Color color, float* packArray) {
-	packArray[0] = color.getRed();
-	packArray[1] = color.getGreen();
-	packArray[2] = color.getBlue();
-	packArray[3] = color.getAlpha();
+	packArray[0] = (float)color.getRed();
+	packArray[1] = (float)color.getGreen();
+	packArray[2] = (float)color.getBlue();
+	packArray[3] = (float)color.getAlpha();
 }
 
 bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {

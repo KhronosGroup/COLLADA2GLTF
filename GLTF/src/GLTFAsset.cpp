@@ -205,6 +205,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 	if (materials.size() > 0) {
 		jsonWriter->Key("materials");
 		jsonWriter->StartObject();
+		bool usesMaterialsCommon = false;
 		for (auto const& materialMapEntry : materials) {
 			std::string materialId = materialMapEntry.first;
 			GLTF::Material* material = materialMapEntry.second;
@@ -213,6 +214,10 @@ void GLTF::Asset::writeJSON(void* writer) {
 				if (technique) {
 					techniques[technique->id] = technique;
 				}
+			}
+			else if (material->type == GLTF::Material::Type::MATERIAL_COMMON && !usesMaterialsCommon) {
+				this->extensionsUsed.insert("KHR_materials_common");
+				usesMaterialsCommon = true;
 			}
 			jsonWriter->Key(materialId.c_str());
 			jsonWriter->StartObject();
@@ -243,6 +248,16 @@ void GLTF::Asset::writeJSON(void* writer) {
 		jsonWriter->EndObject();
 	}
 	techniques.clear();
+
+	// Write extensionsUsed
+	if (this->extensionsUsed.size() > 0) {
+		jsonWriter->Key("extensionsUsed");
+		jsonWriter->StartArray();
+		for (const std::string extensionUsed : this->extensionsUsed) {
+			jsonWriter->String(extensionUsed.c_str());
+		}
+		jsonWriter->EndArray();
+	}
 
 	GLTF::Object::writeJSON(writer);
 }
