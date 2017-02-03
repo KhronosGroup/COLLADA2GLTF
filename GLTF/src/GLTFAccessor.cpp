@@ -179,6 +179,25 @@ const char* GLTF::Accessor::getTypeName() {
 	return "";
 }
 
+bool GLTF::Accessor::equals(GLTF::Accessor* accessor) {
+	if (type != accessor->type || componentType != accessor->componentType || count != accessor->count) {
+		return false;
+	}
+	int numberOfComponents = getNumberOfComponents();
+	double* componentOne = new double[numberOfComponents];
+	double* componentTwo = new double[numberOfComponents];
+	for (int i = 0; i < count; i++) {
+		this->getComponentAtIndex(i, componentOne);
+		accessor->getComponentAtIndex(i, componentTwo);
+		for (int j = 0; j < numberOfComponents; j++) {
+			if (componentOne[j] != componentTwo[j]) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 void GLTF::Accessor::writeJSON(void* writer) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (this->bufferView) {

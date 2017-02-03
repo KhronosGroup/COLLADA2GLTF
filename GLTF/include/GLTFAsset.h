@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "GLTFAnimation.h"
 #include "GLTFObject.h"
 #include "GLTFScene.h"
 
@@ -31,6 +32,7 @@ namespace GLTF {
 		std::set<std::string> extensionsUsed;
 
 		std::vector<GLTF::Scene*> scenes;
+		std::vector<GLTF::Animation*> animations;
 		int scene = -1;
 
 		GLTF::Scene* getDefaultScene();

@@ -32,6 +32,7 @@ namespace GLTF {
 		Values* values = NULL;
 
 		Material();
+		bool hasTexture();
 		virtual void writeJSON(void* writer);
 	};
 

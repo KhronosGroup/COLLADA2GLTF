@@ -7,27 +7,44 @@
 #include "GLTFAccessor.h"
 #include "GLTFNode.h"
 #include "GLTFObject.h"
-#include "GLTFSampler.h"
 
 namespace GLTF {
-  class Animation : GLTF::Object {
+  class Animation : public GLTF::Object {
   public:
-    class Channel : GLTF::Object {
+	static int INSTANCE_COUNT;
+	class Sampler : public GLTF::Object {
+	public:
+		GLTF::Accessor* input;
+		std::string interpolation = "LINEAR";
+		GLTF::Accessor* output;
+
+		virtual void writeJSON(void* writer);
+	};
+
+    class Channel : public GLTF::Object {
     public:
-      class Target : GLTF::Object {
-      public:
-        GLTF::Node* target;
-        enum Path {
-          TRANSLATION,
-          ROTATION,
-          SCALE
-        };
-        Path path;
-      };
+		class Target : public GLTF::Object {
+		public:
+			enum class Path {
+				TRANSLATION,
+				ROTATION,
+				SCALE,
+			};
+			GLTF::Node* node;
+			Path path;
+
+			virtual void writeJSON(void* writer);
+		};
+
+		GLTF::Animation::Sampler* sampler;
+		Target* target;
+
+		virtual void writeJSON(void* writer);
     };
 
     std::vector<Channel*> channels;
-    std::map<std::string, GLTF::Accessor*> parameters;
-    std::vector<GLTF::Sampler*> samplers;
+
+	Animation();
+	virtual void writeJSON(void* writer);
   };
 }

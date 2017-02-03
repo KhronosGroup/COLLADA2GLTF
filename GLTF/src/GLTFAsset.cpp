@@ -58,6 +58,7 @@ GLTF::Scene* GLTF::Asset::getDefaultScene() {
 
 void GLTF::Asset::writeJSON(void* writer) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+
 	// Write asset metadata
 	if (this->metadata) {
 		jsonWriter->Key("asset");
@@ -79,8 +80,17 @@ void GLTF::Asset::writeJSON(void* writer) {
 		jsonWriter->Key("scenes");
 		jsonWriter->StartObject();
 		for (GLTF::Scene* scene : this->scenes) {
+			std::vector<GLTF::Node*> nodeStack;
 			for (GLTF::Node* node : scene->nodes) {
+				nodeStack.push_back(node);
+			}
+			while (nodeStack.size() > 0) {
+				GLTF::Node* node = nodeStack.back();
+				nodeStack.pop_back();
 				nodes[node->id] = node;
+				for (GLTF::Node* child : node->children) {
+					nodeStack.push_back(child);
+				}
 			}
 			jsonWriter->Key(scene->id.c_str());
 			jsonWriter->StartObject();
@@ -141,6 +151,24 @@ void GLTF::Asset::writeJSON(void* writer) {
 		jsonWriter->EndObject();
 	}
 	meshes.clear();
+
+	// Write animations and add accessors to the accessor hash
+	if (animations.size() > 0) {
+		jsonWriter->Key("animations");
+		jsonWriter->StartObject();
+		for (GLTF::Animation* animation : animations) {
+			for (GLTF::Animation::Channel* channel : animation->channels) {
+				GLTF::Animation::Sampler* sampler = channel->sampler;
+				accessors[sampler->input->id] = sampler->input;
+				accessors[sampler->output->id] = sampler->output;
+			}
+			jsonWriter->Key(animation->id.c_str());
+			jsonWriter->StartObject();
+			animation->writeJSON(writer);
+			jsonWriter->EndObject();
+		}
+		jsonWriter->EndObject();
+	}
 
 	// Write accessors and build bufferView hash
 	std::map<std::string, GLTF::BufferView*> bufferViews;
@@ -255,6 +283,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 			texture->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
+		jsonWriter->EndObject();
 	}
 	textures.clear();
 
@@ -270,6 +299,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 			image->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
+		jsonWriter->EndObject();
 	}
 	images.clear();
 
@@ -285,6 +315,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 			sampler->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
+		jsonWriter->EndObject();
 	}
 	samplers.clear();
 

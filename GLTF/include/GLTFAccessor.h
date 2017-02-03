@@ -56,6 +56,7 @@ namespace GLTF {
 		bool getComponentAtIndex(int index, double* component);
 		int getComponentByteLength();
 		int getNumberOfComponents();
+		bool equals(GLTF::Accessor* accessor);
 		const char* getTypeName();
 	};
 };

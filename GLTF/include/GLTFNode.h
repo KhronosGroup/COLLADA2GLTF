@@ -14,21 +14,32 @@ namespace GLTF {
 	class Node : public GLTF::Object {
 	public:
 		class Transform {
-			virtual void concat(Transform* transform);
+		public:
+			enum Type {
+				TRS,
+				MATRIX
+			};
+
+			Type type;
 		};
 
 		class TransformTRS;
-		class TransformMatrix : Transform {
-			int matrix[4][4];
+		class TransformMatrix : public Transform {
+		public:
+			float matrix[16];
 
+			TransformMatrix();
+			void getTransformTRS(TransformTRS* out);
 			TransformTRS* getTransformTRS();
 		};
 
-		class TransformTRS : Transform {
-			int translation[3];
-			int rotation[3];
-			int scale[3];
+		class TransformTRS : public Transform {
+		public:
+			float translation[3];
+			float rotation[3];
+			float scale[3];
 
+			TransformTRS();
 			TransformMatrix* getTransformMatrix();
 		};
 
@@ -41,7 +52,7 @@ namespace GLTF {
 		std::string jointName;
 		std::vector<GLTF::Mesh*> meshes;
 
-		Transform* transform;
+		Transform* transform = NULL;
 
 		Node();
 		Node(std::string id);

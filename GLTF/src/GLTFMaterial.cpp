@@ -8,6 +8,10 @@ GLTF::Material::Material() {
 	this->type = GLTF::Material::MATERIAL;
 }
 
+bool GLTF::Material::hasTexture() {
+	return this->values->diffuseTexture != NULL;
+}
+
 void GLTF::Material::Values::writeJSON(void* writer) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	jsonWriter->Key("ambient");

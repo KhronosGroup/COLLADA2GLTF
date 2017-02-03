@@ -5,15 +5,15 @@
 
 int GLTF::BufferView::INSTANCE_COUNT = 0;
 
-GLTF::BufferView::BufferView(unsigned char* data,
-	int dataLength,
-	GLTF::Constants::WebGL target
-) {
+GLTF::BufferView::BufferView(unsigned char* data, int dataLength) {
 	this->id = "bufferView_" + std::to_string(GLTF::BufferView::INSTANCE_COUNT);
 	GLTF::BufferView::INSTANCE_COUNT++;
 	this->byteOffset = 0;
 	this->byteLength = dataLength;
 	this->buffer = new Buffer(data, dataLength);
+}
+
+GLTF::BufferView::BufferView(unsigned char* data, int dataLength, GLTF::Constants::WebGL target) : GLTF::BufferView::BufferView(data, dataLength) {
 	this->target = target;
 }
 
@@ -27,6 +27,8 @@ void GLTF::BufferView::writeJSON(void* writer) {
 	jsonWriter->Int(this->byteOffset);
 	jsonWriter->Key("byteLength");
 	jsonWriter->Int(this->byteLength);
-	jsonWriter->Key("target");
-	jsonWriter->Int((int)this->target);
+	if ((int)target > 0) {
+		jsonWriter->Key("target");
+		jsonWriter->Int((int)this->target);
+	}
 }

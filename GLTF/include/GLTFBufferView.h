@@ -11,8 +11,9 @@ namespace GLTF {
 		GLTF::Buffer* buffer = NULL;
 		int byteOffset = 0;
 		int byteLength = 0;
-		GLTF::Constants::WebGL target;
+		GLTF::Constants::WebGL target = (GLTF::Constants::WebGL)-1;
 
+		BufferView(unsigned char* data, int dataLength);
 		BufferView(unsigned char* data,
 			int dataLength,
 			GLTF::Constants::WebGL target
