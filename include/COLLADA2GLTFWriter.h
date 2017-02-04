@@ -16,12 +16,20 @@ namespace COLLADA2GLTF {
 		GLTF::BufferView* _indicesBufferView = NULL;
 		GLTF::BufferView* _attributesBufferView = NULL;
 		GLTF::BufferView* _animationsBufferView = NULL;
+		GLTF::BufferView* _skinAttributesBufferView = NULL;
 		std::map<COLLADAFW::UniqueId, COLLADAFW::UniqueId> _materialEffects;
 		std::map<COLLADAFW::UniqueId, GLTF::Material*> _effectInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _meshInstances;
+		std::map<COLLADAFW::UniqueId, std::map<GLTF::Primitive*, std::vector<int>>> _meshPositionMapping;
+		std::map<COLLADAFW::UniqueId, GLTF::Skin*> _skinInstances;
+		std::map<COLLADAFW::UniqueId, GLTF::Node*> _animatedNodes;
+		std::map<std::string, std::vector<GLTF::Node*>*> _unboundSkeletonNodes;
+		std::map<std::string, GLTF::Node*> _nodes;
+		std::map<COLLADAFW::UniqueId, std::set<COLLADAFW::UniqueId>> _skinJointNodes;
+		std::map<COLLADAFW::UniqueId, std::tuple<GLTF::Accessor::Type, std::vector<int*>, std::vector<float*>>> _skinData;
+		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _skinnedMeshes;
 		std::map<COLLADAFW::UniqueId, GLTF::Image*> _images;
 		std::map<COLLADAFW::UniqueId, GLTF::Animation::Sampler*> _animationSamplers;
-		std::map<COLLADAFW::UniqueId, GLTF::Node*> _animatedNodes;
 
 		bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
 		bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);

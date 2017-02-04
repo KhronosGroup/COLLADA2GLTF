@@ -41,12 +41,19 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	this->bufferView = bufferView;
 	this->byteOffset = bufferView->byteLength;
 	this->count = count;
-	int byteLength = count * this->getNumberOfComponents() * this->getComponentByteLength();
+	int componentByteLength = this->getComponentByteLength();
+	int byteLength = count * this->getNumberOfComponents() * componentByteLength;
 
-	buffer->data = (unsigned char*)realloc(buffer->data, buffer->byteLength + byteLength);
-	std::memcpy(buffer->data + buffer->byteLength, data, byteLength);
-	buffer->byteLength += byteLength;
-	bufferView->byteLength += byteLength;
+	int padding = byteOffset % componentByteLength;
+	if (padding != 0) {
+		padding = componentByteLength - padding;
+	}
+	this->byteOffset += padding;
+
+	buffer->data = (unsigned char*)realloc(buffer->data, buffer->byteLength + padding + byteLength);
+	std::memcpy(buffer->data + buffer->byteLength + padding, data, byteLength);
+	buffer->byteLength += byteLength + padding;
+	bufferView->byteLength += byteLength + padding;
 	this->computeMinMax();
 }
 
@@ -109,6 +116,39 @@ bool GLTF::Accessor::getComponentAtIndex(int index, double* component) {
 			break;
 		case GLTF::Constants::WebGL::UNSIGNED_INT:
 			component[i] = (double)((unsigned int*)buf)[i];
+			break;
+		default:
+			return false;
+		}
+	}
+	return true;
+}
+
+bool GLTF::Accessor::writeComponentAtIndex(int index, double* component) {
+	int byteOffset = this->byteOffset + this->bufferView->byteOffset;
+	int numberOfComponents = this->getNumberOfComponents();
+	byteOffset += this->getByteStride() * index;
+	unsigned char* buf = this->bufferView->buffer->data + byteOffset;
+
+	for (int i = 0; i < numberOfComponents; i++) {
+		switch (this->componentType) {
+		case GLTF::Constants::WebGL::BYTE:
+			buf[i] = (char)component[i];
+			break;
+		case GLTF::Constants::WebGL::UNSIGNED_BYTE:
+			buf[i] = (unsigned char)component[i];
+			break;
+		case GLTF::Constants::WebGL::SHORT:
+			((short*)buf)[i] = (short)component[i];
+			break;
+		case GLTF::Constants::WebGL::UNSIGNED_SHORT: 
+			((unsigned short*)buf)[i] = (unsigned short)component[i];
+			break;
+		case GLTF::Constants::WebGL::FLOAT: 
+			((float*)buf)[i] = (float)component[i];
+			break;
+		case GLTF::Constants::WebGL::UNSIGNED_INT:
+			((unsigned int*)buf)[i] = (unsigned int)component[i];
 			break;
 		default:
 			return false;

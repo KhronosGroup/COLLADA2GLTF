@@ -148,12 +148,14 @@ void GLTF::Node::writeJSON(void* writer) {
 		jsonWriter->String(mesh->id.c_str());
 	}
 	jsonWriter->EndArray();
-	jsonWriter->Key("children");
-	jsonWriter->StartArray();
-	for (GLTF::Node* child : children) {
-		jsonWriter->String(child->id.c_str());
+	if (children.size() > 0) {
+		jsonWriter->Key("children");
+		jsonWriter->StartArray();
+		for (GLTF::Node* child : children) {
+			jsonWriter->String(child->id.c_str());
+		}
+		jsonWriter->EndArray();
 	}
-	jsonWriter->EndArray();
 	if (transform != NULL) {
 		if (transform->type == GLTF::Node::Transform::MATRIX) {
 			GLTF::Node::TransformMatrix* transformMatrix = (GLTF::Node::TransformMatrix*)transform;
@@ -186,5 +188,21 @@ void GLTF::Node::writeJSON(void* writer) {
 			}
 			jsonWriter->EndArray();
 		}
+	}
+	if (skeletons.size() > 0) {
+		jsonWriter->Key("skeletons");
+		jsonWriter->StartArray();
+		for (GLTF::Node* skeleton : skeletons) {
+			jsonWriter->String(skeleton->id.c_str());
+		}
+		jsonWriter->EndArray();
+	}
+	if (jointName != "") {
+		jsonWriter->Key("jointName");
+		jsonWriter->String(jointName.c_str());
+	}
+	if (skin != NULL) {
+		jsonWriter->Key("skin");
+		jsonWriter->String(skin->id.c_str());
 	}
 }

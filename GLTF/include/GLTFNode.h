@@ -7,7 +7,6 @@
 #include "GLTFCamera.h"
 #include "GLTFMesh.h"
 #include "GLTFObject.h"
-#include "GLTFSkeleton.h"
 #include "GLTFSkin.h"
 
 namespace GLTF {
@@ -47,8 +46,8 @@ namespace GLTF {
 
 		GLTF::Camera* camera;
 		std::vector<GLTF::Node*> children;
-		std::vector<GLTF::Skeleton*> skeletons;
-		GLTF::Skin* skin;
+		std::vector<GLTF::Node*> skeletons;
+		GLTF::Skin* skin = NULL;
 		std::string jointName;
 		std::vector<GLTF::Mesh*> meshes;
 

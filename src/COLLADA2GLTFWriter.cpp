@@ -5,6 +5,7 @@ COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options)
 	_indicesBufferView = new GLTF::BufferView(NULL, 0, GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
 	_attributesBufferView = new GLTF::BufferView(NULL, 0, GLTF::Constants::WebGL::ARRAY_BUFFER);
 	_animationsBufferView = new GLTF::BufferView(NULL, 0);
+	_skinAttributesBufferView = new GLTF::BufferView(NULL, 0, GLTF::Constants::WebGL::ARRAY_BUFFER);
 }
 
 void COLLADA2GLTF::Writer::cancel(const std::string& errorMessage) {
@@ -87,12 +88,16 @@ COLLADABU::Math::Matrix4 getFlattenedTransform(std::vector<const COLLADAFW::Tran
 	return matrix;
 }
 
-void packColladaMatrix(COLLADABU::Math::Matrix4 matrix, GLTF::Node::TransformMatrix* transform) {
+void packColladaMatrix(COLLADABU::Math::Matrix4 matrix, float* dataArray, size_t offset) {
 	for (int j = 0; j < 4; j++) {
 		for (int k = 0; k < 4; k++) {
-			transform->matrix[k * 4 + j] = (float)matrix.getElement(j, k);
+			dataArray[k * 4 + j + offset] = (float)matrix.getElement(j, k);
 		}
 	}
+}
+
+void packColladaMatrix(COLLADABU::Math::Matrix4 matrix, GLTF::Node::TransformMatrix* transform) {
+	packColladaMatrix(matrix, transform->matrix, 0);
 }
 
 bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* colladaNode) {
@@ -102,6 +107,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	GLTF::Node::TransformMatrix* transform;
 	// Add root node to group
 	group->push_back(node);
+	const COLLADAFW::UniqueId& colladaNodeId = colladaNode->getUniqueId();
 	std::string id = colladaNode->getOriginalId();
 	node->id = id;
 	node->name = colladaNode->getName();
@@ -173,6 +179,69 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 		node->transform = transform;
 	}
 
+	// Identify and map joint nodes
+	for (auto const& skinNodes : _skinJointNodes) {
+		const COLLADAFW::UniqueId& skinId = skinNodes.first;
+		std::set<COLLADAFW::UniqueId> nodeIds = skinNodes.second;
+		if (nodeIds.find(colladaNodeId) != nodeIds.end()) {
+			GLTF::Skin* skin = _skinInstances[skinId];
+			skin->joints.push_back(node);
+			node->jointName = id;
+		}
+	}
+
+	// Instance skinning
+	const COLLADAFW::InstanceControllerPointerArray& instanceControllers = colladaNode->getInstanceControllers();
+	for (size_t i = 0; i < instanceControllers.getCount(); i++) {
+		COLLADAFW::InstanceController* instanceController = instanceControllers[i];
+		COLLADAFW::UniqueId uniqueId = instanceController->getInstanciatedObjectId();
+		std::map<COLLADAFW::UniqueId, GLTF::Skin*>::iterator iter = _skinInstances.find(uniqueId);
+		if (iter != _skinInstances.end()) {
+			GLTF::Skin* skin = iter->second;
+			node->skin = skin;
+
+			GLTF::Mesh* skinnedMesh = _skinnedMeshes[uniqueId];
+			node->meshes.push_back(skinnedMesh);
+
+			const COLLADAFW::MaterialBindingArray &materialBindings = instanceController->getMaterialBindings();
+			for (size_t j = 0; j < materialBindings.getCount(); j++) {
+				COLLADAFW::MaterialBinding materialBinding = materialBindings[j];
+				GLTF::Primitive* primitive = skinnedMesh->primitives[j];
+				COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
+				COLLADAFW::UniqueId effectId = this->_materialEffects[materialId];
+				GLTF::Material* material = _effectInstances[effectId];
+				if (material->type == GLTF::Material::Type::MATERIAL_COMMON) {
+					GLTF::MaterialCommon* materialCommon = (GLTF::MaterialCommon*)material;
+					materialCommon->jointCount = _skinJointNodes[uniqueId].size();
+				}
+				material->id = materialBinding.getName();
+				primitive->material = material;
+			}
+
+			for (const COLLADABU::URI& skeletonURI : instanceController->skeletons()) {
+				std::string skeletonId = skeletonURI.getFragment();
+				std::map<std::string, GLTF::Node*>::iterator iter = _nodes.find(skeletonId);
+				if (iter != _nodes.end()) {
+					node->skeletons.push_back(iter->second);
+				} else {
+					// The skeleton node hasn't been created yet, mark it as unbound
+					GLTF::Node* unboundNodePointer = NULL;
+					_unboundSkeletonNodes[skeletonId] = &node->skeletons;
+				}
+			}
+		}
+	}
+
+	// Identify and map unbound skeleton nodes
+	if (_unboundSkeletonNodes.size() > 0) {
+		std::map<std::string, std::vector<GLTF::Node*>*>::iterator iter = _unboundSkeletonNodes.find(id);
+		if (iter != _unboundSkeletonNodes.end()) {
+			std::vector<GLTF::Node*>* skeletonNodes = iter->second;
+			skeletonNodes->push_back(node);
+			_unboundSkeletonNodes.erase(iter);
+		}
+	}
+
 	// Instance Geometries
 	const COLLADAFW::InstanceGeometryPointerArray& instanceGeometries = colladaNode->getInstanceGeometries();
 	int count = instanceGeometries.getCount();
@@ -205,6 +274,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			}
 		}
 	}
+	_nodes[id] = node;
 
 	// Recurse child nodes
 	const COLLADAFW::NodePointerArray& childNodes = colladaNode->getChildNodes();
@@ -327,6 +397,8 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	GLTF::Mesh* mesh = new GLTF::Mesh();
 	mesh->id = colladaMesh->getOriginalId();
 	mesh->name = colladaMesh->getName();
+	const COLLADAFW::UniqueId& uniqueId = colladaMesh->getUniqueId();
+	std::map<GLTF::Primitive*, std::vector<int>> positionMapping;
 
 	const COLLADAFW::MeshPrimitiveArray& meshPrimitives = colladaMesh->getMeshPrimitives();
 	int meshPrimitivesCount = meshPrimitives.getCount();
@@ -338,6 +410,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			std::vector<unsigned short> buildIndices;
 			COLLADAFW::MeshPrimitive* colladaPrimitive = meshPrimitives[i];
 			GLTF::Primitive* primitive = new GLTF::Primitive();
+			std::vector<int> mapping;
 
 			COLLADAFW::MeshPrimitive::PrimitiveType type = colladaPrimitive->getPrimitiveType();
 			switch (colladaPrimitive->getPrimitiveType()) {
@@ -347,6 +420,8 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			case COLLADAFW::MeshPrimitive::LINE_STRIPS:
 				primitive->mode = GLTF::Primitive::Mode::LINE_STRIP;
 				break;
+			// Having POLYLIST and POLYGONS map to TRIANGLES generally produces good output for cases where the polygons are already triangles, 
+			// but in other cases, we probably do need to triangulate
 			case COLLADAFW::MeshPrimitive::POLYLIST:
 			case COLLADAFW::MeshPrimitive::POLYGONS:
 			case COLLADAFW::MeshPrimitive::TRIANGLES:
@@ -443,8 +518,12 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 							numberOfComponents = 2;
 							flipY = true;
 						}
+						int semanticIndex = semanticIndices[semantic][j];
+						if (semantic == "POSITION") {
+							mapping.push_back(semanticIndex);
+						}
 						for (int k = 0; k < numberOfComponents; k++) {
-							float value = getMeshVertexDataAtIndex(*semanticData[semantic], semanticIndices[semantic][j] * numberOfComponents + k);
+							float value = getMeshVertexDataAtIndex(*semanticData[semantic], semanticIndex * numberOfComponents + k);
 							if (flipY && k == 1) {
 								value = 1 - value;
 							}
@@ -470,9 +549,11 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)&attributeData[0], attributeData.size() / GLTF::Accessor::getNumberOfComponents(type), this->_attributesBufferView);
 				primitive->attributes[semantic] = accessor;
 			}
+			positionMapping[primitive] = mapping;
 		}
 	}
-	this->_meshInstances[colladaMesh->getUniqueId()] = mesh;
+	_meshPositionMapping[uniqueId] = positionMapping;
+	_meshInstances[uniqueId] = mesh;
 	return true;
 }
 
@@ -830,13 +911,148 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 }
 
 bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControllerData* skinControllerData) {
+	GLTF::Skin* skin = new GLTF::Skin();
+	COLLADAFW::UniqueId uniqueId = skinControllerData->getUniqueId();
+	skin->id = skinControllerData->getOriginalId();
+	skin->name = skinControllerData->getName();
+
+	// Write inverseBindMatrices and bindShapeMatrix
+	const COLLADAFW::Matrix4Array& matrixArray = skinControllerData->getInverseBindMatrices();
+	size_t matrixArrayCount = matrixArray.getCount();
+	float* inverseBindMatrices = new float[matrixArrayCount * 16];
+	for (size_t i = 0; i < matrixArrayCount; i++) {
+		packColladaMatrix(matrixArray[i], inverseBindMatrices, i * 16);
+	}
+	skin->inverseBindMatrices = new GLTF::Accessor(GLTF::Accessor::Type::MAT4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)inverseBindMatrices, matrixArrayCount, _animationsBufferView);
+	packColladaMatrix(skinControllerData->getBindShapeMatrix(), skin->bindShapeMatrix, 0);
+
+	// Cache joint and weight data
+	// COLLADA can have different numbers of joints for a single vertex
+	// We have to make this uniform across all vertices to make it into a GLTF primitive attribute
+	int maxJointsPerVertex = 0;
+	const COLLADAFW::UIntValuesArray& jointsPerVertexArray = skinControllerData->getJointsPerVertex();
+	
+	size_t totalVertices = 0;
+	for (size_t i = 0; i < jointsPerVertexArray.getCount(); i++) {
+		int jointsPerVertex = jointsPerVertexArray[i];
+		totalVertices += jointsPerVertex;
+		if (jointsPerVertex > maxJointsPerVertex) {
+			maxJointsPerVertex = jointsPerVertex;
+		}
+	}
+	GLTF::Accessor::Type type;
+	if (maxJointsPerVertex == 1) {
+		type = GLTF::Accessor::Type::SCALAR;
+	} else if (maxJointsPerVertex == 2) {
+		type = GLTF::Accessor::Type::VEC2;
+	} else if (maxJointsPerVertex == 3) {
+		type = GLTF::Accessor::Type::VEC3;
+	} else if (maxJointsPerVertex == 4) {
+		type = GLTF::Accessor::Type::VEC4;
+	} else if (maxJointsPerVertex <= 9) {
+		type = GLTF::Accessor::Type::MAT3;
+	} else if (maxJointsPerVertex <= 16) {
+		type = GLTF::Accessor::Type::MAT4;
+	} else {
+		// There is no GLTF accessor type big enough to store this many joint influences
+		return false;
+	}
+	maxJointsPerVertex = GLTF::Accessor::getNumberOfComponents(type);
+
+	size_t vertexCount = skinControllerData->getVertexCount();
+	size_t offset = 0;
+	const COLLADAFW::IntValuesArray& jointIndices = skinControllerData->getJointIndices();
+	const COLLADAFW::UIntValuesArray& weightIndicesArray = skinControllerData->getWeightIndices();
+	const COLLADAFW::FloatOrDoubleArray& weightsArray = skinControllerData->getWeights();
+
+	std::vector<int*> joints;
+	std::vector<float*> weights;
+	for (size_t i = 0; i < vertexCount; i++) {
+		unsigned int jointsPerVertex = jointsPerVertexArray[i];
+		int* joint = new int[maxJointsPerVertex];
+		float* weight = new float[maxJointsPerVertex];
+		for (size_t j = 0; j < maxJointsPerVertex; j++) {
+			if (j < jointsPerVertex) {
+				joint[j] = jointIndices[j + offset];
+				unsigned int weightIndex = weightIndicesArray[j + offset];
+				float weightValue;
+				if (weightsArray.getType() == COLLADAFW::FloatOrDoubleArray::DATA_TYPE_FLOAT) {
+					weightValue = weightsArray.getFloatValues()->getData()[weightIndex];
+				} else if (weightsArray.getType() == COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE) {
+					weightValue = (float)weightsArray.getDoubleValues()->getData()[weightIndex];
+				}
+				weight[j] = weightValue;
+			} else {
+				joint[j] = 0;
+				weight[j] = 0;
+			}
+		}
+		offset += jointsPerVertex;
+		joints.push_back(joint);
+		weights.push_back(weight);
+	}
+	_skinData[uniqueId] = std::tuple<GLTF::Accessor::Type, std::vector<int*>, std::vector<float*>>(type, joints, weights);
+	_skinInstances[uniqueId] = skin;
 	return true;
 }
 
+/**
+* Creates a placeholder <GLTF::Skin> for each <COLLADAFW::SkinController>.
+* The produced skins are stored in `_skinInstances` indexed by their <COLLADAFW::UniqueId>.
+*
+* This is expected to run before nodes are written, so the targeted joint nodes are stored
+* in a set of <COLLADAFW::UniqueId> for each SkinController id on _skinJointNodes. When nodes
+* are written, this is used to assign <GLTF::Node> references for joints.
+*
+* @param controller The COLLADA skin controller to write to glTF
+* @return `true` if the operation completed succesfully, `false` if an error occured
+*/
 bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controller) {
 	if (controller->getControllerType() == COLLADAFW::Controller::CONTROLLER_TYPE_SKIN) {
 		COLLADAFW::SkinController* skinController = (COLLADAFW::SkinController*)controller;
-		GLTF::Skin* skin = new GLTF::Skin();
+		COLLADAFW::UniqueId skinControllerDataId = skinController->getSkinControllerData();
+		COLLADAFW::UniqueId skinControllerId = skinController->getUniqueId();
+		GLTF::Skin* skin = _skinInstances[skinControllerDataId];
+		COLLADAFW::UniqueIdArray& jointIds = skinController->getJoints();
+		for (int i = 0; i < jointIds.getCount(); i++) {
+			_skinJointNodes[skinControllerId].insert(jointIds[i]);
+		}
+		GLTF::Accessor::Type type;
+		std::vector<int*> joints;
+		std::vector<float*> weights;
+		std::tie(type, joints, weights) = _skinData[skinControllerDataId];
+		int numberOfComponents = GLTF::Accessor::getNumberOfComponents(type);
+
+		COLLADAFW::UniqueId meshId = skinController->getSource();
+		GLTF::Mesh* mesh = _meshInstances[meshId];
+
+		double* jointComponent = new double[numberOfComponents];
+		double* weightComponent = new double[numberOfComponents];
+		std::map<GLTF::Primitive*, std::vector<int>> positionMapping = _meshPositionMapping[meshId];
+		for (const auto& primitiveEntry : positionMapping) {
+			GLTF::Primitive* primitive = primitiveEntry.first;
+			int count = primitive->attributes["POSITION"]->count;
+			unsigned short* jointArray = new unsigned short[count * numberOfComponents];
+			float* weightArray = new float[count * numberOfComponents];
+
+			std::vector<int> mapping = primitiveEntry.second;
+			for (int i = 0; i < count; i++) {
+				int index = mapping[i];
+				int* joint = joints[index];
+				float* weight = weights[index];
+				for (int j = 0; j < numberOfComponents; j++) {
+					jointArray[i * numberOfComponents + j] = joint[j];
+					weightArray[i * numberOfComponents + j] = weight[j];
+				}
+			}
+			GLTF::Accessor* weightAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weightArray, count, _skinAttributesBufferView);
+			primitive->attributes["WEIGHT"] = weightAccessor;
+			GLTF::Accessor* jointAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)jointArray, count, _skinAttributesBufferView);
+			primitive->attributes["JOINT"] = jointAccessor;
+		}
+
+		_skinInstances[skinControllerId] = skin;
+		_skinnedMeshes[skinControllerId] = mesh;
 	}
 	return true;
 }

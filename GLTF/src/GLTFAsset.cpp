@@ -100,8 +100,9 @@ void GLTF::Asset::writeJSON(void* writer) {
 		jsonWriter->EndObject();
 	}
 
-	// Write nodes and build mesh hash
+	// Write nodes and build mesh and skin hash
 	std::map<std::string, GLTF::Mesh*> meshes;
+	std::map<std::string, GLTF::Skin*> skins;
 	if (nodes.size() > 0) {
 		jsonWriter->Key("nodes");
 		jsonWriter->StartObject();
@@ -110,6 +111,9 @@ void GLTF::Asset::writeJSON(void* writer) {
 			GLTF::Node* node = nodeMapEntry.second;
 			for (GLTF::Mesh* mesh : node->meshes) {
 				meshes[mesh->id] = mesh;
+			}
+			if (node->skin != NULL) {
+				skins[node->skin->id] = node->skin;
 			}
 			jsonWriter->Key(nodeId.c_str());
 			jsonWriter->StartObject();
@@ -169,6 +173,25 @@ void GLTF::Asset::writeJSON(void* writer) {
 		}
 		jsonWriter->EndObject();
 	}
+
+	// Write skins and add accessors to the accessor hash
+	if (skins.size() > 0) {
+		jsonWriter->Key("skins");
+		jsonWriter->StartObject();
+		for (auto const& skinMapEntry : skins) {
+			std::string skinId = skinMapEntry.first;
+			GLTF::Skin* skin = skinMapEntry.second;
+			if (skin->inverseBindMatrices != NULL) {
+				accessors[skin->inverseBindMatrices->id] = skin->inverseBindMatrices;
+			}
+			jsonWriter->Key(skinId.c_str());
+			jsonWriter->StartObject();
+			skin->writeJSON(writer);
+			jsonWriter->EndObject();
+		}
+		jsonWriter->EndObject();
+	}
+	skins.clear();
 
 	// Write accessors and build bufferView hash
 	std::map<std::string, GLTF::BufferView*> bufferViews;

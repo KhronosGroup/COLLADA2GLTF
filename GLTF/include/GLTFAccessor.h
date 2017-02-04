@@ -54,6 +54,7 @@ namespace GLTF {
 		bool computeMinMax();
 		int getByteStride();
 		bool getComponentAtIndex(int index, double* component);
+		bool writeComponentAtIndex(int index, double* component);
 		int getComponentByteLength();
 		int getNumberOfComponents();
 		bool equals(GLTF::Accessor* accessor);
