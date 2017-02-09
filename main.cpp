@@ -88,7 +88,7 @@ static const OptionDescriptor options[] = {
 static const int OPTIONS_COUNT = sizeof(options) / sizeof(OptionDescriptor);
 
 static void buildOptions() {
-    helpMessage += "usage: collada2gltlf -f [file] [options]\n";
+    helpMessage += "usage: collada2gltf -f [file] [options]\n";
     helpMessage += "options:\n";
     
     opt_options = (option*)malloc(sizeof(option) * OPTIONS_COUNT);
