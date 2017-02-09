@@ -32,6 +32,7 @@
 #endif
 
 #include "stdarg.h"
+#include <unordered_map>
 
 #define _GL_STR(X) #X
 #define _GL(X) (this->_profile->getGLenumForString(_GL_STR(X)));
@@ -55,11 +56,17 @@ namespace GLTF
         ((std::istream*)png_get_io_ptr(pngPtr))->read((char*)data, length);
     }
 #endif
+	static std::unordered_map<std::string, bool> haveAlphas;		// Caching to remove up to 98% execution time
     //thanks to piko3d.com libpng tutorial here
     static bool imageHasAlpha(const char *path)
     {
-#ifdef USE_LIBPNG
+		auto haveHasAlpha = haveAlphas.find(std::string(path));
+		if (haveHasAlpha != haveAlphas.end()) {
+			return haveHasAlpha->second;
+		}
+
         bool hasAlpha = false;
+#ifdef USE_LIBPNG
         std::shared_ptr<std::istream> source;
         if (is_dataUri(path))
         {
@@ -78,70 +85,74 @@ namespace GLTF
         png_byte pngsig[PNGSIGSIZE];
         int isPNG = 0;
         source->read((char*)pngsig, PNGSIGSIZE);
-        if (!source->good())
-            return false;
-        isPNG = png_sig_cmp(pngsig, 0, PNGSIGSIZE) == 0;
-        if (isPNG) {
-            png_structp pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-            if (pngPtr) {
-                png_infop infoPtr = png_create_info_struct(pngPtr);
-                if (infoPtr) {
-                    png_set_read_fn(pngPtr,(png_voidp)source.get(), userReadData);
-                    png_set_sig_bytes(pngPtr, PNGSIGSIZE);
-                    png_read_info(pngPtr, infoPtr);
-                    png_uint_32 color_type = png_get_color_type(pngPtr, infoPtr);
-                    if (color_type == PNG_COLOR_TYPE_RGB_ALPHA || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
-                        int width = png_get_image_width(pngPtr, infoPtr);
-                        int height = png_get_image_height(pngPtr, infoPtr);
-                        png_byte bit_depth = png_get_bit_depth(pngPtr, infoPtr);
-
-                        if (bit_depth == 16)
-                            png_set_strip_16(pngPtr);
-
-                        if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS))
-                            png_set_tRNS_to_alpha(pngPtr);
-
-                        if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-                            png_set_gray_to_rgb(pngPtr);
-
-                        png_read_update_info(pngPtr, infoPtr);
-
-                        // Allocate row pointers
-                        png_bytep *row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
-                        png_size_t rowBytes = png_get_rowbytes(pngPtr, infoPtr);
-                        for (int y = 0; y < height; y++) {
-                            row_pointers[y] = (png_byte*)malloc(rowBytes);
-                        }
-
-                        png_read_image(pngPtr, row_pointers);
-
-                        // Check for alpha less than 255
-                        for (int y = 0; (y < height) && !hasAlpha; y++) {
-                            png_bytep row = row_pointers[y];
-                            for (int x = 0; (x < width) && !hasAlpha; x++) {
-                                png_bytep px = &(row[x * 4]);
-                                if (px[3] != 255) {
-                                    hasAlpha = true;
+        if (!source->good()) {
+            hasAlpha = false;
+		} else {
+            isPNG = png_sig_cmp(pngsig, 0, PNGSIGSIZE) == 0;
+            if (isPNG) {
+                png_structp pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+                if (pngPtr) {
+                    png_infop infoPtr = png_create_info_struct(pngPtr);
+                    if (infoPtr) {
+                        png_set_read_fn(pngPtr,(png_voidp)source.get(), userReadData);
+                        png_set_sig_bytes(pngPtr, PNGSIGSIZE);
+                        png_read_info(pngPtr, infoPtr);
+                        png_uint_32 color_type = png_get_color_type(pngPtr, infoPtr);
+                        if (color_type == PNG_COLOR_TYPE_RGB_ALPHA || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
+                            int width = png_get_image_width(pngPtr, infoPtr);
+                            int height = png_get_image_height(pngPtr, infoPtr);
+                            png_byte bit_depth = png_get_bit_depth(pngPtr, infoPtr);
+    
+                            if (bit_depth == 16)
+                                png_set_strip_16(pngPtr);
+    
+                            if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS))
+                                png_set_tRNS_to_alpha(pngPtr);
+    
+                            if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+                                png_set_gray_to_rgb(pngPtr);
+    
+                            png_read_update_info(pngPtr, infoPtr);
+    
+                            // Allocate row pointers
+                            png_bytep *row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
+                            png_size_t rowBytes = png_get_rowbytes(pngPtr, infoPtr);
+                            for (int y = 0; y < height; y++) {
+                                row_pointers[y] = (png_byte*)malloc(rowBytes);
+                            }
+    
+                            png_read_image(pngPtr, row_pointers);
+    
+                            // Check for alpha less than 255
+                            for (int y = 0; (y < height) && !hasAlpha; y++) {
+                                png_bytep row = row_pointers[y];
+                                for (int x = 0; (x < width) && !hasAlpha; x++) {
+                                    png_bytep px = &(row[x * 4]);
+                                    if (px[3] != 255) {
+                                        hasAlpha = true;
+                                    }
                                 }
                             }
+    
+                            // Free row pointers
+                            for (int y = 0; y < height; y++) {
+                                free(row_pointers[y]);
+                            }
+                            free(row_pointers);
                         }
-
-                        // Free row pointers
-                        for (int y = 0; y < height; y++) {
-                            free(row_pointers[y]);
-                        }
-                        free(row_pointers);
+                        
+                        png_destroy_read_struct(&pngPtr, (png_infopp)0, (png_infopp)0);
                     }
-                    
-                    png_destroy_read_struct(&pngPtr, (png_infopp)0, (png_infopp)0);
                 }
             }
         }
-        
-        return hasAlpha;
 #else
-		return false;
+		hasAlpha = false;
 #endif
+
+		// For the love of sanity, cache this!
+		haveAlphas[std::string(path)] = hasAlpha;
+		return hasAlpha;
     }
     
     
@@ -226,7 +237,7 @@ namespace GLTF
                 if (images->contains(sourceUID)) {
                     shared_ptr<JSONObject> image = images->getObject(sourceUID);
                     // If the user adds an <has_alpha> extra tag to the image then we override
-                    //  what the image actually contain as far as weather there is alpha or not.
+                    // what the image actually contains as far as whether there is alpha or not.
                     if (image->contains("has_alpha"))
                     {
                         return !image->getBool("has_alpha");
@@ -238,8 +249,9 @@ namespace GLTF
                         imagePath = getPathDir(inputURI) + imagePath;
                     }
 
-                    if (imageHasAlpha(imagePath.c_str()))
+                    if (imageHasAlpha(imagePath.c_str())) {
                         return false;
+					}
                 } else {
                     static bool printedOnce = false;
                     if (!printedOnce) {
