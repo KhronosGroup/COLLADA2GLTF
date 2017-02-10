@@ -319,6 +319,14 @@ namespace GLTF
                 (*materialBindingsPrimitiveMap)[primitive->getMaterialObjectID()] = materialBinding;
             }
         }
+
+		// This optimization will prevent incredibly inefficient O(n^2) scanning in writeNode()
+		MaterialBindingSetsForMeshUID& mbForMeshUID = this->_asset->materialBindingSetsForMeshUID();
+        MaterialBindingSet& materialBindingSet = mbForMeshUID[prefixedMeshUID];
+		for(size_t k = 0; k < materialBindings.getCount(); k++) {
+			materialBindingSet.insert(materialBindings[k].getReferencedMaterial());
+		}
+
         return;
     }
 
@@ -512,31 +520,13 @@ namespace GLTF
                     COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
                     // Check if this geometry has already been bound to another node with a different material
                     bool alreadyBound = false;
-                    MaterialBindingsForNodeUID nodeBindings = this->_asset->materialBindingsForNodeUID();
-                    for (auto nodeBinding : nodeBindings) {
-                        shared_ptr<MaterialBindingsForMeshUID> meshBindings = nodeBinding.second;
-                        for (auto meshBinding : *(meshBindings.get())) {
-                            string meshId = meshBinding.first;
-                            if ("meshes-" + uniqueId.toAscii() == meshId) {
-                                shared_ptr<MaterialBindingsPrimitiveMap> materialBindings = meshBinding.second;
-                                bool materialUsed = false;
-                                for (auto materialBinding : *(materialBindings.get())) {
-                                    shared_ptr<MaterialBinding> primitiveBindings = materialBinding.second;
-                                    if (primitiveBindings->getReferencedMaterial() == materialId) {
-                                        materialUsed = true;
-                                        break;
-                                    }
-                                }
-                                if (!materialUsed) {
-                                    alreadyBound = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (alreadyBound) {
-                            break;
-                        }
+                    auto nodeBindings = this->_asset->materialBindingSetsForMeshUID().find("meshes-" + uniqueId.toAscii());
+                    if (nodeBindings != this->_asset->materialBindingSetsForMeshUID().end()) {
+						MaterialBindingSet& bindingSet = nodeBindings->second;
+                        bool materialUsed = bindingSet.find(materialId) != bindingSet.end();
+                        alreadyBound = !materialUsed;		// ie, it was bound, but to a different material
                     }
+
                     if (alreadyBound) {
                         // This is an instance of a material
                         shared_ptr<GLTFMesh> mesh = static_pointer_cast<GLTFMesh>(this->_asset->getValueForUniqueId(uniqueId.toAscii()));
