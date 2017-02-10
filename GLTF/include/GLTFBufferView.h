@@ -12,12 +12,13 @@ namespace GLTF {
 		int byteLength = 0;
 		GLTF::Constants::WebGL target = (GLTF::Constants::WebGL)-1;
 
+		BufferView(int byteOffset, int byteLength, GLTF::Buffer* buffer);
 		BufferView(unsigned char* data, int dataLength);
 		BufferView(unsigned char* data,
 			int dataLength,
 			GLTF::Constants::WebGL target
 		);
 
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 };

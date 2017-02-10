@@ -14,7 +14,7 @@ GLTF::Object* GLTF::Primitive::clone() {
 	return clone;
 }
 
-void GLTF::Primitive::writeJSON(void* writer) {
+void GLTF::Primitive::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	jsonWriter->Key("attributes");
 	jsonWriter->StartObject();
@@ -33,5 +33,5 @@ void GLTF::Primitive::writeJSON(void* writer) {
 		jsonWriter->Key("material");
 		jsonWriter->Int(this->material->id);
 	}
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }

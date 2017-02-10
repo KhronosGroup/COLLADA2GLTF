@@ -8,7 +8,7 @@ GLTF::Skin::Skin() {
 	bindShapeMatrix = new float[16];
 }
 
-void GLTF::Skin::writeJSON(void* writer) {
+void GLTF::Skin::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
 	if (bindShapeMatrix != NULL) {
@@ -27,9 +27,9 @@ void GLTF::Skin::writeJSON(void* writer) {
 	jsonWriter->StartArray();
 	for (GLTF::Node* node : joints) {
 		if (node != NULL) {
-			jsonWriter->Int(node->id);
+			jsonWriter->String(node->jointName.c_str());
 		}
 	}
 	jsonWriter->EndArray();
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }

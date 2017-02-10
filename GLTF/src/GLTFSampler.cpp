@@ -3,7 +3,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-void GLTF::Sampler::writeJSON(void* writer) {
+void GLTF::Sampler::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	jsonWriter->Key("magFilter");
 	jsonWriter->Int((int)magFilter);
@@ -13,5 +13,5 @@ void GLTF::Sampler::writeJSON(void* writer) {
 	jsonWriter->Int((int)wrapS);
 	jsonWriter->Key("wrapT");
 	jsonWriter->Int((int)wrapT);
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }

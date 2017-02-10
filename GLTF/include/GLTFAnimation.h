@@ -17,7 +17,7 @@ namespace GLTF {
 		std::string interpolation = "LINEAR";
 		GLTF::Accessor* output;
 
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 
     class Channel : public GLTF::Object {
@@ -32,17 +32,17 @@ namespace GLTF {
 			GLTF::Node* node;
 			Path path;
 
-			virtual void writeJSON(void* writer);
+			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};
 
 		GLTF::Animation::Sampler* sampler;
 		Target* target;
 
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
     };
 
     std::vector<Channel*> channels;
 
-	virtual void writeJSON(void* writer);
+	virtual void writeJSON(void* writer, GLTF::Options* options);
   };
 }

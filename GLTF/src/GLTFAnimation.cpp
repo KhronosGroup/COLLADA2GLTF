@@ -3,7 +3,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-void GLTF::Animation::writeJSON(void* writer) {
+void GLTF::Animation::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
 	jsonWriter->Key("channels");
@@ -16,7 +16,7 @@ void GLTF::Animation::writeJSON(void* writer) {
 			samplers.push_back(channel->sampler);
 		}
 		jsonWriter->StartObject();
-		channel->writeJSON(writer);
+		channel->writeJSON(writer, options);
 		jsonWriter->EndObject();
 	}
 	jsonWriter->EndArray();
@@ -25,15 +25,15 @@ void GLTF::Animation::writeJSON(void* writer) {
 	jsonWriter->StartArray();
 	for (GLTF::Animation::Sampler* sampler : samplers) {
 		jsonWriter->StartObject();
-		sampler->writeJSON(writer);
+		sampler->writeJSON(writer, options);
 		jsonWriter->EndObject();
 	}
 	jsonWriter->EndArray();
 	samplers.clear();
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }
 
-void GLTF::Animation::Sampler::writeJSON(void* writer) {
+void GLTF::Animation::Sampler::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
 	jsonWriter->Key("input");
@@ -42,23 +42,23 @@ void GLTF::Animation::Sampler::writeJSON(void* writer) {
 	jsonWriter->String(interpolation.c_str());
 	jsonWriter->Key("output");
 	jsonWriter->Int(output->id);
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }
 
-void GLTF::Animation::Channel::writeJSON(void* writer) {
+void GLTF::Animation::Channel::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
 	jsonWriter->Key("sampler");
 	jsonWriter->Int(sampler->id);
 	jsonWriter->Key("target");
 	jsonWriter->StartObject();
-	target->writeJSON(writer);
+	target->writeJSON(writer, options);
 	jsonWriter->EndObject();
 
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }
 
-void GLTF::Animation::Channel::Target::writeJSON(void* writer) {
+void GLTF::Animation::Channel::Target::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	
 	jsonWriter->Key("id");
@@ -75,5 +75,5 @@ void GLTF::Animation::Channel::Target::writeJSON(void* writer) {
 		jsonWriter->String("scale");
 	}
 
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }

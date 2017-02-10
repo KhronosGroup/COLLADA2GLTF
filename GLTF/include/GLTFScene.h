@@ -10,6 +10,6 @@ namespace GLTF {
 	public:
 		std::vector<GLTF::Node*> nodes;
 
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

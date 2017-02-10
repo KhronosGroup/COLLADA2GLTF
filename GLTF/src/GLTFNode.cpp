@@ -125,10 +125,10 @@ void GLTF::Node::TransformMatrix::getTransformTRS(GLTF::Node::TransformTRS* trs)
 		y = -trs->rotation[1];
 		z = -trs->rotation[2];
 	}
-	trs->rotation[0] = x;
-	trs->rotation[1] = y;
-	trs->rotation[2] = z;
-	trs->rotation[3] = w;
+	trs->rotation[0] = -x;
+	trs->rotation[1] = -y;
+	trs->rotation[2] = -z;
+	trs->rotation[3] = -w;
 
 	// get scale
 	trs->scale[0] = sqrtf(matrix[0] * matrix[0] + matrix[1] * matrix[1] + matrix[2] * matrix[2]);
@@ -190,7 +190,7 @@ GLTF::Node::TransformMatrix* GLTF::Node::TransformTRS::getTransformMatrix() {
 	return result;
 }
 
-void GLTF::Node::writeJSON(void* writer) {
+void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	
 	if (meshes.size() > 0) {

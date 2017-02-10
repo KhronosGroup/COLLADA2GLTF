@@ -58,6 +58,6 @@ namespace GLTF {
 
 		Transform* transform = NULL;
 
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

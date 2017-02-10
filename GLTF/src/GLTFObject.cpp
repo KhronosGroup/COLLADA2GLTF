@@ -17,7 +17,7 @@ GLTF::Object* GLTF::Object::clone() {
 	return clone;
 }
 
-void GLTF::Object::writeJSON(void* writer) {
+void GLTF::Object::writeJSON(void* writer, GLTF::Options* options) {
   rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
   if (this->name.length() > 0) {
     jsonWriter->Key("name");
@@ -29,7 +29,7 @@ void GLTF::Object::writeJSON(void* writer) {
     for (const auto extension : this->extensions) {
       jsonWriter->Key(extension.first.c_str());
       jsonWriter->StartObject();
-      extension.second->writeJSON(writer);
+      extension.second->writeJSON(writer, options);
       jsonWriter->EndObject();
     }
     jsonWriter->EndObject();
@@ -40,7 +40,7 @@ void GLTF::Object::writeJSON(void* writer) {
     for (const auto extra : this->extras) {
       jsonWriter->Key(extra.first.c_str());
       jsonWriter->StartObject();
-      extra.second->writeJSON(writer);
+      extra.second->writeJSON(writer, options);
       jsonWriter->EndObject();
     }
     jsonWriter->EndObject();

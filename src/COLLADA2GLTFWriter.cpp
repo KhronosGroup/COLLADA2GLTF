@@ -2,10 +2,6 @@
 #include "Base64.h"
 
 COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options) : _asset(asset), _options(options) {
-	_indicesBufferView = new GLTF::BufferView(NULL, 0, GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
-	_attributesBufferView = new GLTF::BufferView(NULL, 0, GLTF::Constants::WebGL::ARRAY_BUFFER);
-	_animationsBufferView = new GLTF::BufferView(NULL, 0);
-	_skinAttributesBufferView = new GLTF::BufferView(NULL, 0, GLTF::Constants::WebGL::ARRAY_BUFFER);
 }
 
 void COLLADA2GLTF::Writer::cancel(const std::string& errorMessage) {
@@ -556,7 +552,8 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				}
 			}
 			// Create indices accessor
-			primitive->indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0], buildIndices.size(), this->_indicesBufferView);
+			GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
+			primitive->indices = indices;
 			mesh->primitives.push_back(primitive);
 			// Create attribute accessors
 			for (const auto& entry : buildAttributes) {
@@ -566,7 +563,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				if (semantic.find("TEXCOORD") == 0) {
 					type = GLTF::Accessor::Type::VEC2;
 				}
-				GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)&attributeData[0], attributeData.size() / GLTF::Accessor::getNumberOfComponents(type), this->_attributesBufferView);
+				GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)&attributeData[0], attributeData.size() / GLTF::Accessor::getNumberOfComponents(type), GLTF::Constants::WebGL::ARRAY_BUFFER);
 				primitive->attributes[semantic] = accessor;
 			}
 			positionMapping[primitive] = mapping;
@@ -657,7 +654,10 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 
 		COLLADAFW::FloatOrParam shininess = effectCommon->getShininess();
 		if (shininess.getType() == COLLADAFW::FloatOrParam::FLOAT) {
-			material->values->shininess[0] = shininess.getFloatValue();
+			float shininessValue = shininess.getFloatValue();
+			if (shininessValue >= 0) {
+				material->values->shininess[0] = shininessValue;
+			}
 		}
 
 		this->_effectInstances[effect->getUniqueId()] = material;
@@ -673,29 +673,25 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* camera) {
 bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	const COLLADABU::URI imageUri = colladaImage->getImageURI();
 	std::string relativePathFile = _options->basePath + imageUri.getURIString();
-	std::string mimeType = "image/" + imageUri.getPathExtension();
+	std::string fileExtension = imageUri.getPathExtension();
 	std::string uri = COLLADABU::URI::uriDecode(imageUri.getPathDir() + relativePathFile);
 
 	GLTF::Image* image;
-	if (_options->embedded) {
-		FILE* file = fopen(uri.c_str(), "rb");
-		if (file == NULL) {
-			return false;
-		}
-		fseek(file, 0, SEEK_END);
-		long int size = ftell(file);
-		fclose(file);
-		file = fopen(uri.c_str(), "rb");
-		unsigned char* buffer = (unsigned char*)malloc(size);
-		int bytes_read = fread(buffer, sizeof(unsigned char), size, file);
-		fclose(file);
+	FILE* file = fopen(uri.c_str(), "rb");
+	if (file == NULL) {
+		return false;
+	}
+	fseek(file, 0, SEEK_END);
+	long int size = ftell(file);
+	fclose(file);
+	file = fopen(uri.c_str(), "rb");
+	unsigned char* buffer = (unsigned char*)malloc(size);
+	int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
+	fclose(file);
 
-		image = new GLTF::Image("data:" + mimeType + ";base64," + GLTF::Base64::encode(buffer, size));
-		free(buffer);
-	}
-	else {
-		image = new GLTF::Image(uri);
-	}
+	uri = imageUri.getPathFile();
+	image = new GLTF::Image(uri, buffer, bytesRead, fileExtension);
+
 	_images[colladaImage->getUniqueId()] = image;
 	return true;
 }
@@ -741,9 +737,9 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 			outputValues[i] = value;
 		}
 
-		GLTF::Accessor* inputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)inputValues, inputLength, _animationsBufferView);
-		// The type is unknown at this point, so this output accessor doesn't get packed yet, since we may need to modify the data
-		GLTF::Accessor* outputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputValues, outputLength, GLTF::Constants::WebGL::ARRAY_BUFFER);
+		GLTF::Accessor* inputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)inputValues, inputLength, (GLTF::Constants::WebGL)-1);
+		// The type is unknown at this point; this may get replaced during writeAnimationList
+		GLTF::Accessor* outputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputValues, outputLength, (GLTF::Constants::WebGL)-1);
 		
 		sampler->input = inputAccessor;
 		sampler->output = outputAccessor;
@@ -836,7 +832,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			GLTF::Animation::Sampler* translationSampler = new GLTF::Animation::Sampler();
 			translationChannel->sampler = translationSampler;
 			translationSampler->input = sampler->input;
-			translationSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)translation, count / 16, _animationsBufferView);
+			translationSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)translation, count / 16, (GLTF::Constants::WebGL)-1);
 
 			GLTF::Animation::Channel* rotationChannel = new GLTF::Animation::Channel();
 			GLTF::Animation::Channel::Target* rotationTarget = new GLTF::Animation::Channel::Target();
@@ -847,7 +843,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			GLTF::Animation::Sampler* rotationSampler = new GLTF::Animation::Sampler();
 			rotationChannel->sampler = rotationSampler;
 			rotationSampler->input = sampler->input;
-			rotationSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)rotation, count / 16, _animationsBufferView);
+			rotationSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)rotation, count / 16, (GLTF::Constants::WebGL)-1);
 
 			GLTF::Animation::Channel* scaleChannel = new GLTF::Animation::Channel();
 			GLTF::Animation::Channel::Target* scaleTarget = new GLTF::Animation::Channel::Target();
@@ -858,7 +854,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			GLTF::Animation::Sampler* scaleSampler = new GLTF::Animation::Sampler();
 			scaleChannel->sampler = scaleSampler;
 			scaleSampler->input = sampler->input;
-			scaleSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)scale, count / 16, _animationsBufferView);
+			scaleSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)scale, count / 16, (GLTF::Constants::WebGL)-1);
 			break;
 		}
 		case COLLADAFW::AnimationList::AnimationClass::POSITION_XYZ: {
@@ -866,7 +862,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			outputData = (float*)output->bufferView->buffer->data;
 			type = GLTF::Accessor::Type::VEC3;
 			target->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
-			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, _animationsBufferView);
+			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, (GLTF::Constants::WebGL)-1);
 			sampler->output = output;
 			break;
 		}
@@ -897,7 +893,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 					}
 				}
 			}
-			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, _animationsBufferView);
+			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, (GLTF::Constants::WebGL)-1);
 			sampler->output = output;
 			break;
 		}
@@ -906,7 +902,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			outputData = (float*)output->bufferView->buffer->data;
 			type = GLTF::Accessor::Type::VEC4;
 			target->path = GLTF::Animation::Channel::Target::Path::ROTATION;
-			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, _animationsBufferView);
+			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, (GLTF::Constants::WebGL)-1);
 			sampler->output = output;
 			break;
 		}
@@ -923,7 +919,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 					COLLADABU::Math::Real angle;
 					COLLADABU::Math::Vector3 axis;
 					for (int j = 0; j < count; j++) {
-						COLLADABU::Math::Quaternion quaternion = COLLADABU::Math::Quaternion(rotation[0], rotation[1], rotation[2], rotation[3]);
+						COLLADABU::Math::Quaternion quaternion = COLLADABU::Math::Quaternion(rotation[3], rotation[0], rotation[1], rotation[2]);
 						quaternion.toAngleAxis(angle, axis);
 						output->getComponentAtIndex(j, component);
 						angle = COLLADABU::Math::Utils::degToRad(component[0]);
@@ -935,7 +931,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 					}
 				}
 			}
-			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, _animationsBufferView);
+			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, (GLTF::Constants::WebGL)-1);
 			sampler->output = output;
 			break;
 		}}
@@ -956,7 +952,7 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 	for (size_t i = 0; i < matrixArrayCount; i++) {
 		packColladaMatrix(matrixArray[i], inverseBindMatrices, i * 16);
 	}
-	skin->inverseBindMatrices = new GLTF::Accessor(GLTF::Accessor::Type::MAT4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)inverseBindMatrices, matrixArrayCount, _animationsBufferView);
+	skin->inverseBindMatrices = new GLTF::Accessor(GLTF::Accessor::Type::MAT4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)inverseBindMatrices, matrixArrayCount, (GLTF::Constants::WebGL)-1);
 	packColladaMatrix(skinControllerData->getBindShapeMatrix(), skin->bindShapeMatrix, 0);
 
 	// Cache joint and weight data
@@ -1083,9 +1079,9 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 					weightArray[i * numberOfComponents + j] = weight[j];
 				}
 			}
-			GLTF::Accessor* weightAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weightArray, count, _skinAttributesBufferView);
+			GLTF::Accessor* weightAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weightArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
 			primitive->attributes["WEIGHT"] = weightAccessor;
-			GLTF::Accessor* jointAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)jointArray, count, _skinAttributesBufferView);
+			GLTF::Accessor* jointAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)jointArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
 			primitive->attributes["JOINT"] = jointAccessor;
 		}
 

@@ -24,7 +24,7 @@ namespace GLTF {
 			float shininess[1] = { 0.0 };
 			float specular[4] = { 0.0, 0.0, 0.0, 1.0 };
 
-			void writeJSON(void* writer);
+			void writeJSON(void* writer, GLTF::Options* options);
 		};
 
 		GLTF::Technique* technique = NULL;
@@ -33,7 +33,7 @@ namespace GLTF {
 
 		Material();
 		bool hasTexture();
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 
 
@@ -55,6 +55,6 @@ namespace GLTF {
 
 		MaterialCommon();
 		const char* getTechniqueName();
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

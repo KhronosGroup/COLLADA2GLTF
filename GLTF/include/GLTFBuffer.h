@@ -7,9 +7,10 @@ namespace GLTF {
 	public:
 		unsigned char* data = NULL;
 		int byteLength;
+		std::string uri;
 
 		Buffer(unsigned char* data, int dataLength);
 		
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 };

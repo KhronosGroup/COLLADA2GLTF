@@ -52,6 +52,19 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	this->computeMinMax();
 }
 
+GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
+	GLTF::Constants::WebGL componentType,
+	int byteOffset,
+	int byteStride,
+	int count,
+	GLTF::BufferView* bufferView
+) : Accessor(type, componentType) {
+	this->byteOffset = byteOffset;
+	this->byteStride = byteStride;
+	this->count = count;
+	this->bufferView = bufferView;
+}
+
 bool GLTF::Accessor::computeMinMax() {
 	int numberOfComponents = this->getNumberOfComponents();
 	int count = this->count;
@@ -233,7 +246,7 @@ bool GLTF::Accessor::equals(GLTF::Accessor* accessor) {
 	return true;
 }
 
-void GLTF::Accessor::writeJSON(void* writer) {
+void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (this->bufferView) {
 		jsonWriter->Key("bufferView");

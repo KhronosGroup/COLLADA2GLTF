@@ -11,6 +11,6 @@ namespace GLTF {
 		std::vector<GLTF::Primitive*> primitives;
 
 		virtual GLTF::Object* clone();
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

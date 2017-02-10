@@ -15,6 +15,6 @@ namespace GLTF {
 		std::vector<Node*> joints;
 
 		Skin();
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

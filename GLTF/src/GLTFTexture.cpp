@@ -3,7 +3,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-void GLTF::Texture::writeJSON(void* writer) {
+void GLTF::Texture::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	jsonWriter->Key("format");
 	jsonWriter->Int((int)format);
@@ -17,5 +17,5 @@ void GLTF::Texture::writeJSON(void* writer) {
 	jsonWriter->Int((int)target);
 	jsonWriter->Key("type");
 	jsonWriter->Int((int)type);
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }

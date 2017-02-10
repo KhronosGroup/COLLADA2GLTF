@@ -15,7 +15,7 @@ namespace GLTF {
 		public:
 			std::string api = "WebGL";
 			std::string version = "1.0";
-			virtual void writeJSON(void* writer);
+			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};
 
 		class Metadata : public GLTF::Object {
@@ -25,7 +25,7 @@ namespace GLTF {
 			bool premultipliedAlpha = true;
 			Profile* profile = NULL;
 			std::string version = "2.0";
-			virtual void writeJSON(void* writer);
+			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};
 
 		Metadata* metadata = NULL;
@@ -37,8 +37,17 @@ namespace GLTF {
 
 		Asset();
 		GLTF::Scene* getDefaultScene();
+		std::vector<GLTF::Node*> getAllNodes();
+		std::vector<GLTF::Mesh*> getAllMeshes();
+		std::vector<GLTF::Primitive*> getAllPrimitives();
+		std::vector<GLTF::Skin*> getAllSkins();
+		std::vector<GLTF::Material*> getAllMaterials();
+		std::vector<GLTF::Texture*> getAllTextures();
+		std::vector<GLTF::Image*> getAllImages();
+		void removeUnusedSemantics();
 		void separateSkeletonNodes();
 		void removeUnusedNodes();
-		virtual void writeJSON(void* writer);
+		GLTF::Buffer* packAccessors();
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

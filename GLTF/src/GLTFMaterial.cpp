@@ -12,7 +12,7 @@ bool GLTF::Material::hasTexture() {
 	return this->values->diffuseTexture != NULL;
 }
 
-void GLTF::Material::Values::writeJSON(void* writer) {
+void GLTF::Material::Values::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	jsonWriter->Key("ambient");
 	jsonWriter->StartArray();
@@ -22,16 +22,16 @@ void GLTF::Material::Values::writeJSON(void* writer) {
 	jsonWriter->EndArray();
 
 	jsonWriter->Key("diffuse");
+	jsonWriter->StartArray();
 	if (diffuseTexture) {
 		jsonWriter->Int(diffuseTexture->id);
 	}
 	else {
-		jsonWriter->StartArray();
 		for (float val : this->diffuse) {
 			jsonWriter->Double(val);
 		}
-		jsonWriter->EndArray();
 	}
+	jsonWriter->EndArray();
 
 	jsonWriter->Key("emission");
 	jsonWriter->StartArray();
@@ -53,19 +53,19 @@ void GLTF::Material::Values::writeJSON(void* writer) {
 	jsonWriter->EndArray();
 }
 
-void GLTF::Material::writeJSON(void* writer) {
+void GLTF::Material::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (this->values) {
 		jsonWriter->Key("values");
 		jsonWriter->StartObject();
-		this->values->writeJSON(writer);
+		this->values->writeJSON(writer, options);
 		jsonWriter->EndObject();
 	}
 	if (this->technique) {
 		jsonWriter->Key("technique");
 		jsonWriter->Int(this->technique->id);
 	}
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }
 
 GLTF::MaterialCommon::MaterialCommon() {
@@ -73,7 +73,7 @@ GLTF::MaterialCommon::MaterialCommon() {
 	this->type = GLTF::Material::MATERIAL_COMMON;
 }
 
-void GLTF::MaterialCommon::writeJSON(void* writer) {
+void GLTF::MaterialCommon::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	jsonWriter->Key("extensions");
 	jsonWriter->StartObject();
@@ -89,10 +89,10 @@ void GLTF::MaterialCommon::writeJSON(void* writer) {
 	jsonWriter->String(this->getTechniqueName());
 	jsonWriter->Key("transparent");
 	jsonWriter->Bool(this->transparent);
-	GLTF::Material::writeJSON(writer);
+	GLTF::Material::writeJSON(writer, options);
 	jsonWriter->EndObject();
 	jsonWriter->EndObject();
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }
 
 const char* GLTF::MaterialCommon::getTechniqueName() {

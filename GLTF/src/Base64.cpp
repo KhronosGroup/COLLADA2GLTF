@@ -10,7 +10,7 @@ static inline bool is_base64(unsigned char c) {
 }
 
 const std::string base64CharSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-char* GLTF::Base64::encode(unsigned char* data, size_t length) {
+char* Base64::encode(unsigned char* data, size_t length) {
 	size_t base64Length = (size_t)(std::ceil(length / 3.0) * 4) + 1;
 	char* base64 = new char[base64Length];
 	int index;
@@ -48,7 +48,7 @@ char* GLTF::Base64::encode(unsigned char* data, size_t length) {
 	return base64;
 }
 
-std::string GLTF::Base64::decode(std::string string) {
+std::string Base64::decode(std::string string) {
 	size_t length = string.size();
 	size_t i = 0;
 	size_t j = 0;

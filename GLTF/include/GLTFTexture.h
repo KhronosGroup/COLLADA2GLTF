@@ -15,6 +15,6 @@ namespace GLTF {
 		GLTF::Constants::WebGL target = GLTF::Constants::WebGL::TEXTURE_2D;
 		GLTF::Constants::WebGL type = GLTF::Constants::WebGL::UNSIGNED_BYTE;
 		
-		virtual void writeJSON(void* writer);
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

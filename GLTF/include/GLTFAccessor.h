@@ -45,10 +45,16 @@ namespace GLTF {
 			GLTF::BufferView* bufferView
 		);
 
+		Accessor(GLTF::Accessor::Type type,
+			GLTF::Constants::WebGL componentType,
+			int byteOffset,
+			int byteStride,
+			int count,
+			GLTF::BufferView* bufferView
+		);
+
 		static int getComponentByteLength(GLTF::Constants::WebGL componentType);
 		static int getNumberOfComponents(GLTF::Accessor::Type type);
-
-		virtual void writeJSON(void* writer);
 
 		bool computeMinMax();
 		int getByteStride();
@@ -58,5 +64,7 @@ namespace GLTF {
 		int getNumberOfComponents();
 		bool equals(GLTF::Accessor* accessor);
 		const char* getTypeName();
+
+		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 };

@@ -10,7 +10,7 @@ GLTF::Asset::Asset() {
 	metadata->profile = new GLTF::Asset::Profile();
 }
 
-void GLTF::Asset::Profile::writeJSON(void* writer) {
+void GLTF::Asset::Profile::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (api.length() > 0) {
 		jsonWriter->Key("api");
@@ -20,10 +20,10 @@ void GLTF::Asset::Profile::writeJSON(void* writer) {
 		jsonWriter->Key("version");
 		jsonWriter->String(version.c_str());
 	}
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }
 
-void GLTF::Asset::Metadata::writeJSON(void* writer) {
+void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (copyright.length() > 0) {
 		jsonWriter->Key("copyright");
@@ -38,14 +38,14 @@ void GLTF::Asset::Metadata::writeJSON(void* writer) {
 	if (profile) {
 		jsonWriter->Key("profile");
 		jsonWriter->StartObject();
-		profile->writeJSON(writer);
+		profile->writeJSON(writer, options);
 		jsonWriter->EndObject();
 	}
 	if (version.length() > 0) {
 		jsonWriter->Key("version");
 		jsonWriter->String(version.c_str());
 	}
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }
 
 GLTF::Scene* GLTF::Asset::getDefaultScene() {
@@ -59,6 +59,125 @@ GLTF::Scene* GLTF::Asset::getDefaultScene() {
 		scene = this->scenes[this->scene];
 	}
 	return scene;
+}
+
+std::vector<GLTF::Node*> GLTF::Asset::getAllNodes() {
+	std::vector<GLTF::Node*> nodeStack;
+	std::vector<GLTF::Node*> nodes;
+	for (GLTF::Node* node : getDefaultScene()->nodes) {
+		nodeStack.push_back(node);
+	}
+	while (nodeStack.size() > 0) {
+		GLTF::Node* node = nodeStack.back();
+		std::vector<GLTF::Node*>::iterator it = std::find(nodes.begin(), nodes.end(), node);
+		if (it == nodes.end()) {
+			nodes.push_back(node);
+		}
+		nodeStack.pop_back();
+		for (GLTF::Node* child : node->children) {
+			nodeStack.push_back(child);
+		}
+		for (GLTF::Node* skeleton : node->skeletons) {
+			nodeStack.push_back(skeleton);
+		}
+	}
+	return nodes;
+}
+
+std::vector<GLTF::Mesh*> GLTF::Asset::getAllMeshes() {
+	std::vector<GLTF::Mesh*> meshes;
+	for (GLTF::Node* node : getAllNodes()) {
+		for (GLTF::Mesh* mesh : node->meshes) {
+			std::vector<GLTF::Mesh*>::iterator it = std::find(meshes.begin(), meshes.end(), mesh);
+			if (it == meshes.end()) {
+				meshes.push_back(mesh);
+			}
+		}
+	}
+	return meshes;
+}
+
+std::vector<GLTF::Primitive*> GLTF::Asset::getAllPrimitives() {
+	std::vector<GLTF::Primitive*> primitives;
+	for (GLTF::Mesh* mesh : getAllMeshes()) {
+		for (GLTF::Primitive* primitive : mesh->primitives) {
+			primitives.push_back(primitive);
+		}
+	}
+	return primitives;
+}
+
+std::vector<GLTF::Skin*> GLTF::Asset::getAllSkins() {
+	std::vector<GLTF::Skin*> skins;
+	for (GLTF::Node* node : getAllNodes()) {
+		GLTF::Skin* skin = node->skin;
+		if (skin != NULL) {
+			std::vector<GLTF::Skin*>::iterator it = std::find(skins.begin(), skins.end(), skin);
+			if (it == skins.end()) {
+				skins.push_back(skin);
+			}
+		}
+	}
+	return skins;
+}
+
+std::vector<GLTF::Material*> GLTF::Asset::getAllMaterials() {
+	std::vector<GLTF::Material*> materials;
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+		GLTF::Material* material = primitive->material;
+		if (material != NULL) {
+			std::vector<GLTF::Material*>::iterator it = std::find(materials.begin(), materials.end(), material);
+			if (it == materials.end()) {
+				materials.push_back(material);
+			}
+		}
+	}
+	return materials;
+}
+
+std::vector<GLTF::Texture*> GLTF::Asset::getAllTextures() {
+	std::vector<GLTF::Texture*> textures;
+	for (GLTF::Material* material : getAllMaterials()) {
+		GLTF::Material::Values* values = material->values;
+		GLTF::Texture* texture = values->diffuseTexture;
+		if (texture != NULL) {
+			std::vector<GLTF::Texture*>::iterator it = std::find(textures.begin(), textures.end(), texture);
+			if (it == textures.end()) {
+				textures.push_back(texture);
+			}
+		}
+	}
+	return textures;
+}
+
+std::vector<GLTF::Image*> GLTF::Asset::getAllImages() {
+	std::vector<GLTF::Image*> images;
+	for (GLTF::Texture* texture : getAllTextures()) {
+		GLTF::Image* image = texture->source;
+		std::vector<GLTF::Image*>::iterator it = std::find(images.begin(), images.end(), image);
+		if (it == images.end()) {
+			images.push_back(image);
+		}
+	}
+	return images;
+}
+
+void GLTF::Asset::removeUnusedSemantics() {
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+		GLTF::Material* material = primitive->material;
+		GLTF::Material::Values* values = material->values;
+
+		std::map<std::string, GLTF::Accessor*> attributes = primitive->attributes;
+		for (const auto attribute : attributes) {
+			std::string semantic = attribute.first;
+			if (semantic.find("TEXCOORD") != std::string::npos) {
+				if (values->diffuseTexture == NULL) {
+					std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
+					primitive->attributes.erase(removeTexcoord);
+				}
+			}
+		}
+	}
 }
 
 void GLTF::Asset::separateSkeletonNodes() {
@@ -123,7 +242,7 @@ void GLTF::Asset::removeUnusedNodes() {
 		nodeStack.pop_back();
 		for (int i = 0; i < node->children.size(); i++) {
 			GLTF::Node* child = node->children[i];
-			if (child->children.size() == 0 && child->skeletons.size() == 0 && child->skin == NULL && child->jointName == "") {
+			if (child->children.size() == 0 && child->skeletons.size() == 0 && child->meshes.size() == 0 && child->skin == NULL && child->jointName == "") {
 				// this node is extraneous, remove it
 				node->children.erase(node->children.begin() + i);
 				i--;
@@ -137,14 +256,112 @@ void GLTF::Asset::removeUnusedNodes() {
 	}
 }
 
-void GLTF::Asset::writeJSON(void* writer) {
+GLTF::BufferView* packAccessorsForTarget(std::vector<GLTF::Accessor*> accessors, GLTF::Constants::WebGL target) {
+	std::map<GLTF::Accessor*, size_t> byteOffsets;
+	size_t byteLength = 0;
+	for (GLTF::Accessor* accessor : accessors) {
+		int componentByteLength = accessor->getComponentByteLength();
+		int padding = byteLength % componentByteLength;
+		if (padding != 0) {
+			byteLength += (componentByteLength - padding);
+		}
+		byteOffsets[accessor] = byteLength;
+		byteLength += componentByteLength * accessor->getNumberOfComponents() * accessor->count;
+	}
+	unsigned char* bufferData = new unsigned char[byteLength];
+	GLTF::BufferView* bufferView = new GLTF::BufferView(bufferData, byteLength, target);
+	for (GLTF::Accessor* accessor : accessors) {
+		size_t byteOffset = byteOffsets[accessor];
+		GLTF::Accessor* packedAccessor = new GLTF::Accessor(accessor->type, accessor->componentType, byteOffset, 0, accessor->count, bufferView);
+		int numberOfComponents = accessor->getNumberOfComponents();
+		double* component = new double[numberOfComponents];
+		for (int i = 0; i < accessor->count; i++) {
+			accessor->getComponentAtIndex(i, component);
+			packedAccessor->writeComponentAtIndex(i, component);
+		}
+		accessor->byteOffset = packedAccessor->byteOffset;
+		accessor->byteStride = packedAccessor->byteStride;
+		accessor->bufferView = packedAccessor->bufferView;
+	}
+	return bufferView;
+}
+
+GLTF::Buffer* GLTF::Asset::packAccessors() {
+	std::vector<GLTF::Accessor*> attributeAccessors;
+	std::vector<GLTF::Accessor*> indicesAccessors;
+	std::vector<GLTF::Accessor*> animationAccessors;
+
+	for (GLTF::Skin* skin : getAllSkins()) {
+		GLTF::Accessor* inverseBindMatrices = skin->inverseBindMatrices;
+		if (inverseBindMatrices != NULL) {
+			std::vector<GLTF::Accessor*>::iterator it = std::find(attributeAccessors.begin(), attributeAccessors.end(), inverseBindMatrices);
+			if (it == attributeAccessors.end()) {
+				attributeAccessors.push_back(inverseBindMatrices);
+			}
+		}
+	}
+
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+		for (const auto attribute : primitive->attributes) {
+			GLTF::Accessor* attributeAccessor = attribute.second;
+			std::vector<GLTF::Accessor*>::iterator it = std::find(attributeAccessors.begin(), attributeAccessors.end(), attributeAccessor);
+			if (it == attributeAccessors.end()) {
+				attributeAccessors.push_back(attributeAccessor);
+			}
+		}
+		GLTF::Accessor* indicesAccessor = primitive->indices;
+		if (indicesAccessor != NULL) {
+			std::vector<GLTF::Accessor*>::iterator it = std::find(indicesAccessors.begin(), indicesAccessors.end(), indicesAccessor);
+			if (it == indicesAccessors.end()) {
+				indicesAccessors.push_back(indicesAccessor);
+			}
+		}
+	}
+
+	for (GLTF::Animation* animation : animations) {
+		for (GLTF::Animation::Channel* channel : animation->channels) {
+			GLTF::Animation::Sampler* sampler = channel->sampler;
+			GLTF::Accessor* input = sampler->input;
+			std::vector<GLTF::Accessor*>::iterator it = std::find(animationAccessors.begin(), animationAccessors.end(), input);
+			if (it == animationAccessors.end()) {
+				animationAccessors.push_back(input);
+			}
+			GLTF::Accessor* output = sampler->output;
+			it = std::find(animationAccessors.begin(), animationAccessors.end(), output);
+			if (it == animationAccessors.end()) {
+				animationAccessors.push_back(output);
+			}
+		}
+	}
+
+	GLTF::BufferView* attributeBufferView = packAccessorsForTarget(attributeAccessors, GLTF::Constants::WebGL::ARRAY_BUFFER);
+	GLTF::BufferView* indicesBufferView = packAccessorsForTarget(indicesAccessors, GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
+	GLTF::BufferView* animationBufferView = packAccessorsForTarget(animationAccessors, (GLTF::Constants::WebGL) - 1);
+
+	size_t byteLength = attributeBufferView->byteLength + indicesBufferView->byteLength + animationBufferView->byteLength;
+	unsigned char* bufferData = new unsigned char[byteLength];
+	std::memcpy(bufferData, attributeBufferView->buffer->data, attributeBufferView->byteLength);
+	std::memcpy(bufferData + attributeBufferView->byteLength, indicesBufferView->buffer->data, indicesBufferView->byteLength);
+	std::memcpy(bufferData + attributeBufferView->byteLength + indicesBufferView->byteLength, animationBufferView->buffer->data, animationBufferView->byteLength);
+	
+	GLTF::Buffer* buffer = new GLTF::Buffer(bufferData, byteLength);
+	attributeBufferView->buffer = buffer;
+	indicesBufferView->buffer = buffer;
+	indicesBufferView->byteOffset = attributeBufferView->byteLength;
+	animationBufferView->buffer = buffer;
+	animationBufferView->byteOffset = attributeBufferView->byteLength + indicesBufferView->byteLength;
+
+	return buffer;
+}
+
+void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
 	// Write asset metadata
 	if (this->metadata) {
 		jsonWriter->Key("asset");
 		jsonWriter->StartObject();
-		this->metadata->writeJSON(writer);
+		this->metadata->writeJSON(writer, options);
 		jsonWriter->EndObject();
 	}
 
@@ -179,7 +396,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 				}
 			}
 			jsonWriter->StartObject();
-			scene->writeJSON(writer);
+			scene->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
@@ -205,7 +422,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 				}
 			}
 			jsonWriter->StartObject();
-			node->writeJSON(writer);
+			node->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
@@ -243,7 +460,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 				}
 			}
 			jsonWriter->StartObject();
-			mesh->writeJSON(writer);
+			mesh->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
@@ -268,7 +485,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 				}
 			}
 			jsonWriter->StartObject();
-			animation->writeJSON(writer);
+			animation->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
@@ -284,7 +501,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 				accessors.push_back(skin->inverseBindMatrices);
 			}
 			jsonWriter->StartObject();
-			skin->writeJSON(writer);
+			skin->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
@@ -305,46 +522,12 @@ void GLTF::Asset::writeJSON(void* writer) {
 				}
 			}
 			jsonWriter->StartObject();
-			accessor->writeJSON(writer);
+			accessor->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
 	}
 	accessors.clear();
-
-	// Write bufferViews and add buffers to the buffer array
-	std::vector<GLTF::Buffer*> buffers;
-	if (bufferViews.size() > 0) {
-		jsonWriter->Key("bufferViews");
-		jsonWriter->StartArray();
-		for (GLTF::BufferView* bufferView : bufferViews) {
-			if (bufferView->buffer) {
-				GLTF::Buffer* buffer = bufferView->buffer;
-				if (buffer->id < 0) {
-					buffer->id = buffers.size();
-					buffers.push_back(buffer);
-				}
-			}
-			jsonWriter->StartObject();
-			bufferView->writeJSON(writer);
-			jsonWriter->EndObject();
-		}
-		jsonWriter->EndArray();
-	}
-	bufferViews.clear();
-
-	// Write buffers
-	if (buffers.size() > 0) {
-		jsonWriter->Key("buffers");
-		jsonWriter->StartArray();
-		for (GLTF::Buffer* buffer : buffers) {
-			jsonWriter->StartObject();
-			buffer->writeJSON(writer);
-			jsonWriter->EndObject();
-		}
-		jsonWriter->EndArray();
-	}
-	buffers.clear();
 
 	// Write materials and build technique and texture arrays
 	std::vector<GLTF::Technique*> techniques;
@@ -371,7 +554,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 				textures.push_back(diffuseTexture);
 			}
 			jsonWriter->StartObject();
-			material->writeJSON(writer);
+			material->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
@@ -396,20 +579,25 @@ void GLTF::Asset::writeJSON(void* writer) {
 				images.push_back(source);
 			}
 			jsonWriter->StartObject();
-			texture->writeJSON(writer);
+			texture->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
 	}
 	textures.clear();
 
-	// Write images
+	// Write images and add bufferViews if we have them
 	if (images.size() > 0) {
 		jsonWriter->Key("images");
 		jsonWriter->StartArray();
 		for (GLTF::Image* image : images) {
+			GLTF::BufferView* bufferView = image->bufferView;
+			if (bufferView != NULL && bufferView->id < 0) {
+				bufferView->id = bufferViews.size();
+				bufferViews.push_back(bufferView);
+			}
 			jsonWriter->StartObject();
-			image->writeJSON(writer);
+			image->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
@@ -422,7 +610,7 @@ void GLTF::Asset::writeJSON(void* writer) {
 		jsonWriter->StartArray();
 		for (GLTF::Sampler* sampler : samplers) {
 			jsonWriter->StartObject();
-			sampler->writeJSON(writer);
+			sampler->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
@@ -443,15 +631,66 @@ void GLTF::Asset::writeJSON(void* writer) {
 				}
 			}
 			jsonWriter->StartObject();
-			technique->writeJSON(writer);
+			technique->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();
 	}
 	techniques.clear();
 
+	// Write bufferViews and add buffers to the buffer array
+	std::vector<GLTF::Buffer*> buffers;
+	if (bufferViews.size() > 0) {
+		jsonWriter->Key("bufferViews");
+		jsonWriter->StartArray();
+		for (GLTF::BufferView* bufferView : bufferViews) {
+			if (bufferView->buffer) {
+				GLTF::Buffer* buffer = bufferView->buffer;
+				if (buffer->id < 0) {
+					buffer->id = buffers.size();
+					buffers.push_back(buffer);
+				}
+			}
+			jsonWriter->StartObject();
+			bufferView->writeJSON(writer, options);
+			jsonWriter->EndObject();
+		}
+		jsonWriter->EndArray();
+	}
+	bufferViews.clear();
+
+	// Write buffers
+	if (buffers.size() > 0) {
+		jsonWriter->Key("buffers");
+		if (options->binary) {
+			jsonWriter->StartObject();
+			jsonWriter->String("binary_glTF");
+		}
+		else {
+			jsonWriter->StartArray();
+		}
+		for (GLTF::Buffer* buffer : buffers) {
+			jsonWriter->StartObject();
+			buffer->writeJSON(writer, options);
+			jsonWriter->EndObject();
+		}
+		if (options->binary) {
+			jsonWriter->EndObject();
+		}
+		else {
+			jsonWriter->EndArray();
+		}
+	}
+	buffers.clear();
+
 	// Write extensionsUsed
 	if (this->extensionsUsed.size() > 0) {
+		jsonWriter->Key("extensionsRequired");
+		jsonWriter->StartArray();
+		for (const std::string extensionUsed : this->extensionsUsed) {
+			jsonWriter->String(extensionUsed.c_str());
+		}
+		jsonWriter->EndArray();
 		jsonWriter->Key("extensionsUsed");
 		jsonWriter->StartArray();
 		for (const std::string extensionUsed : this->extensionsUsed) {
@@ -460,5 +699,5 @@ void GLTF::Asset::writeJSON(void* writer) {
 		jsonWriter->EndArray();
 	}
 
-	GLTF::Object::writeJSON(writer);
+	GLTF::Object::writeJSON(writer, options);
 }
