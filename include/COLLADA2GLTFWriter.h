@@ -17,6 +17,7 @@ namespace COLLADA2GLTF {
 		GLTF::BufferView* _attributesBufferView = NULL;
 		GLTF::BufferView* _animationsBufferView = NULL;
 		GLTF::BufferView* _skinAttributesBufferView = NULL;
+		GLTF::Node* _rootNode = NULL;
 		std::map<COLLADAFW::UniqueId, COLLADAFW::UniqueId> _materialEffects;
 		std::map<COLLADAFW::UniqueId, GLTF::Material*> _effectInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _meshInstances;

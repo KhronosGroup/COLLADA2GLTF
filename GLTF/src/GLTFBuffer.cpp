@@ -3,11 +3,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-int GLTF::Buffer::INSTANCE_COUNT = 0;
-
 GLTF::Buffer::Buffer(unsigned char* data, int dataLength) {
-	this->id = "buffer_" + std::to_string(GLTF::Buffer::INSTANCE_COUNT);
-	GLTF::Buffer::INSTANCE_COUNT++;
 	this->data = data;
 	this->byteLength = dataLength;
 }

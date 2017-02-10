@@ -28,6 +28,13 @@ namespace GLTF {
 			float matrix[16];
 
 			TransformMatrix();
+			TransformMatrix(float a00, float a01, float a02, float a03, 
+				float a10, float a11, float a12, float a13, 
+				float a20, float a21, float a22, float a23, 
+				float a30, float a31, float a32, float a33);
+
+			void premultiply(TransformMatrix* transform);
+			bool isIdentity();
 			void getTransformTRS(TransformTRS* out);
 			TransformTRS* getTransformTRS();
 		};
@@ -42,8 +49,6 @@ namespace GLTF {
 			TransformMatrix* getTransformMatrix();
 		};
 
-		static int INSTANCE_COUNT;
-
 		GLTF::Camera* camera;
 		std::vector<GLTF::Node*> children;
 		std::vector<GLTF::Node*> skeletons;
@@ -52,9 +57,6 @@ namespace GLTF {
 		std::vector<GLTF::Mesh*> meshes;
 
 		Transform* transform = NULL;
-
-		Node();
-		Node(std::string id);
 
 		virtual void writeJSON(void* writer);
 	};

@@ -5,6 +5,11 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+GLTF::Asset::Asset() {
+	metadata = new GLTF::Asset::Metadata();
+	metadata->profile = new GLTF::Asset::Profile();
+}
+
 void GLTF::Asset::Profile::writeJSON(void* writer) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (api.length() > 0) {
@@ -56,6 +61,82 @@ GLTF::Scene* GLTF::Asset::getDefaultScene() {
 	return scene;
 }
 
+void GLTF::Asset::separateSkeletonNodes() {
+	std::vector<GLTF::Node*> nodeStack;
+	std::vector<GLTF::Node*> skinnedNodes;
+	std::map<GLTF::Node*, GLTF::Node*> parents;
+
+	for (GLTF::Node* node : getDefaultScene()->nodes) {
+		nodeStack.push_back(node);
+	}
+	while (nodeStack.size() > 0) {
+		GLTF::Node* node = nodeStack.back();
+		nodeStack.pop_back();
+		for (GLTF::Node* child : node->children) {
+			parents[child] = node; 
+			nodeStack.push_back(child);
+		}
+		if (node->skeletons.size() > 0) {
+			skinnedNodes.push_back(node);
+		}
+	}
+	for (GLTF::Node* skinnedNode : skinnedNodes) {
+		std::vector<GLTF::Node*> skeletons = skinnedNode->skeletons;
+		for (size_t i = 0; i < skeletons.size(); i++) {
+			GLTF::Node* skeletonNode = skeletons[i];
+			GLTF::Node::TransformMatrix* transform = NULL;
+			auto it = parents.find(skeletonNode);
+			GLTF::Node* skeletonParent = NULL;
+			while (it != parents.end()) {
+				GLTF::Node* parent = it->second;
+				if (transform == NULL) {
+					skeletonParent = parent;
+					transform = new GLTF::Node::TransformMatrix();
+				}
+				transform->premultiply((GLTF::Node::TransformMatrix*)parent->transform);
+				it = parents.find(parent);
+			}
+			if (transform != NULL) {
+				auto removeChild = std::find(skeletonParent->children.begin(), skeletonParent->children.end(), skeletonNode);
+				if (removeChild != skeletonParent->children.end()) {
+					skeletonParent->children.erase(removeChild);
+				}
+				if (!transform->isIdentity()) {
+					GLTF::Node* newRoot = new GLTF::Node();
+					newRoot->transform = transform;
+					newRoot->children.push_back(skeletonNode);
+					skinnedNode->skeletons[i] = newRoot;
+				}
+			}
+		}
+	}
+}
+
+void GLTF::Asset::removeUnusedNodes() {
+	std::vector<GLTF::Node*> nodeStack;
+
+	for (GLTF::Node* node : getDefaultScene()->nodes) {
+		nodeStack.push_back(node);
+	}
+	while (nodeStack.size() > 0) {
+		GLTF::Node* node = nodeStack.back();
+		nodeStack.pop_back();
+		for (int i = 0; i < node->children.size(); i++) {
+			GLTF::Node* child = node->children[i];
+			if (child->children.size() == 0 && child->skeletons.size() == 0 && child->skin == NULL && child->jointName == "") {
+				// this node is extraneous, remove it
+				node->children.erase(node->children.begin() + i);
+				i--;
+				// add the parent back to the node stack for re-evaluation
+				nodeStack.push_back(node);
+			}
+			else {
+				nodeStack.push_back(child);
+			}
+		}
+	}
+}
+
 void GLTF::Asset::writeJSON(void* writer) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
@@ -69,16 +150,15 @@ void GLTF::Asset::writeJSON(void* writer) {
 
 	// Write scene
 	if (this->scene >= 0) {
-		GLTF::Scene* scene = this->scenes[this->scene];
 		jsonWriter->Key("scene");
-		jsonWriter->String(scene->id.c_str());
+		jsonWriter->Int(this->scene);
 	}
 
-	// Write scenes and build node hash
-	std::map<std::string, GLTF::Node*> nodes;
+	// Write scenes and build node array
+	std::vector<GLTF::Node*> nodes;
 	if (this->scenes.size() > 0) {
 		jsonWriter->Key("scenes");
-		jsonWriter->StartObject();
+		jsonWriter->StartArray();
 		for (GLTF::Scene* scene : this->scenes) {
 			std::vector<GLTF::Node*> nodeStack;
 			for (GLTF::Node* node : scene->nodes) {
@@ -87,184 +167,198 @@ void GLTF::Asset::writeJSON(void* writer) {
 			while (nodeStack.size() > 0) {
 				GLTF::Node* node = nodeStack.back();
 				nodeStack.pop_back();
-				nodes[node->id] = node;
+				if (node->id < 0) {
+					node->id = nodes.size();
+					nodes.push_back(node);
+				}
 				for (GLTF::Node* child : node->children) {
 					nodeStack.push_back(child);
 				}
+				for (GLTF::Node* skeleton : node->skeletons) {
+					nodeStack.push_back(skeleton);
+				}
 			}
-			jsonWriter->Key(scene->id.c_str());
 			jsonWriter->StartObject();
 			scene->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 
-	// Write nodes and build mesh and skin hash
-	std::map<std::string, GLTF::Mesh*> meshes;
-	std::map<std::string, GLTF::Skin*> skins;
+	// Write nodes and build mesh and skin arrays
+	std::vector<GLTF::Mesh*> meshes;
+	std::vector<GLTF::Skin*> skins;
 	if (nodes.size() > 0) {
 		jsonWriter->Key("nodes");
-		jsonWriter->StartObject();
-		for (auto const& nodeMapEntry : nodes) {
-			std::string nodeId = nodeMapEntry.first;
-			GLTF::Node* node = nodeMapEntry.second;
+		jsonWriter->StartArray();
+		for (GLTF::Node* node : nodes) {
 			for (GLTF::Mesh* mesh : node->meshes) {
-				meshes[mesh->id] = mesh;
+				if (mesh->id < 0) {
+					mesh->id = meshes.size();
+					meshes.push_back(mesh);
+				}
 			}
 			if (node->skin != NULL) {
-				skins[node->skin->id] = node->skin;
+				if (node->skin->id < 0) {
+					node->skin->id = skins.size();
+					skins.push_back(node->skin);
+				}
 			}
-			jsonWriter->Key(nodeId.c_str());
 			jsonWriter->StartObject();
 			node->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	nodes.clear();
 
-	// Write meshes and build accessor and material hash
-	std::map<std::string, GLTF::Accessor*> accessors;
-	std::map<std::string, GLTF::Material*> materials;
+	// Write meshes and build accessor and material arrays
+	std::vector<GLTF::Accessor*> accessors;
+	std::vector<GLTF::Material*> materials;
 	if (meshes.size() > 0) {
 		jsonWriter->Key("meshes");
-		jsonWriter->StartObject();
-		for (auto const& meshMapEntry : meshes) {
-			std::string meshId = meshMapEntry.first;
-			GLTF::Mesh* mesh = meshMapEntry.second;
+		jsonWriter->StartArray();
+		for (GLTF::Mesh* mesh : meshes) {
 			for (GLTF::Primitive* primitive : mesh->primitives) {
 				if (primitive->material) {
 					GLTF::Material* material = primitive->material;
-					materials[material->id] = material;
+					if (material->id < 0) {
+						material->id = materials.size();
+						materials.push_back(material);
+					}
 				}
 				if (primitive->indices) {
 					GLTF::Accessor* indices = primitive->indices;
-					accessors[indices->id] = indices;
+					if (indices->id < 0) {
+						indices->id = accessors.size();
+						accessors.push_back(indices);
+					}
 				}
 				for (auto const& primitiveAttribute : primitive->attributes) {
 					GLTF::Accessor* attribute = primitiveAttribute.second;
-					accessors[attribute->id] = attribute;
+					if (attribute->id < 0) {
+						attribute->id = accessors.size();
+						accessors.push_back(attribute);
+					}
 				}
 			}
-			jsonWriter->Key(meshId.c_str());
 			jsonWriter->StartObject();
 			mesh->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	meshes.clear();
 
-	// Write animations and add accessors to the accessor hash
+	// Write animations and add accessors to the accessor array
 	if (animations.size() > 0) {
 		jsonWriter->Key("animations");
-		jsonWriter->StartObject();
-		for (GLTF::Animation* animation : animations) {
+		jsonWriter->StartArray();
+		for (int i = 0; i < animations.size(); i++) {
+			GLTF::Animation* animation = animations[i];
 			for (GLTF::Animation::Channel* channel : animation->channels) {
 				GLTF::Animation::Sampler* sampler = channel->sampler;
-				accessors[sampler->input->id] = sampler->input;
-				accessors[sampler->output->id] = sampler->output;
+				if (sampler->input->id < 0) {
+					sampler->input->id = accessors.size();
+					accessors.push_back(sampler->input);
+				}
+				if (sampler->output->id < 0) {
+					sampler->output->id = accessors.size();
+					accessors.push_back(sampler->output);
+				}
 			}
-			jsonWriter->Key(animation->id.c_str());
 			jsonWriter->StartObject();
 			animation->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 
-	// Write skins and add accessors to the accessor hash
+	// Write skins and add accessors to the accessor array
 	if (skins.size() > 0) {
 		jsonWriter->Key("skins");
-		jsonWriter->StartObject();
-		for (auto const& skinMapEntry : skins) {
-			std::string skinId = skinMapEntry.first;
-			GLTF::Skin* skin = skinMapEntry.second;
-			if (skin->inverseBindMatrices != NULL) {
-				accessors[skin->inverseBindMatrices->id] = skin->inverseBindMatrices;
+		jsonWriter->StartArray();
+		for (GLTF::Skin* skin : skins) {
+			if (skin->inverseBindMatrices != NULL && skin->inverseBindMatrices->id < 0) {
+				skin->inverseBindMatrices->id = accessors.size();
+				accessors.push_back(skin->inverseBindMatrices);
 			}
-			jsonWriter->Key(skinId.c_str());
 			jsonWriter->StartObject();
 			skin->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	skins.clear();
 
-	// Write accessors and build bufferView hash
-	std::map<std::string, GLTF::BufferView*> bufferViews;
+	// Write accessors and add bufferViews to the bufferView array
+	std::vector<GLTF::BufferView*> bufferViews;
 	if (accessors.size() > 0) {
 		jsonWriter->Key("accessors");
-		jsonWriter->StartObject();
-		for (auto const& accessorMapEntry : accessors) {
-			std::string accessorId = accessorMapEntry.first;
-			GLTF::Accessor* accessor = accessorMapEntry.second;
+		jsonWriter->StartArray();
+		for (GLTF::Accessor* accessor : accessors) {
 			if (accessor->bufferView) {
 				GLTF::BufferView* bufferView = accessor->bufferView;
-				bufferViews[bufferView->id] = bufferView;
+				if (bufferView->id < 0) {
+					bufferView->id = bufferViews.size();
+					bufferViews.push_back(bufferView);
+				}
 			}
-			jsonWriter->Key(accessorId.c_str());
 			jsonWriter->StartObject();
 			accessor->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	accessors.clear();
 
-	// Write bufferViews and build buffer hash
-	std::map<std::string, GLTF::Buffer*> buffers;
+	// Write bufferViews and add buffers to the buffer array
+	std::vector<GLTF::Buffer*> buffers;
 	if (bufferViews.size() > 0) {
 		jsonWriter->Key("bufferViews");
-		jsonWriter->StartObject();
-		for (auto const& bufferViewMapEntry : bufferViews) {
-			std::string bufferViewId = bufferViewMapEntry.first;
-			GLTF::BufferView* bufferView = bufferViewMapEntry.second;
+		jsonWriter->StartArray();
+		for (GLTF::BufferView* bufferView : bufferViews) {
 			if (bufferView->buffer) {
 				GLTF::Buffer* buffer = bufferView->buffer;
-				buffers[buffer->id] = buffer;
+				if (buffer->id < 0) {
+					buffer->id = buffers.size();
+					buffers.push_back(buffer);
+				}
 			}
-			jsonWriter->Key(bufferViewId.c_str());
 			jsonWriter->StartObject();
 			bufferView->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	bufferViews.clear();
 
 	// Write buffers
 	if (buffers.size() > 0) {
 		jsonWriter->Key("buffers");
-		jsonWriter->StartObject();
-		for (auto const& bufferMapEntry : buffers) {
-			std::string bufferId = bufferMapEntry.first;
-			GLTF::Buffer* buffer = bufferMapEntry.second;
-			jsonWriter->Key(bufferId.c_str());
+		jsonWriter->StartArray();
+		for (GLTF::Buffer* buffer : buffers) {
 			jsonWriter->StartObject();
 			buffer->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	buffers.clear();
 
-	// Write materials and build technique and texture hash
-	std::map<std::string, GLTF::Technique*> techniques;
-	std::map<std::string, GLTF::Texture*> textures;
+	// Write materials and build technique and texture arrays
+	std::vector<GLTF::Technique*> techniques;
+	std::vector<GLTF::Texture*> textures;
 	if (materials.size() > 0) {
 		jsonWriter->Key("materials");
-		jsonWriter->StartObject();
+		jsonWriter->StartArray();
 		bool usesMaterialsCommon = false;
-		for (auto const& materialMapEntry : materials) {
-			std::string materialId = materialMapEntry.first;
-			GLTF::Material* material = materialMapEntry.second;
+		for (GLTF::Material* material : materials) {
 			if (material->type == GLTF::Material::Type::MATERIAL) {
 				GLTF::Technique* technique = material->technique;
-				if (technique) {
-					techniques[technique->id] = technique;
+				if (technique && technique->id < 0) {
+					technique->id = techniques.size();
+					techniques.push_back(technique);
 				}
 			}
 			else if (material->type == GLTF::Material::Type::MATERIAL_COMMON && !usesMaterialsCommon) {
@@ -272,94 +366,87 @@ void GLTF::Asset::writeJSON(void* writer) {
 				usesMaterialsCommon = true;
 			}
 			GLTF::Texture* diffuseTexture = material->values->diffuseTexture;
-			if (diffuseTexture) {
-				textures[diffuseTexture->id] = diffuseTexture;
+			if (diffuseTexture != NULL && diffuseTexture->id < 0) {
+				diffuseTexture->id = textures.size();
+				textures.push_back(diffuseTexture);
 			}
-			jsonWriter->Key(materialId.c_str());
 			jsonWriter->StartObject();
 			material->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	materials.clear();
 
-	// Write textures and build sampler and image hash
-	std::map<std::string, GLTF::Sampler*> samplers;
-	std::map<std::string, GLTF::Image*> images;
+	// Write textures and build sampler and image arrays
+	std::vector<GLTF::Sampler*> samplers;
+	std::vector<GLTF::Image*> images;
 	if (textures.size() > 0) {
 		jsonWriter->Key("textures");
-		jsonWriter->StartObject();
-		for (auto const& textureMapEntry : textures) {
-			std::string textureId = textureMapEntry.first;
-			GLTF::Texture* texture = textureMapEntry.second;
+		jsonWriter->StartArray();
+		for (GLTF::Texture* texture : textures) {
 			GLTF::Sampler* sampler = texture->sampler;
-			if (sampler) {
-				samplers[sampler->id] = sampler;
+			if (sampler && sampler->id < 0) {
+				sampler->id = samplers.size();
+				samplers.push_back(sampler);
 			}
 			GLTF::Image* source = texture->source;
-			if (source) {
-				images[source->id] = source;
+			if (source && source->id < 0) {
+				source->id = images.size();
+				images.push_back(source);
 			}
-			jsonWriter->Key(textureId.c_str());
 			jsonWriter->StartObject();
 			texture->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	textures.clear();
 
 	// Write images
 	if (images.size() > 0) {
 		jsonWriter->Key("images");
-		jsonWriter->StartObject();
-		for (auto const& imageMapEntry : images) {
-			std::string imageId = imageMapEntry.first;
-			GLTF::Image* image = imageMapEntry.second;
-			jsonWriter->Key(imageId.c_str());
+		jsonWriter->StartArray();
+		for (GLTF::Image* image : images) {
 			jsonWriter->StartObject();
 			image->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	images.clear();
 
 	// Write samplers
 	if (samplers.size() > 0) {
 		jsonWriter->Key("samplers");
-		jsonWriter->StartObject();
-		for (auto const& samplerMapEntry : samplers) {
-			std::string samplerId = samplerMapEntry.first;
-			GLTF::Sampler* sampler = samplerMapEntry.second;
-			jsonWriter->Key(samplerId.c_str());
+		jsonWriter->StartArray();
+		for (GLTF::Sampler* sampler : samplers) {
 			jsonWriter->StartObject();
 			sampler->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	samplers.clear();
 
 	// Write techniques and build program hash
-	std::map<std::string, GLTF::Program*> programs;
+	std::vector<GLTF::Program*> programs;
 	if (techniques.size() > 0) {
 		jsonWriter->Key("techniques");
-		jsonWriter->StartObject();
-		for (auto const& techniqueMapEntry : techniques) {
-			std::string techniqueId = techniqueMapEntry.first;
-			GLTF::Technique* technique = techniqueMapEntry.second;
+		jsonWriter->StartArray();
+		for (GLTF::Technique* technique : techniques) {
 			if (technique->program) {
 				GLTF::Program* program = technique->program;
-				programs[program->id] = program;
+				if (program->id < 0) {
+					program->id = programs.size();
+					programs.push_back(program);
+				}
 			}
-			jsonWriter->Key(techniqueId.c_str());
 			jsonWriter->StartObject();
 			technique->writeJSON(writer);
 			jsonWriter->EndObject();
 		}
-		jsonWriter->EndObject();
+		jsonWriter->EndArray();
 	}
 	techniques.clear();
 

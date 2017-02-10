@@ -23,7 +23,7 @@ void GLTF::Material::Values::writeJSON(void* writer) {
 
 	jsonWriter->Key("diffuse");
 	if (diffuseTexture) {
-		jsonWriter->String(diffuseTexture->id.c_str());
+		jsonWriter->Int(diffuseTexture->id);
 	}
 	else {
 		jsonWriter->StartArray();
@@ -63,7 +63,7 @@ void GLTF::Material::writeJSON(void* writer) {
 	}
 	if (this->technique) {
 		jsonWriter->Key("technique");
-		jsonWriter->String(this->technique->id.c_str());
+		jsonWriter->Int(this->technique->id);
 	}
 	GLTF::Object::writeJSON(writer);
 }

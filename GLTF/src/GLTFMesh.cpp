@@ -3,13 +3,6 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-int GLTF::Mesh::INSTANCE_COUNT = 0;
-
-GLTF::Mesh::Mesh() {
-	this->id = "mesh_" + std::to_string(GLTF::Mesh::INSTANCE_COUNT);
-	GLTF::Mesh::INSTANCE_COUNT++;
-}
-
 GLTF::Object* GLTF::Mesh::clone() {
 	GLTF::Mesh* clone = (GLTF::Mesh*)GLTF::Object::clone();
 	for (GLTF::Primitive* primitive : this->primitives) {

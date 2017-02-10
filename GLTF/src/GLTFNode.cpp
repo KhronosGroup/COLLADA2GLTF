@@ -3,24 +3,75 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-int GLTF::Node::INSTANCE_COUNT = 0;
-
-GLTF::Node::Node() {
-	this->id = "node_" + std::to_string(GLTF::Node::INSTANCE_COUNT);
-	GLTF::Accessor::INSTANCE_COUNT++;
-}
-
-GLTF::Node::Node(std::string id) {
-	this->id = id;
-}
-
 GLTF::Node::TransformMatrix::TransformMatrix() {
 	this->type = GLTF::Node::Transform::MATRIX;
+	this->matrix[0] = 1;
+	this->matrix[1] = 0;
+	this->matrix[2] = 0;
+	this->matrix[3] = 0;
+	this->matrix[4] = 0;
+	this->matrix[5] = 1;
+	this->matrix[6] = 0;
+	this->matrix[7] = 0;
+	this->matrix[8] = 0;
+	this->matrix[9] = 0;
+	this->matrix[10] = 1;
+	this->matrix[11] = 0;
+	this->matrix[12] = 0;
+	this->matrix[13] = 0;
+	this->matrix[14] = 0;
+	this->matrix[15] = 1;
+}
+
+GLTF::Node::TransformMatrix::TransformMatrix(float a00, float a01, float a02, float a03,
+	float a10, float a11, float a12, float a13,
+	float a20, float a21, float a22, float a23,
+	float a30, float a31, float a32, float a33) : GLTF::Node::TransformMatrix() {
+	this->matrix[0] = a00;
+	this->matrix[1] = a10;
+	this->matrix[2] = a20;
+	this->matrix[3] = a30;
+	this->matrix[4] = a01;
+	this->matrix[5] = a11;
+	this->matrix[6] = a21;
+	this->matrix[7] = a31;
+	this->matrix[8] = a02;
+	this->matrix[9] = a12;
+	this->matrix[10] = a22;
+	this->matrix[11] = a32;
+	this->matrix[12] = a03;
+	this->matrix[13] = a13;
+	this->matrix[14] = a23;
+	this->matrix[15] = a33;
 }
 
 GLTF::Node::TransformTRS::TransformTRS() {
 	this->type = GLTF::Node::Transform::TRS;
 }
+
+void GLTF::Node::TransformMatrix::premultiply(GLTF::Node::TransformMatrix* transform) {
+	float matrix[16];
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			float sum = 0;
+			for (int k = 0; k < 4; k++) {
+				sum += this->matrix[i * 4 + k] * transform->matrix[k * 4 + j];
+			}
+			matrix[i * 4 + j] = sum;
+		}
+	}
+	for (int i = 0; i < 16; i++) {
+		this->matrix[i] = matrix[i];
+	}
+}
+
+bool GLTF::Node::TransformMatrix::isIdentity() {
+	return matrix[0] == 1 && matrix[1] == 0 && matrix[2] == 0 && matrix[3] == 0 &&
+		matrix[4] == 0 && matrix[5] == 1 && matrix[6] == 0 && matrix[7] == 0 &&
+		matrix[8] == 0 && matrix[9] == 0 && matrix[10] == 1 && matrix[11] == 0 &&
+		matrix[12] == 0 && matrix[13] == 0 && matrix[14] == 0 && matrix[15] == 1;
+}
+
 
 GLTF::Node::TransformTRS* GLTF::Node::TransformMatrix::getTransformTRS() {
 	GLTF::Node::TransformTRS* trs = new GLTF::Node::TransformTRS();
@@ -146,7 +197,7 @@ void GLTF::Node::writeJSON(void* writer) {
 		jsonWriter->Key("meshes");
 		jsonWriter->StartArray();
 		for (GLTF::Mesh* mesh : meshes) {
-			jsonWriter->String(mesh->id.c_str());
+			jsonWriter->Int(mesh->id);
 		}
 		jsonWriter->EndArray();
 	}
@@ -154,7 +205,7 @@ void GLTF::Node::writeJSON(void* writer) {
 		jsonWriter->Key("children");
 		jsonWriter->StartArray();
 		for (GLTF::Node* child : children) {
-			jsonWriter->String(child->id.c_str());
+			jsonWriter->Int(child->id);
 		}
 		jsonWriter->EndArray();
 	}
@@ -195,7 +246,7 @@ void GLTF::Node::writeJSON(void* writer) {
 		jsonWriter->Key("skeletons");
 		jsonWriter->StartArray();
 		for (GLTF::Node* skeleton : skeletons) {
-			jsonWriter->String(skeleton->id.c_str());
+			jsonWriter->Int(skeleton->id);
 		}
 		jsonWriter->EndArray();
 	}
@@ -205,6 +256,6 @@ void GLTF::Node::writeJSON(void* writer) {
 	}
 	if (skin != NULL) {
 		jsonWriter->Key("skin");
-		jsonWriter->String(skin->id.c_str());
+		jsonWriter->Int(skin->id);
 	}
 }

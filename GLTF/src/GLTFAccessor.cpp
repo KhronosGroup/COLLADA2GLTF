@@ -8,14 +8,9 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-int GLTF::Accessor::INSTANCE_COUNT = 0;
-
 GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	GLTF::Constants::WebGL componentType
-) : type(type), componentType(componentType), byteOffset(0), byteStride(0) {
-	this->id = "accessor_" + std::to_string(GLTF::Accessor::INSTANCE_COUNT);
-	GLTF::Accessor::INSTANCE_COUNT++;
-}
+) : type(type), componentType(componentType), byteOffset(0), byteStride(0) {}
 
 GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	GLTF::Constants::WebGL componentType,
@@ -242,7 +237,7 @@ void GLTF::Accessor::writeJSON(void* writer) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (this->bufferView) {
 		jsonWriter->Key("bufferView");
-		jsonWriter->String(this->bufferView->id.c_str());
+		jsonWriter->Int(this->bufferView->id);
 	}
 	jsonWriter->Key("byteOffset");
 	jsonWriter->Int(this->byteOffset);

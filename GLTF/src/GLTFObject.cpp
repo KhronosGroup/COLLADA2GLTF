@@ -4,23 +4,15 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-void GLTF::Object::addExtra(GLTF::Object* extra) {
-  this->extras.push_back(extra);
-}
-
-void GLTF::Object::addExtension(GLTF::Extension* extension) {
-  this->extensions.push_back(extension);
-}
-
 GLTF::Object* GLTF::Object::clone() {
 	GLTF::Object* clone = new GLTF::Object();
 	clone->id = this->id;
 	clone->name = this->name;
-	for (GLTF::Object* extra : this->extras) {
-		clone->extras.push_back(extra->clone());
+	for (const auto extra : this->extras) {
+		clone->extras[extra.first] = extra.second;
 	}
-	for (GLTF::Extension* extension : this->extensions) {
-		clone->extensions.push_back((GLTF::Extension*)extension->clone());
+	for (const auto extension : this->extensions) {
+		clone->extensions[extension.first] = extension.second;
 	}
 	return clone;
 }
@@ -34,10 +26,10 @@ void GLTF::Object::writeJSON(void* writer) {
   if (this->extensions.size() > 0) {
     jsonWriter->Key("extensions");
     jsonWriter->StartObject();
-    for (GLTF::Extension* extension : this->extensions) {
-      jsonWriter->Key(extension->id.c_str());
+    for (const auto extension : this->extensions) {
+      jsonWriter->Key(extension.first.c_str());
       jsonWriter->StartObject();
-      extension->writeJSON(writer);
+      extension.second->writeJSON(writer);
       jsonWriter->EndObject();
     }
     jsonWriter->EndObject();
@@ -45,10 +37,10 @@ void GLTF::Object::writeJSON(void* writer) {
   if (this->extras.size() > 0) {
     jsonWriter->Key("extras");
     jsonWriter->StartObject();
-    for (GLTF::Object* extra : this->extras) {
-      jsonWriter->Key(extra->id.c_str());
+    for (const auto extra : this->extras) {
+      jsonWriter->Key(extra.first.c_str());
       jsonWriter->StartObject();
-      extra->writeJSON(writer);
+      extra.second->writeJSON(writer);
       jsonWriter->EndObject();
     }
     jsonWriter->EndObject();

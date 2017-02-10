@@ -21,6 +21,23 @@ void COLLADA2GLTF::Writer::finish() {
 }
 
 bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
+	if (asset->getUpAxisType() == COLLADAFW::FileInfo::X_UP) {
+		_rootNode = new GLTF::Node();
+		_rootNode->transform = new GLTF::Node::TransformMatrix(
+			0, -1, 0, 0,
+			1, 0, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1
+		);
+	} else if (asset->getUpAxisType() == COLLADAFW::FileInfo::Z_UP) {
+		_rootNode = new GLTF::Node();
+		_rootNode->transform = new GLTF::Node::TransformMatrix(
+			1, 0, 0, 0,
+			0, 0, 1, 0,
+			0, -1, 0, 0,
+			0, 0, 0, 1
+		);
+	}
 	return true;
 }
 
@@ -109,7 +126,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	group->push_back(node);
 	const COLLADAFW::UniqueId& colladaNodeId = colladaNode->getUniqueId();
 	std::string id = colladaNode->getOriginalId();
-	node->id = id;
 	node->name = colladaNode->getName();
 	COLLADAFW::TransformationPointerArray transformations = colladaNode->getTransformations();
 
@@ -124,7 +140,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				// If the current top level node is animated, we need to make a buffer node so the transform is not changed
 				if (isAnimated) {
 					GLTF::Node* bufferNode = new GLTF::Node();
-					bufferNode->id = id + "_" + std::to_string(bufferNodes);
 					bufferNodes++;
 					node->children.push_back(bufferNode);
 					node = bufferNode;
@@ -140,7 +155,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 
 				GLTF::Node* animatedNode = new GLTF::Node();
 				// These animated nodes are assigned the same ids initially, and a suffix is added when the animation gets applied
-				animatedNode->id = id;
 				node->children.push_back(animatedNode);
 				node = animatedNode;
 			}
@@ -166,7 +180,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 		if (matrix != COLLADABU::Math::Matrix4::IDENTITY) {
 			if (isAnimated) {
 				GLTF::Node* bufferNode = new GLTF::Node();
-				bufferNode->id = id + "_" + std::to_string(bufferNodes);
 				bufferNodes++;
 				node->children.push_back(bufferNode);
 				node = bufferNode;
@@ -220,7 +233,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					GLTF::MaterialCommon* materialCommon = (GLTF::MaterialCommon*)material;
 					materialCommon->jointCount = _skinJointNodes[uniqueId].size();
 				}
-				material->id = materialBinding.getName();
 				primitive->material = material;
 			}
 
@@ -267,7 +279,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 						COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
 						COLLADAFW::UniqueId effectId = this->_materialEffects[materialId];
 						GLTF::Material* material = _effectInstances[effectId];
-						material->id = materialBinding.getName();
 						if (primitive->material != NULL && primitive->material != material) {
 							// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
 							mesh = (GLTF::Mesh*)mesh->clone();
@@ -308,6 +319,10 @@ bool COLLADA2GLTF::Writer::writeVisualScene(const COLLADAFW::VisualScene* visual
 	}
 	else {
 		scene = asset->getDefaultScene();
+	}
+	if (_rootNode != NULL) {
+		scene->nodes.push_back(_rootNode);
+		return this->writeNodesToGroup(&_rootNode->children, visualScene->getRootNodes());
 	}
 	return this->writeNodesToGroup(&scene->nodes, visualScene->getRootNodes());
 }
@@ -401,7 +416,6 @@ std::string buildAttributeId(const COLLADAFW::MeshVertexData& data, int index, i
  */
 bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	GLTF::Mesh* mesh = new GLTF::Mesh();
-	mesh->id = colladaMesh->getOriginalId();
 	mesh->name = colladaMesh->getName();
 	const COLLADAFW::UniqueId& uniqueId = colladaMesh->getUniqueId();
 	std::map<GLTF::Primitive*, std::vector<int>> positionMapping;
@@ -536,7 +550,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 							buildAttributes[semantic].push_back(value);
 						}
 					}
-					// attributeIndicesMapping[attributeId] = index;
+					attributeIndicesMapping[attributeId] = index;
 					buildIndices.push_back(index);
 					index++;
 				}
@@ -682,7 +696,6 @@ bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	else {
 		image = new GLTF::Image(uri);
 	}
-	image->id = colladaImage->getOriginalId();
 	_images[colladaImage->getUniqueId()] = image;
 	return true;
 }
@@ -693,7 +706,6 @@ bool COLLADA2GLTF::Writer::writeLight(const COLLADAFW::Light* light) {
 
 bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation) {
 	GLTF::Animation::Sampler* sampler = new GLTF::Animation::Sampler();
-	sampler->id = animation->getOriginalId();
 
 	if (animation->getAnimationType() == COLLADAFW::Animation::ANIMATION_CURVE) {
 		COLLADAFW::AnimationCurve *animationCurve = (COLLADAFW::AnimationCurve*)animation;
@@ -823,7 +835,6 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			animation->channels.push_back(translationChannel);
 			GLTF::Animation::Sampler* translationSampler = new GLTF::Animation::Sampler();
 			translationChannel->sampler = translationSampler;
-			translationSampler->id = sampler->id + "_translation";
 			translationSampler->input = sampler->input;
 			translationSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)translation, count / 16, _animationsBufferView);
 
@@ -835,7 +846,6 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			animation->channels.push_back(rotationChannel);
 			GLTF::Animation::Sampler* rotationSampler = new GLTF::Animation::Sampler();
 			rotationChannel->sampler = rotationSampler;
-			rotationSampler->id = sampler->id + "_rotation";
 			rotationSampler->input = sampler->input;
 			rotationSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)rotation, count / 16, _animationsBufferView);
 
@@ -847,13 +857,8 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			animation->channels.push_back(scaleChannel);
 			GLTF::Animation::Sampler* scaleSampler = new GLTF::Animation::Sampler();
 			scaleChannel->sampler = scaleSampler;
-			scaleSampler->id = sampler->id + "_scale";
 			scaleSampler->input = sampler->input;
 			scaleSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)scale, count / 16, _animationsBufferView);
-			node->id += "_transform";
-			if (node->jointName != "") {
-				node->jointName = node->id;
-			}
 			break;
 		}
 		case COLLADAFW::AnimationList::AnimationClass::POSITION_XYZ: {
@@ -861,10 +866,6 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			outputData = (float*)output->bufferView->buffer->data;
 			type = GLTF::Accessor::Type::VEC3;
 			target->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
-			node->id += "_translate";
-			if (node->jointName != "") {
-				node->jointName = node->id;
-			}
 			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, _animationsBufferView);
 			sampler->output = output;
 			break;
@@ -885,10 +886,6 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			float* outputData = new float[count * 3];
 			type = GLTF::Accessor::Type::VEC3;
 			target->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
-			node->id += "_translate";
-			if (node->jointName != "") {
-				node->jointName = node->id;
-			}
 			for (int j = 0; j < count; j++) {
 				output->getComponentAtIndex(j, component);
 				for (int k = 0; k < 3; k++) {
@@ -909,10 +906,6 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			outputData = (float*)output->bufferView->buffer->data;
 			type = GLTF::Accessor::Type::VEC4;
 			target->path = GLTF::Animation::Channel::Target::Path::ROTATION;
-			node->id += "_rotate";
-			if (node->jointName != "") {
-				node->jointName = node->id;
-			}
 			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, _animationsBufferView);
 			sampler->output = output;
 			break;
@@ -926,10 +919,6 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 					outputData = new float[count * 4];
 					type = GLTF::Accessor::Type::VEC4;
 					target->path = GLTF::Animation::Channel::Target::Path::ROTATION;
-					node->id += "_rotate";
-					if (node->jointName != "") {
-						node->jointName = node->id;
-					}
 
 					COLLADABU::Math::Real angle;
 					COLLADABU::Math::Vector3 axis;
@@ -958,7 +947,6 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControllerData* skinControllerData) {
 	GLTF::Skin* skin = new GLTF::Skin();
 	COLLADAFW::UniqueId uniqueId = skinControllerData->getUniqueId();
-	skin->id = skinControllerData->getOriginalId();
 	skin->name = skinControllerData->getName();
 
 	// Write inverseBindMatrices and bindShapeMatrix

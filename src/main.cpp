@@ -25,6 +25,10 @@ int main(int argc, char **argv) {
 	rapidjson::StringBuffer s;
 	rapidjson::Writer<rapidjson::StringBuffer> jsonWriter = rapidjson::Writer<rapidjson::StringBuffer>(s);
 	jsonWriter.StartObject();
+
+	asset->separateSkeletonNodes();
+	asset->removeUnusedNodes();
+
 	asset->writeJSON(&jsonWriter);
 	jsonWriter.EndObject();
 	std::string jsonString = s.GetString();

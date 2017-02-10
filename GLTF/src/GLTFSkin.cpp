@@ -21,13 +21,13 @@ void GLTF::Skin::writeJSON(void* writer) {
 	}
 	if (inverseBindMatrices != NULL) {
 		jsonWriter->Key("inverseBindMatrices");
-		jsonWriter->String(inverseBindMatrices->id.c_str());
+		jsonWriter->Int(inverseBindMatrices->id);
 	}
 	jsonWriter->Key("jointNames");
 	jsonWriter->StartArray();
 	for (GLTF::Node* node : joints) {
 		if (node != NULL) {
-			jsonWriter->String(node->id.c_str());
+			jsonWriter->Int(node->id);
 		}
 	}
 	jsonWriter->EndArray();

@@ -7,7 +7,6 @@
 namespace GLTF {
 	class BufferView : public GLTF::Object {
 	public:
-		static int INSTANCE_COUNT;
 		GLTF::Buffer* buffer = NULL;
 		int byteOffset = 0;
 		int byteLength = 0;

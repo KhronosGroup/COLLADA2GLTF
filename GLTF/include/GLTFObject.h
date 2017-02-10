@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -7,13 +8,10 @@ namespace GLTF {
   class Extension;
   class Object {
   public:
-    std::string id;
+	  int id = -1;
     std::string name;
-	std::vector<GLTF::Extension*> extensions;
-	std::vector<GLTF::Object*> extras;
-
-    void addExtension(GLTF::Extension* extension);
-    void addExtra(GLTF::Object* extra);
+	std::map<std::string, GLTF::Extension*> extensions;
+	std::map<std::string, GLTF::Object*> extras;
 
 	virtual GLTF::Object* clone();
     virtual void writeJSON(void* writer);

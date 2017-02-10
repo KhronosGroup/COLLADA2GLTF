@@ -11,7 +11,6 @@
 namespace GLTF {
   class Animation : public GLTF::Object {
   public:
-	static int INSTANCE_COUNT;
 	class Sampler : public GLTF::Object {
 	public:
 		GLTF::Accessor* input;
@@ -44,7 +43,6 @@ namespace GLTF {
 
     std::vector<Channel*> channels;
 
-	Animation();
 	virtual void writeJSON(void* writer);
   };
 }

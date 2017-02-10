@@ -9,7 +9,6 @@
 namespace GLTF {
 	class Accessor : public GLTF::Object {
 	public:
-		static int INSTANCE_COUNT;
 		enum class Type {
 			SCALAR,
 			VEC2,
