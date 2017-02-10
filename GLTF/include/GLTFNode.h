@@ -35,7 +35,7 @@ namespace GLTF {
 		class TransformTRS : public Transform {
 		public:
 			float translation[3];
-			float rotation[3];
+			float rotation[4];
 			float scale[3];
 
 			TransformTRS();

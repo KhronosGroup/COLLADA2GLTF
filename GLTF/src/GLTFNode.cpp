@@ -63,7 +63,7 @@ void GLTF::Node::TransformMatrix::getTransformTRS(GLTF::Node::TransformTRS* trs)
 		int j = rotationMatrixNext[i];
 		int k = rotationMatrixNext[j];
 
-		root = sqrtf(matrix[i * 4 + i] - matrix[j * 4 + j] - matrix[k * 4 + k]);
+		root = sqrtf(matrix[i * 4 + i] - matrix[j * 4 + j] - matrix[k * 4 + k] + 1.0);
 		trs->rotation[i] = 0.5 * root;
 		root = 0.5 / root;
 		w = (matrix[k * 4 + j] - matrix[j * 4 + k]) * root;
@@ -142,12 +142,14 @@ GLTF::Node::TransformMatrix* GLTF::Node::TransformTRS::getTransformMatrix() {
 void GLTF::Node::writeJSON(void* writer) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	
-	jsonWriter->Key("meshes");
-	jsonWriter->StartArray();
-	for (GLTF::Mesh* mesh : meshes) {
-		jsonWriter->String(mesh->id.c_str());
+	if (meshes.size() > 0) {
+		jsonWriter->Key("meshes");
+		jsonWriter->StartArray();
+		for (GLTF::Mesh* mesh : meshes) {
+			jsonWriter->String(mesh->id.c_str());
+		}
+		jsonWriter->EndArray();
 	}
-	jsonWriter->EndArray();
 	if (children.size() > 0) {
 		jsonWriter->Key("children");
 		jsonWriter->StartArray();
