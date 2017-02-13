@@ -87,8 +87,8 @@ std::set<GLTF::Node*> GLTF::Asset::getAllNodes() {
 std::set<GLTF::Mesh*> GLTF::Asset::getAllMeshes() {
 	std::set<GLTF::Mesh*> meshes;
 	for (GLTF::Node* node : getAllNodes()) {
-		for (GLTF::Mesh* mesh : node->meshes) {
-			meshes.insert(mesh);
+		if (node->mesh != NULL) {
+			meshes.insert(node->mesh);
 		}
 	}
 	return meshes;
@@ -279,9 +279,9 @@ void GLTF::Asset::removeUnusedNodes() {
 	while (nodeStack.size() > 0) {
 		GLTF::Node* node = nodeStack.back();
 		nodeStack.pop_back();
-		for (int i = 0; i < node->children.size(); i++) {
+		for (size_t i = 0; i < node->children.size(); i++) {
 			GLTF::Node* child = node->children[i];
-			if (child->children.size() == 0 && child->skeletons.size() == 0 && child->meshes.size() == 0 && child->camera == NULL && child->light == NULL && child->skin == NULL && child->jointName == "") {
+			if (child->children.size() == 0 && child->skeletons.size() == 0 && child->mesh == NULL && child->camera == NULL && child->light == NULL && child->skin == NULL && child->jointName == "") {
 				// this node is extraneous, remove it
 				node->children.erase(node->children.begin() + i);
 				i--;
@@ -456,7 +456,8 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->Key("nodes");
 		jsonWriter->StartArray();
 		for (GLTF::Node* node : nodes) {
-			for (GLTF::Mesh* mesh : node->meshes) {
+			GLTF::Mesh* mesh = node->mesh;
+			if (mesh != NULL) {
 				if (mesh->id < 0) {
 					mesh->id = meshes.size();
 					meshes.push_back(mesh);
@@ -560,7 +561,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	if (animations.size() > 0) {
 		jsonWriter->Key("animations");
 		jsonWriter->StartArray();
-		for (int i = 0; i < animations.size(); i++) {
+		for (size_t i = 0; i < animations.size(); i++) {
 			GLTF::Animation* animation = animations[i];
 			int numChannels = 0;
 			for (GLTF::Animation::Channel* channel : animation->channels) {

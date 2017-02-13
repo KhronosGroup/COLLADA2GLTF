@@ -193,13 +193,9 @@ GLTF::Node::TransformMatrix* GLTF::Node::TransformTRS::getTransformMatrix() {
 void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	
-	if (meshes.size() > 0) {
-		jsonWriter->Key("meshes");
-		jsonWriter->StartArray();
-		for (GLTF::Mesh* mesh : meshes) {
-			jsonWriter->Int(mesh->id);
-		}
-		jsonWriter->EndArray();
+	if (mesh != NULL) {
+		jsonWriter->Key("mesh");
+		jsonWriter->Int(mesh->id);
 	}
 	if (children.size() > 0) {
 		jsonWriter->Key("children");

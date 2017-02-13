@@ -54,7 +54,7 @@ namespace GLTF {
 		std::vector<GLTF::Node*> skeletons;
 		GLTF::Skin* skin = NULL;
 		std::string jointName;
-		std::vector<GLTF::Mesh*> meshes;
+		GLTF::Mesh* mesh = NULL;
 		GLTF::MaterialCommon::Light* light = NULL;
 
 		Transform* transform = NULL;

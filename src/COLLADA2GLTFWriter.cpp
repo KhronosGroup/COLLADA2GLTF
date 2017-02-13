@@ -216,7 +216,9 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			node->skin = skin;
 
 			GLTF::Mesh* skinnedMesh = _skinnedMeshes[uniqueId];
-			node->meshes.push_back(skinnedMesh);
+			GLTF::Node* skinnedMeshNode = new GLTF::Node();
+			skinnedMeshNode->mesh = skinnedMesh;
+			node->children.push_back(skinnedMeshNode);
 
 			const COLLADAFW::MaterialBindingArray &materialBindings = instanceController->getMaterialBindings();
 			for (size_t j = 0; j < materialBindings.getCount(); j++) {
@@ -299,7 +301,9 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 						primitive->material = material;
 					}
 				}
-				node->meshes.push_back(mesh);
+				GLTF::Node* meshNode = new GLTF::Node();
+				meshNode->mesh = mesh;
+				node->children.push_back(meshNode);
 			}
 		}
 	}

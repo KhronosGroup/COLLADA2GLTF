@@ -110,7 +110,8 @@ int main(int argc, char **argv) {
 		std::string outputDir = outputPath.getPathDir();
 		for (GLTF::Image* image : asset->getAllImages()) {
 			std::string uri = outputDir + image->uri;
-			FILE* file = fopen(uri.c_str(), "wb");
+			FILE* file = NULL;
+			fopen_s(&file, uri.c_str(), "wb");
 			if (file != NULL) {
 				fwrite(image->data, sizeof(unsigned char), image->byteLength, file);
 				fclose(file);
@@ -125,7 +126,8 @@ int main(int argc, char **argv) {
 		COLLADABU::URI outputPath(options->outputPath);
 		std::string outputDir = outputPath.getPathDir();
 		std::string uri = outputDir + buffer->uri;
-		FILE* file = fopen(uri.c_str(), "wb");
+		FILE* file = NULL;
+		fopen_s(&file, uri.c_str(), "wb");
 		if (file != NULL) {
 			fwrite(buffer->data, sizeof(unsigned char), buffer->byteLength, file);
 			fclose(file);
@@ -140,7 +142,8 @@ int main(int argc, char **argv) {
 		std::string outputDir = outputPath.getPathDir();
 		for (GLTF::Shader* shader : asset->getAllShaders()) {
 			std::string uri = outputDir + shader->uri;
-			FILE* file = fopen(uri.c_str(), "wb");
+			FILE* file = NULL;
+			fopen_s(&file, uri.c_str(), "wb");
 			if (file != NULL) {
 				fwrite(shader->source.c_str(), sizeof(unsigned char), shader->source.length(), file);
 				fclose(file);
@@ -175,7 +178,8 @@ int main(int argc, char **argv) {
 		if (outputUri.getPathExtension() != "glb") {
 			outputPath = outputUri.getPathDir() + outputUri.getPathFileBase() + ".glb";
 		}
-		FILE* file = fopen(outputPath.c_str(), "wb");
+		FILE* file = NULL;
+		fopen_s(&file, outputPath.c_str(), "wb");
 		if (file != NULL) {
 			uint32_t* writeHeader = new uint32_t[4];
 			fwrite("glTF", sizeof(char), 4, file); // magic
