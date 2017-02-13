@@ -17,12 +17,16 @@ namespace GLTF {
 
 		class Values {
 		public:
-			float ambient[4] = { 0.0, 0.0, 0.0, 1.0 };
-			float diffuse[4] = { 0.0, 0.0, 0.0, 1.0 };
+			float* ambient = NULL;
+			GLTF::Texture* ambientTexture = NULL;
+			float* diffuse = NULL;
 			GLTF::Texture* diffuseTexture = NULL;
-			float emission[4] = { 0.0, 0.0, 0.0, 1.0 };
-			float shininess[1] = { 0.0 };
-			float specular[4] = { 0.0, 0.0, 0.0, 1.0 };
+			float* emission = NULL;
+			GLTF::Texture* emissionTexture = NULL;
+			float* specular = NULL;
+			GLTF::Texture* specularTexture = NULL;
+			float* shininess = NULL;
+			float* transparency = NULL;
 
 			void writeJSON(void* writer, GLTF::Options* options);
 		};
@@ -47,6 +51,26 @@ namespace GLTF {
 			UNKNOWN
 		};
 
+		class Light: public GLTF::Object {
+		public:
+			enum Type {
+				AMBIENT,
+				DIRECTIONAL,
+				POINT,
+				SPOT,
+				UNKOWN
+			};
+
+			Type type = Type::UNKOWN;
+			float color[4];
+			float constantAttenuation;
+			float linearAttenuation;
+			float quadraticAttenuation;
+			void* node = NULL;
+
+			virtual void writeJSON(void* writer, GLTF::Options* options);
+		};
+
 		bool doubleSided = false;
 		int jointCount = 0;
 		bool transparent = false;
@@ -55,6 +79,8 @@ namespace GLTF {
 
 		MaterialCommon();
 		const char* getTechniqueName();
+		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights);
+		std::string getTechniqueKey();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

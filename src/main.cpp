@@ -1,6 +1,9 @@
 #include "COLLADA2GLTFWriter.h"
+#include "COLLADA2GLTFExtrasHandler.h"
 #include "COLLADASaxFWLLoader.h"
 
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
@@ -41,12 +44,16 @@ int main(int argc, char **argv) {
 		else if (arg == "-s" || arg == "--separate") {
 			options->embeddedBuffers = false;
 			options->embeddedTextures = false;
+			options->embeddedShaders = false;
 		}
 		else if (arg == "-t" || arg == "--separateImage") {
 			options->embeddedTextures = false;
 		}
 		else if (arg == "-b" || arg == "--binary") {
 			options->binary = true;
+		}
+		else if (arg == "-m" || arg == "--materialsCommon") {
+			options->materialsCommon = true;
 		}
 		else {
 			std::cout << "Error: Unknown flag or argument '" << arg << "'";
@@ -56,8 +63,10 @@ int main(int argc, char **argv) {
 
 	std::clock_t start = std::clock();
 
-	COLLADA2GLTF::Writer* writer = new COLLADA2GLTF::Writer(asset, options);
+	COLLADA2GLTF::ExtrasHandler* extrasHandler = new COLLADA2GLTF::ExtrasHandler();
+	COLLADA2GLTF::Writer* writer = new COLLADA2GLTF::Writer(asset, options, extrasHandler);
 	COLLADASaxFWL::Loader* loader = new COLLADASaxFWL::Loader();
+	loader->registerExtraDataCallbackHandler((COLLADASaxFWL::IExtraDataCallbackHandler*)extrasHandler);
 	COLLADAFW::Root root(loader, writer);
 	if (!root.loadDocument(options->inputPath)) {
 		std::cout << "Error: Unable to load input from path '" << options->inputPath << "'";
@@ -70,9 +79,9 @@ int main(int argc, char **argv) {
 	GLTF::Buffer* buffer = asset->packAccessors();
 
 	// Create image bufferViews for binary glTF
-	if (options->binary) {
+	if (options->binary && options->embeddedTextures) {
 		size_t imageBufferLength = 0;
-		std::vector<GLTF::Image*> images = asset->getAllImages();
+		std::set<GLTF::Image*> images = asset->getAllImages();
 		for (GLTF::Image* image : images) {
 			imageBufferLength += image->byteLength;
 		}
@@ -87,7 +96,7 @@ int main(int argc, char **argv) {
 		}
 		buffer->data = bufferData;
 		buffer->byteLength += imageBufferLength;
-		asset->extensionsUsed.insert("KHR_binary_glTF");
+		asset->extensions.insert("KHR_binary_glTF");
 	}
 
 	rapidjson::StringBuffer s;
@@ -126,11 +135,34 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	if (!options->embeddedShaders) {
+		COLLADABU::URI outputPath(options->outputPath);
+		std::string outputDir = outputPath.getPathDir();
+		for (GLTF::Shader* shader : asset->getAllShaders()) {
+			std::string uri = outputDir + shader->uri;
+			FILE* file = fopen(uri.c_str(), "wb");
+			if (file != NULL) {
+				fwrite(shader->source.c_str(), sizeof(unsigned char), shader->source.length(), file);
+				fclose(file);
+			}
+			else {
+				std::cout << "Error: Couldn't write shader to path '" << uri << "'";
+			}
+		}
+	}
+
 	std::string jsonString = s.GetString();
 	if (!options->binary) {
+		rapidjson::Document jsonDocument;
+		jsonDocument.Parse(jsonString.c_str());
+
+		rapidjson::StringBuffer buffer;
+		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+		jsonDocument.Accept(writer);
+
 		std::ofstream file(options->outputPath);
 		if (file.is_open()) {
-			file << jsonString;
+			file << buffer.GetString() << std::endl;
 			file.close();
 		}
 		else {

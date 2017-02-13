@@ -7,6 +7,8 @@ namespace GLTF {
 	public:
 		bool embeddedBuffers = true;
 		bool embeddedTextures = true;
+		bool embeddedShaders = true;
 		bool binary = false;
+		bool materialsCommon = false;
 	};
 }

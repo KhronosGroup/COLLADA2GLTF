@@ -7,16 +7,21 @@
 #include "COLLADAFW.h"
 #include "GLTFAsset.h"
 #include "COLLADA2GLTFOptions.h"
+#include "COLLADA2GLTFExtrasHandler.h"
 
 namespace COLLADA2GLTF {
 	class Writer : public COLLADAFW::IWriter {
 	private:
 		GLTF::Asset* _asset;
 		COLLADA2GLTF::Options* _options;
+		COLLADA2GLTF::ExtrasHandler* _extrasHandler;
 		GLTF::Node* _rootNode = NULL;
 		std::map<COLLADAFW::UniqueId, COLLADAFW::UniqueId> _materialEffects;
 		std::map<COLLADAFW::UniqueId, GLTF::Material*> _effectInstances;
+		std::map<COLLADAFW::UniqueId, GLTF::Camera*> _cameraInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _meshInstances;
+		std::map<COLLADAFW::UniqueId, std::map<int, std::set<GLTF::Primitive*>>> _meshMaterialPrimitiveMapping;
+		std::map<COLLADAFW::UniqueId, GLTF::MaterialCommon::Light*> _lightInstances;
 		std::map<COLLADAFW::UniqueId, std::map<GLTF::Primitive*, std::vector<int>>> _meshPositionMapping;
 		std::map<COLLADAFW::UniqueId, GLTF::Skin*> _skinInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Node*> _animatedNodes;
@@ -30,9 +35,10 @@ namespace COLLADA2GLTF {
 
 		bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
 		bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);
+		GLTF::Texture* fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::Texture texture);
 
 	public:
-		Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options);
+		Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* handler);
 
 		/** Deletes the entire scene.
 			 @param errorMessage A message containing informations about the error that occurred.

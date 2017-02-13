@@ -29,7 +29,7 @@ namespace GLTF {
 		};
 
 		Metadata* metadata = NULL;
-		std::set<std::string> extensionsUsed;
+		std::set<std::string> extensions;
 
 		std::vector<GLTF::Scene*> scenes;
 		std::vector<GLTF::Animation*> animations;
@@ -37,13 +37,16 @@ namespace GLTF {
 
 		Asset();
 		GLTF::Scene* getDefaultScene();
-		std::vector<GLTF::Node*> getAllNodes();
-		std::vector<GLTF::Mesh*> getAllMeshes();
-		std::vector<GLTF::Primitive*> getAllPrimitives();
-		std::vector<GLTF::Skin*> getAllSkins();
-		std::vector<GLTF::Material*> getAllMaterials();
-		std::vector<GLTF::Texture*> getAllTextures();
-		std::vector<GLTF::Image*> getAllImages();
+		std::set<GLTF::Node*> getAllNodes();
+		std::set<GLTF::Mesh*> getAllMeshes();
+		std::set<GLTF::Primitive*> getAllPrimitives();
+		std::set<GLTF::Skin*> getAllSkins();
+		std::set<GLTF::Material*> getAllMaterials();
+		std::set<GLTF::Technique*> getAllTechniques();
+		std::set<GLTF::Program*> getAllPrograms();
+		std::set<GLTF::Shader*> getAllShaders();
+		std::set<GLTF::Texture*> getAllTextures();
+		std::set<GLTF::Image*> getAllImages();
 		void removeUnusedSemantics();
 		void separateSkeletonNodes();
 		void removeUnusedNodes();

@@ -209,6 +209,16 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 		}
 		jsonWriter->EndArray();
 	}
+	if (options->materialsCommon && light != NULL) {
+		jsonWriter->Key("extensions");
+		jsonWriter->StartObject();
+		jsonWriter->Key("KHR_materials_common");
+		jsonWriter->StartObject();
+		jsonWriter->Key("light");
+		jsonWriter->Int(light->id);
+		jsonWriter->EndObject();
+		jsonWriter->EndObject();
+	}
 	if (transform != NULL) {
 		if (transform->type == GLTF::Node::Transform::MATRIX) {
 			GLTF::Node::TransformMatrix* transformMatrix = (GLTF::Node::TransformMatrix*)transform;
@@ -257,5 +267,9 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 	if (skin != NULL) {
 		jsonWriter->Key("skin");
 		jsonWriter->Int(skin->id);
+	}
+	if (camera != NULL) {
+		jsonWriter->Key("camera");
+		jsonWriter->Int(camera->id);
 	}
 }
