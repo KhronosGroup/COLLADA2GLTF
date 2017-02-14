@@ -12,6 +12,7 @@ A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.c
 ```bash
 git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
 ```
+
 2. Compile
 ```bash
 cd COLLADA2GLTF
@@ -19,6 +20,7 @@ mkdir build
 cd build
 cmake .. && make
 ```
+
 3. Run
 ```bash
 ./bin/collada2gltf
