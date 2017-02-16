@@ -150,7 +150,7 @@ namespace GLTF
 		hasAlpha = false;
 #endif
 
-		// For the love of sanity, cache this!
+		// cache the result.
 		haveAlphas[std::string(path)] = hasAlpha;
 		return hasAlpha;
     }
