@@ -204,6 +204,10 @@ IF("${CMAKE_SYSTEM}" MATCHES "Linux")
     LIST(APPEND TARGET_LIBS rt)
 endif("${CMAKE_SYSTEM}" MATCHES "Linux")
 
+if (WIN32)
+    LIST(APPEND TARGET_LIBS ws2_32.lib)
+endif ()
+
 target_link_libraries (collada2gltfConvert ${TARGET_LIBS})
 
 set(GLTF_EXE_SOURCES  main.cpp
