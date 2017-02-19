@@ -15,3 +15,4 @@ lib/
 GitSHA1.cpp
 .DS_Store
 x64/
+cmake_temp_msvc2015/

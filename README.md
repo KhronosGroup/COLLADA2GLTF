@@ -6,28 +6,43 @@
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
 
-## Compile from source
+## Compile from source 
 
-1. Clone repository
+###1. Clone repository
  
  ```
 git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
 ```
 
-2. Install dependencies (packages names for Debian)
+###2. Install dependencies 
+
+####(Debian)
  ```
 apt-get install cmake libxml2-dev libpcre3-dev libpng-dev zlib1g-dev
 ```
+####(Windows)
+Install [CMake](http://cmake.org/cmake/resources/software.html).
 
-3. Compile
+###3. Compile
+####(Linux)
  ```
 cd COLLADA2GLTF
 cmake . && make
 ```
+####(Windows)
+```
+generate_vs2015.bat
+```
+then open cmake_temp_msvc2015\COLLADA2GLTF.sln with visual studio 2015, select Release or Debug, and build
 
-4. Run
- ```
+###4. Run
+####(Linux)
+```
 ./bin/collada2gltf
+```
+####(Windows)
+```
+cmake_temp_msvc2015\bin\Release\collada2gltf.exe
 ```
 
 ## Usage
@@ -54,3 +69,4 @@ options:
 -n -> don't combine animations with the same target
 -k -> export materials and lights using KHR_materials_common extension
 ```
+
