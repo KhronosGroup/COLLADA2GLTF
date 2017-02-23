@@ -57,19 +57,19 @@ namespace GLTF
 
     typedef std::map<std::string, std::shared_ptr<GLTFOutputStream> > NameToOutputStream;
 
-	struct UniqueIdMesher {
-		size_t operator()(const COLLADAFW::UniqueId& uniqueID) const {
-			return ((std::hash<int64_t>()((int64_t)uniqueID.getClassId())) << 2) ^
-			       ((std::hash<COLLADAFW::ObjectId>()(uniqueID.getObjectId())) << 1) ^
-			       ((std::hash<COLLADAFW::FileId>()(uniqueID.getFileId())) << 0);
-		}
+	// Conceptually it would be nice to reuse a lambda,
+	// but then we would have to pass it in everywhere
+	struct UniqueIDHasher {
+        size_t operator()(const COLLADAFW::UniqueId& uniqueID) {
+            return (size_t)uniqueID;
+        };
 	};
 
     //types for late binding of material
     class MaterialBindingsPrimitiveMap : public std::map<unsigned int, std::shared_ptr <COLLADAFW::MaterialBinding>> {};
     typedef std::map<std::string, std::shared_ptr <MaterialBindingsPrimitiveMap> > MaterialBindingsForMeshUID;
     typedef std::map<std::string, std::shared_ptr <MaterialBindingsForMeshUID> > MaterialBindingsForNodeUID;
-	typedef std::unordered_set<COLLADAFW::UniqueId, UniqueIdMesher> MaterialBindingSet;
+	typedef std::unordered_set<COLLADAFW::UniqueId, UniqueIDHasher> MaterialBindingSet;
 	typedef std::map<std::string, MaterialBindingSet> MaterialBindingSetsForMeshUID;
 
     class COLLADA2GLTF_EXPORT GLTFAsset : public GLTFAssetValueEvaluator, public JSONValueApplier
