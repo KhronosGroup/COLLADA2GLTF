@@ -320,12 +320,12 @@ namespace GLTF
             }
         }
 
-		// This optimization will prevent incredibly inefficient O(n^2) scanning in writeNode()
-		MaterialBindingSetsForMeshUID& mbForMeshUID = this->_asset->materialBindingSetsForMeshUID();
+        // This optimization will prevent incredibly inefficient O(n^2) scanning in writeNode()
+        MaterialBindingSetsForMeshUID& mbForMeshUID = this->_asset->materialBindingSetsForMeshUID();
         MaterialBindingSet& materialBindingSet = mbForMeshUID[prefixedMeshUID];
-		for(size_t k = 0; k < materialBindings.getCount(); k++) {
-			materialBindingSet.insert(materialBindings[k].getReferencedMaterial());
-		}
+        for(size_t k = 0; k < materialBindings.getCount(); k++) {
+            materialBindingSet.insert(materialBindings[k].getReferencedMaterial());
+        }
 
         return;
     }
@@ -522,7 +522,7 @@ namespace GLTF
                     bool alreadyBound = false;
                     auto nodeBindings = this->_asset->materialBindingSetsForMeshUID().find("meshes-" + uniqueId.toAscii());
                     if (nodeBindings != this->_asset->materialBindingSetsForMeshUID().end()) {
-						MaterialBindingSet& bindingSet = nodeBindings->second;
+                        MaterialBindingSet& bindingSet = nodeBindings->second;
                         bool materialUsed = bindingSet.find(materialId) != bindingSet.end();
                         alreadyBound = !materialUsed;		// ie, it was bound, but to a different material
                     }
