@@ -69,8 +69,8 @@ namespace GLTF
     class MaterialBindingsPrimitiveMap : public std::map<unsigned int, std::shared_ptr <COLLADAFW::MaterialBinding>> {};
     typedef std::map<std::string, std::shared_ptr <MaterialBindingsPrimitiveMap> > MaterialBindingsForMeshUID;
     typedef std::map<std::string, std::shared_ptr <MaterialBindingsForMeshUID> > MaterialBindingsForNodeUID;
-	typedef std::unordered_set<COLLADAFW::UniqueId, UniqueIDHasher> MaterialBindingSet;
-	typedef std::map<std::string, MaterialBindingSet> MaterialBindingSetsForMeshUID;
+    typedef std::unordered_set<COLLADAFW::UniqueId, UniqueIDHasher> MaterialBindingSet;
+    typedef std::map<std::string, MaterialBindingSet> MaterialBindingSetsForMeshUID;
 
     class COLLADA2GLTF_EXPORT GLTFAsset : public GLTFAssetValueEvaluator, public JSONValueApplier
     {
