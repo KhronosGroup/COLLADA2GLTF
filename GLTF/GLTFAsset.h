@@ -133,7 +133,7 @@ namespace GLTF
         std::vector <std::shared_ptr<GLTFAssetModifier> > &assetModifiers() { return this->_assetModifiers; };
 
         MaterialBindingsForNodeUID& materialBindingsForNodeUID() { return this->_materialBindingsForNodeUID; }
-		MaterialBindingSetsForMeshUID& materialBindingSetsForMeshUID() { return this->_materialBindingsForMeshUID; }
+        MaterialBindingSetsForMeshUID& materialBindingSetsForMeshUID() { return this->_materialBindingsForMeshUID; }
 
         std::shared_ptr<JSONObject> getExtras();
         void setExtras(std::shared_ptr<JSONObject>);
@@ -212,7 +212,7 @@ namespace GLTF
         std::vector <std::shared_ptr<GLTFAssetModifier> > _assetModifiers;
 
         MaterialBindingsForNodeUID _materialBindingsForNodeUID;
-		MaterialBindingSetsForMeshUID _materialBindingsForMeshUID;
+        MaterialBindingSetsForMeshUID _materialBindingsForMeshUID;
         
         std::vector <std::shared_ptr<GLTFAssetValueEvaluator>> _evaluators;
 
