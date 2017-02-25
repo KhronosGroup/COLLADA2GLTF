@@ -21,19 +21,47 @@ git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
 apt-get install cmake libxml2-dev libpcre3-dev libpng-dev zlib1g-dev
 ```
 ####(Windows)
-Install [CMake](http://cmake.org/cmake/resources/software.html).
+Install [Visual Studio](http://code.visualstudio.com)
+
+Install [CMake](http://cmake.org/cmake/resources/software.html)
+
+####(OSX)
+Install Xcode
+
+Install dependencies with brew:
+
+If you don't have brew: ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+brew install cmake pkgconfig pcre libpng (*)
+
+(*) if the PNG package is not found, the workaround is:
+Download the the *.tar.gz install from libpng
+./configure
+make check
+sudo make install
 
 ###3. Compile
 ####(Linux)
  ```
 cd COLLADA2GLTF
-cmake . && make
+mkdir linux_build; cd linux_build 
+cmake .. && make
 ```
 ####(Windows)
 ```
-generate_vs2015.bat
+cd COLLADA2GLTF
+mkdir win_build; cd win_build
+cmake .. 
 ```
-then open cmake_temp_msvc2015\COLLADA2GLTF.sln with visual studio 2015, select Release or Debug, and build
+then open COLLADA2GLTF.sln with visual studio 2015, select Release or Debug, and build
+
+####(OSX)
+```
+cd COLLADA2GLTF
+mkdir osx_build; cd osx_build
+cmake -G Xcode ..
+```
+then open COLLADA2GLTF.xcodeproj and build
+or if you installed xcode command line tools you can also build in the terminal: xcodebuild -target collada2gltf -configuration Release (or Debug)
 
 ###4. Run
 ####(Linux)
@@ -42,9 +70,12 @@ then open cmake_temp_msvc2015\COLLADA2GLTF.sln with visual studio 2015, select R
 ```
 ####(Windows)
 ```
-cmake_temp_msvc2015\bin\Release\collada2gltf.exe
+.\bin\Release\collada2gltf.exe
 ```
-
+####(OSX)
+```
+./bin/Release/collada2gltf
+```
 ## Usage
 
 ```
