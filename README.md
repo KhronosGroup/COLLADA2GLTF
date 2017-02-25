@@ -28,28 +28,30 @@ Install [CMake](http://cmake.org/cmake/resources/software.html)
 ####(OSX)
 Install Xcode
 
-Install dependencies with brew:
+Install dependencies with [brew](http://mxcl.github.com/homebrew/)
 
-If you don't have brew: ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
-brew install cmake pkgconfig pcre libpng (*)
+```   
+brew install cmake pkgconfig pcre libpng
+```
 
-(*) if the PNG package is not found, the workaround is:
-Download the the *.tar.gz install from libpng
+if the PNG package is not found, the workaround is to Download the the *.tar.gz install from libpng and then:
+```
 ./configure
 make check
 sudo make install
+```
 
 ###3. Compile
 ####(Linux)
  ```
 cd COLLADA2GLTF
-mkdir linux_build; cd linux_build 
-cmake .. && make
+mkdir linux_build ; cd linux_build 
+cmake .. ; make
 ```
 ####(Windows)
 ```
 cd COLLADA2GLTF
-mkdir win_build; cd win_build
+mkdir win_build && cd win_build
 cmake .. 
 ```
 then open COLLADA2GLTF.sln with visual studio 2015, select Release or Debug, and build
