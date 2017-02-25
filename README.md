@@ -1,5 +1,5 @@
 <p align="center">
-![](https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png)
+![glTF logo](https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png)
 </p>
 
 ![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)
