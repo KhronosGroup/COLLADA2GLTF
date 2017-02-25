@@ -9,48 +9,35 @@ A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.c
 ## Compile from source
 
 1. Clone repository
- 
- ```
-git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
-```
 
-2. Install dependencies (packages names for Debian)
- ```
-apt-get install cmake libxml2-dev libpcre3-dev libpng-dev zlib1g-dev
-```
+  ```bash
+  git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
+  ```
+2. Compile
 
-3. Compile
- ```
-cd COLLADA2GLTF
-cmake . && make
-```
+  ```bash
+  cd COLLADA2GLTF
+  mkdir build
+  cd build
+  cmake .. && make
+  ```
 
-4. Run
- ```
-./bin/collada2gltf
-```
+3. Run
+
+  ```bash
+  ./bin/collada2gltf
+  ```
 
 ## Usage
 
 ```
 collada2gltlf -f [file] [options]
 options:
--z -> path of configuration file [string]
--f -> path of input file, argument [string]
--o -> path of output file argument [string]
--b -> path of output bundle argument [string]
--g -> [experimental] GLSL version to output in generated shaders
--i -> invert-transparency
--d -> export pass details to be able to regenerate shaders and states
--p -> output progress
--l -> enable default lighting (if no lights in scene) [bool], default:true
--c -> compression type: available: Open3DGC [string]
--m -> compression mode: for Open3DGC can be "ascii"(default) or "binary" [string]
--v -> print version
--s -> experimental mode
--h -> help
--r -> verbose logging
--e -> embed resources (bin, shaders, available textures) in glTF file
--n -> don't combine animations with the same target
--k -> export materials and lights using KHR_materials_common extension
+-i --input -> path of input file, argument [string]
+-o --output -> path of output file argument [string]
+--basePath -> resolve external uris to a different path from the input [string]
+-s --separate -> output separate binary buffer, shaders and textures [bool]
+-t --separateImage -> output images separately, but embed buffers and shaders [bool]
+-b --binary -> output binary glTF [bool]
+-m --materialsCommon -> output materials using the KHR_materials_common extension
 ```
