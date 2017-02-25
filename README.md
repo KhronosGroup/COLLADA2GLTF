@@ -1,6 +1,8 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png">
+![](https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png)
 </p>
+
+![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)
 
 # COLLADA to glTF converter
 
