@@ -1,4 +1,5 @@
 language: cpp
+compiler: g++
 addons:
   apt:
     sources:
@@ -11,4 +12,8 @@ git:
 before_install:
     - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
     - git submodule update --init --recursive
+    - if [ "$CXX" == "g++" ]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; fi
+install:
+  - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
 script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
