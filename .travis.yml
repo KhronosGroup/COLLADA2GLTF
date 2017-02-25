@@ -4,6 +4,4 @@ git:
 before_install:
     - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
     - git submodule update --init --recursive
-install: mkdir build && cd build
-script: cmake -Dtest=ON ..
-compiler: g++
+script: mkdir build && cd build && cmake -Dtest=ON ..
