@@ -36,7 +36,7 @@ if (test)
   file(GLOB TEST_SOURCES "test/src/*.cpp")
 
   add_executable(${PROJECT_NAME}_test ${TEST_HEADERS} ${TEST_SOURCES})
-  target_link_libraries(${PROJECT_NAME}_TEST ${PROJECT_NAME} gtest)
+  target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} gtest)
 
   add_test(GLTFAccessorTest ${PROJECT_NAME}_test)
   add_test(GLTFObjectTest ${PROJECT_NAME}_test)
