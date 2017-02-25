@@ -1,15 +1,12 @@
 #include "Base64.h"
 
-static const std::string base64_chars =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"abcdefghijklmnopqrstuvwxyz"
-	"0123456789+/";
+#include <cmath>
 
 static inline bool is_base64(unsigned char c) {
 	return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
-const std::string base64CharSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const std::string base64CharSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 char* Base64::encode(unsigned char* data, size_t length) {
 	size_t base64Length = (size_t)(ceil(length / 3.0) * 4) + 1;
 	char* base64 = new char[base64Length];
@@ -60,7 +57,7 @@ std::string Base64::decode(std::string string) {
 		char_array_4[i++] = string[in_]; in_++;
 		if (i == 4) {
 			for (i = 0; i < 4; i++) {
-				char_array_4[i] = static_cast<unsigned char>(base64_chars.find(char_array_4[i]));
+				char_array_4[i] = static_cast<unsigned char>(base64CharSet.find(char_array_4[i]));
 			}
 
 			char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
@@ -79,7 +76,7 @@ std::string Base64::decode(std::string string) {
 			char_array_4[j] = 0;
 		}
 		for (j = 0; j < 4; j++) {
-			char_array_4[j] = static_cast<unsigned char>(base64_chars.find(char_array_4[j]));
+			char_array_4[j] = static_cast<unsigned char>(base64CharSet.find(char_array_4[j]));
 		}
 
 		char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
