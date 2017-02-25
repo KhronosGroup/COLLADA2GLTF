@@ -7,7 +7,8 @@
 COLLADA2GLTFWriterTest::COLLADA2GLTFWriterTest() {
 	asset = new GLTF::Asset();
 	options = new COLLADA2GLTF::Options();
-	writer = new COLLADA2GLTF::Writer(asset, options);
+	extrasHandler = new COLLADA2GLTF::ExtrasHandler();
+	writer = new COLLADA2GLTF::Writer(asset, options, extrasHandler);
 }
 
 COLLADA2GLTFWriterTest::~COLLADA2GLTFWriterTest() {
@@ -54,16 +55,16 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesNotExist) {
 	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
 	ASSERT_EQ(sceneNodes.size(), 1);
 	GLTF::Node* sceneNode = sceneNodes[0];
-	std::vector<GLTF::Mesh*> meshes = sceneNode->meshes;
-	ASSERT_EQ(meshes.size(), 0);
+	GLTF::Mesh* mesh = sceneNode->mesh;
+	ASSERT_TRUE(mesh == NULL);
 }
 
 TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesExist) {
 	COLLADAFW::LibraryNodes* nodes = new COLLADAFW::LibraryNodes();
 	COLLADAFW::Node* node = new COLLADAFW::Node(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::NODE, 0, 0));
 	COLLADAFW::InstanceGeometry* instanceGeometry = new COLLADAFW::InstanceGeometry(
-		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 0, 0),
-		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 1, 0)
+		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 1, 0),
+		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 0, 0)
 	);
 	COLLADAFW::Geometry* geometry = new COLLADAFW::Mesh(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 0, 0));
 	this->writer->writeGeometry(geometry);
@@ -75,6 +76,6 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesExist) {
 	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
 	ASSERT_EQ(sceneNodes.size(), 1);
 	GLTF::Node* sceneNode = sceneNodes[0];
-	std::vector<GLTF::Mesh*> meshes = sceneNode->meshes;
-	ASSERT_EQ(meshes.size(), 1);
+	GLTF::Mesh* mesh = sceneNode->mesh;
+	ASSERT_TRUE(mesh != NULL);
 }

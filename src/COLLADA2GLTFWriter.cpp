@@ -306,9 +306,15 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 						primitive->material = material;
 					}
 				}
-				GLTF::Node* meshNode = new GLTF::Node();
-				meshNode->mesh = mesh;
-				node->children.push_back(meshNode);
+				if (node->mesh != NULL) {
+					// Split out a new child node if this one already has a mesh
+					GLTF::Node* meshNode = new GLTF::Node();
+					meshNode->mesh = mesh;
+					node->children.push_back(meshNode);
+				}
+				else {
+					node->mesh = mesh;
+				}
 			}
 		}
 	}
