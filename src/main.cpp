@@ -7,60 +7,113 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+#include "argparse.h"
+
 #include <ctime>
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <experimental/filesystem>
 
-int main(int argc, char **argv) {
+using namespace std::experimental::filesystem;
+
+int main(int argc, const char **argv) {
 	GLTF::Asset* asset = new GLTF::Asset();
 	COLLADA2GLTF::Options* options = new COLLADA2GLTF::Options();
 
-	for (int i = 1; i < argc; i++) {
-		std::string arg = argv[i];
-		if (arg == "-i" || arg == "--input") {
-			i++;
-			if (i < argc) {
-				arg = argv[i];
-				options->inputPath = arg;
-				COLLADABU::URI uri(arg);
-				options->basePath = uri.getPathDir();
-			}
-		}
-		else if (arg == "-o" || arg == "--output") {
-			i++;
-			if (i < argc) {
-				arg = argv[i];
-				options->outputPath = arg;
-			}
-		}
-		else if (arg == "--basePath") {
-			i++;
-			if (i < argc) {
-				arg = argv[i];
-				options->basePath = arg;
-			}
-		}
-		else if (arg == "-s" || arg == "--separate") {
-			options->embeddedBuffers = false;
-			options->embeddedTextures = false;
-			options->embeddedShaders = false;
-		}
-		else if (arg == "-t" || arg == "--separateImage") {
-			options->embeddedTextures = false;
-		}
-		else if (arg == "-b" || arg == "--binary") {
-			options->binary = true;
-		}
-		else if (arg == "-m" || arg == "--materialsCommon") {
-			options->materialsCommon = true;
+	const char* inputPathArg = NULL;
+	const char* outputPathArg = NULL;
+	const char* basePathArg = NULL;
+	int binary = 0;
+	int separate = 0;
+	int separateTextures = 0;
+
+	struct argparse argparse;
+	static const char* usage[] = {
+		"./COLLADA2GLTF input.dae output.gltf [options]",
+		NULL
+	};
+	struct argparse_option parseOptions[] = {
+		OPT_HELP(),
+		OPT_STRING('i', "input", &inputPathArg, "path of the input COLLADA file [required]"),
+		OPT_STRING('o', "output", &outputPathArg, "path of the output glTF file [default: output/${COLLADA_NAME}.gltf]"),
+		OPT_STRING('\0', "basePath", &basePathArg, "resolve external uris using this as the reference path [default: the directory containing the input COLLADA file]"),
+		OPT_BOOLEAN('s', "separate", &separate, "output separate binary buffer, shaders, and textures [default: false]"),
+		OPT_BOOLEAN('t', "separateTextures", &separateTextures, "output images separately, but embed buffers and shaders [default: false]"),
+		OPT_BOOLEAN('b', "binary", &binary, "output binary glTF [default: false]"),
+		OPT_BOOLEAN('m', "materialsCommon", &options->materialsCommon, "output materials using the KHR_materials_common extension [default: false]"),
+		OPT_END()
+	};
+	
+	argparse_init(&argparse, parseOptions, usage, 0);
+	argparse_describe(&argparse, "Converts COLLADA 3D model files to the glTF 2.0 format", "");
+	argc = argparse_parse(&argparse, argc, argv);
+
+	// Resolve and sanitize paths
+	path inputPath;
+	int rawPosition = 0;
+	if (inputPathArg == NULL) {
+		if (rawPosition < argc) {
+			inputPath = path(argv[rawPosition]);
+			rawPosition++;
 		}
 		else {
-			std::cout << "Error: Unknown flag or argument '" << arg << "'";
-			return -1;
+			std::cout << "Error: Missing required argument: input COLLADA file\n" << std::endl;
+			argparse_usage(&argparse);
+			return 1;
 		}
 	}
+	else {
+		inputPath = path(inputPathArg);
+	}
+	options->inputPath = inputPath.string();
+	options->name = inputPath.stem().string();
 
+	path outputPath;
+	if (outputPathArg == NULL) {
+		if (rawPosition < argc) {
+			outputPath = path(argv[rawPosition]);
+			rawPosition++;
+		}
+		else {
+			outputPath = inputPath.parent_path() / "output" / inputPath.stem();
+			outputPath += ".gltf";
+		}
+	}
+	else {
+		outputPath = path(outputPathArg);
+	}
+	options->outputPath = outputPath.string();
+
+	path basePath;
+	if (basePathArg == NULL) {
+		basePath = inputPath.parent_path();
+	}
+	else {
+		basePath = path(basePathArg);
+	}
+	options->basePath = basePath.string();
+
+	// Export flags
+	if (separate != 0) {
+		options->embeddedBuffers = false;
+		options->embeddedShaders = false;
+		options->embeddedTextures = false;
+	}
+	if (separateTextures != 0) {
+		options->embeddedTextures = false;
+	}
+	if (binary != 0) {
+		options->binary = true;
+	}
+
+	// Create the output directory if it does not exist
+	path outputDirectory = outputPath.parent_path();
+	if (!std::experimental::filesystem::exists(outputDirectory)) {
+		std::experimental::filesystem::create_directories(outputDirectory);
+	}
+
+	std::cout << "Converting " << options->inputPath << " -> " << options->outputPath << std::endl;
 	std::clock_t start = std::clock();
 
 	COLLADA2GLTF::ExtrasHandler* extrasHandler = new COLLADA2GLTF::ExtrasHandler();
@@ -69,7 +122,7 @@ int main(int argc, char **argv) {
 	loader->registerExtraDataCallbackHandler((COLLADASaxFWL::IExtraDataCallbackHandler*)extrasHandler);
 	COLLADAFW::Root root(loader, writer);
 	if (!root.loadDocument(options->inputPath)) {
-		std::cout << "Error: Unable to load input from path '" << options->inputPath << "'";
+		std::cout << "Error: Unable to load input from path '" << options->inputPath << "'" << std::endl;
 		return -1;
 	}
 
@@ -106,50 +159,44 @@ int main(int argc, char **argv) {
 	jsonWriter.EndObject();
 
 	if (!options->embeddedTextures) {
-		COLLADABU::URI outputPath(options->outputPath);
-		std::string outputDir = outputPath.getPathDir();
 		for (GLTF::Image* image : asset->getAllImages()) {
-			std::string uri = outputDir + image->uri;
+			path uri = outputDirectory / image->uri;
 			FILE* file = NULL;
-			fopen_s(&file, uri.c_str(), "wb");
+			fopen_s(&file, uri.generic_string().c_str(), "wb");
 			if (file != NULL) {
 				fwrite(image->data, sizeof(unsigned char), image->byteLength, file);
 				fclose(file);
 			}
 			else {
-				std::cout << "Error: Couldn't write image to path '" << uri << "'";
+				std::cout << "Error: Couldn't write image to path '" << uri << "'" << std::endl;
 			}
 		}
 	}
 
 	if (!options->embeddedBuffers) {
-		COLLADABU::URI outputPath(options->outputPath);
-		std::string outputDir = outputPath.getPathDir();
-		std::string uri = outputDir + buffer->uri;
+		path uri = outputDirectory / buffer->uri;
 		FILE* file = NULL;
-		fopen_s(&file, uri.c_str(), "wb");
+		fopen_s(&file, uri.generic_string().c_str(), "wb");
 		if (file != NULL) {
 			fwrite(buffer->data, sizeof(unsigned char), buffer->byteLength, file);
 			fclose(file);
 		}
 		else {
-			std::cout << "Error: Couldn't write buffer to path '" << uri << "'";
+			std::cout << "Error: Couldn't write buffer to path '" << uri << "'" << std::endl;
 		}
 	}
 
 	if (!options->embeddedShaders) {
-		COLLADABU::URI outputPath(options->outputPath);
-		std::string outputDir = outputPath.getPathDir();
 		for (GLTF::Shader* shader : asset->getAllShaders()) {
-			std::string uri = outputDir + shader->uri;
+			path uri = outputDirectory / shader->uri;
 			FILE* file = NULL;
-			fopen_s(&file, uri.c_str(), "wb");
+			fopen_s(&file, uri.generic_string().c_str(), "wb");
 			if (file != NULL) {
 				fwrite(shader->source.c_str(), sizeof(unsigned char), shader->source.length(), file);
 				fclose(file);
 			}
 			else {
-				std::cout << "Error: Couldn't write shader to path '" << uri << "'";
+				std::cout << "Error: Couldn't write shader to path '" << uri << "'" << std::endl;
 			}
 		}
 	}
@@ -169,17 +216,16 @@ int main(int argc, char **argv) {
 			file.close();
 		}
 		else {
-			std::cout << "Error couldn't write glTF to path '" << options->outputPath << "'";
+			std::cout << "Error: couldn't write glTF to path '" << options->outputPath << "'" << std::endl;
 		}
 	}
 	else {
-		std::string outputPath = options->outputPath;
-		COLLADABU::URI outputUri(outputPath);
-		if (outputUri.getPathExtension() != "glb") {
-			outputPath = outputUri.getPathDir() + outputUri.getPathFileBase() + ".glb";
+		if (outputPath.extension() != "glb") {
+			outputPath = outputPath.parent_path() / outputPath.stem();
+			outputPath += ".glb";
 		}
 		FILE* file = NULL;
-		fopen_s(&file, outputPath.c_str(), "wb");
+		fopen_s(&file, outputPath.generic_string().c_str(), "wb");
 		if (file != NULL) {
 			uint32_t* writeHeader = new uint32_t[4];
 			fwrite("glTF", sizeof(char), 4, file); // magic
@@ -200,10 +246,12 @@ int main(int argc, char **argv) {
 			fclose(file);
 		}
 		else {
-			std::cout << "Error couldn't write binary glTF to path '" << outputPath << "'";
+			std::cout << "Error couldn't write binary glTF to path '" << outputPath << "'" << std::endl;
 		}
 	}
 
 	std::clock_t end = std::clock();
-	std::cout << "Conversion time: " << ((end - start) / (double)(CLOCKS_PER_SEC / 1000)) << " ms" << std::endl;
+	std::cout << "Time: " << ((end - start) / (double)(CLOCKS_PER_SEC / 1000)) << " ms" << std::endl;
+
+	return 0;
 }

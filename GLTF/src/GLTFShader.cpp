@@ -17,7 +17,7 @@ void GLTF::Shader::writeJSON(void* writer, GLTF::Options* options) {
 		uri = "data:text/plain;base64," + std::string(Base64::encode((unsigned char*)source.c_str(), source.length()));
 	}
 	else {
-		uri = std::to_string(id) + (type == GLTF::Constants::WebGL::VERTEX_SHADER ? "VS" : "FS") + ".glsl";
+		uri = options->name + std::to_string(id) + (type == GLTF::Constants::WebGL::VERTEX_SHADER ? ".vert" : ".frag");
 	}
 	jsonWriter->String(uri.c_str());
 	GLTF::Object::writeJSON(writer, options);

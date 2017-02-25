@@ -19,7 +19,7 @@ void GLTF::Buffer::writeJSON(void* writer, GLTF::Options* options) {
 			uri = "data:application/octet-stream;base64," + std::string(Base64::encode(this->data, this->byteLength));
 		}
 		else {
-			uri = std::to_string(id) + ".bin";
+			uri = options->name + std::to_string(id) + ".bin";
 		}
 		jsonWriter->String(uri.c_str());
 	}

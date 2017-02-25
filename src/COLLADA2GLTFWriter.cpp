@@ -1,5 +1,10 @@
 #include "COLLADA2GLTFWriter.h"
+
+#include <experimental/filesystem>
+
 #include "Base64.h"
+
+using namespace std::experimental::filesystem;
 
 COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _asset(asset), _options(options), _extrasHandler(extrasHandler) {
 }
@@ -554,6 +559,8 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			for (int j = 0; j < count; j++) {
 				std::string attributeId;
 				if (shouldTriangulate) {
+					// This approach is very efficient in terms of runtime, but there are more correct solutions that may be worth considering.
+					// Using a 3D variant of Fortune's Algorithm or something similar to compute a mesh with no overlapping triangles would be ideal.
 					if (vertexCount >= faceVertexCount) {
 						int end = buildIndices.size() - 1;
 						if (faceVertexCount > 3) {
@@ -829,25 +836,24 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 
 bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	const COLLADABU::URI imageUri = colladaImage->getImageURI();
-	std::string relativePathFile = _options->basePath + imageUri.getURIString();
-	std::string fileExtension = imageUri.getPathExtension();
-	std::string uri = COLLADABU::URI::uriDecode(imageUri.getPathDir() + relativePathFile);
+	path imagePath = path(_options->basePath) / imageUri.getURIString();
+	std::string fileString = imagePath.string();
+	std::string fileExtension = imagePath.extension().string();
 
 	GLTF::Image* image;
-	FILE* file = fopen(uri.c_str(), "rb");
+	FILE* file = fopen(fileString.c_str(), "rb");
 	if (file == NULL) {
 		return false;
 	}
 	fseek(file, 0, SEEK_END);
 	long int size = ftell(file);
 	fclose(file);
-	file = fopen(uri.c_str(), "rb");
+	file = fopen(fileString.c_str(), "rb");
 	unsigned char* buffer = (unsigned char*)malloc(size);
 	int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
 	fclose(file);
 
-	uri = imageUri.getPathFile();
-	image = new GLTF::Image(uri, buffer, bytesRead, fileExtension);
+	image = new GLTF::Image(imageUri.getPathFile(), buffer, bytesRead, fileExtension);
 
 	_images[colladaImage->getUniqueId()] = image;
 	return true;
