@@ -23,7 +23,5 @@ void GLTF::Buffer::writeJSON(void* writer, GLTF::Options* options) {
 		}
 		jsonWriter->String(uri.c_str());
 	}
-	jsonWriter->Key("type");
-	jsonWriter->String("arraybuffer");
 	GLTF::Object::writeJSON(writer, options);
 }
