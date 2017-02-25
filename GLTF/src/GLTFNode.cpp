@@ -1,5 +1,7 @@
 #include "GLTFNode.h"
 
+#include <cmath>
+
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
