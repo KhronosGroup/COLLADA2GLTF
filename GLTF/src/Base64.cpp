@@ -11,7 +11,7 @@ static inline bool is_base64(unsigned char c) {
 
 const std::string base64CharSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 char* Base64::encode(unsigned char* data, size_t length) {
-	size_t base64Length = (size_t)(std::ceil(length / 3.0) * 4) + 1;
+	size_t base64Length = (size_t)(ceil(length / 3.0) * 4) + 1;
 	char* base64 = new char[base64Length];
 	int index;
 	int j = 0;
