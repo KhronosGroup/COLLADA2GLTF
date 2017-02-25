@@ -1,0 +1,4 @@
+language: cpp
+install: mkdir build && cd build
+script: cmake -Dtest=ON .. && make test
+compiler: g++
