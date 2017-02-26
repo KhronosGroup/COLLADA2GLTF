@@ -4,7 +4,7 @@ set(PROJECT_NAME GLTF)
 
 project(${PROJECT_NAME})
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  add_compile_options(-std=c++11 -lstdc++fs)
+  add_compile_options(-std=c++11)
 endif()
 
 # cmake -Dtest=ON to build with tests

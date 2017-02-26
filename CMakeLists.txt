@@ -32,14 +32,14 @@ include_directories(include)
 file(GLOB LIB_HEADERS "include/*.h")
 set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp src/COLLADA2GLTFExtrasHandler.cpp)
 add_library(${PROJECT_NAME}_lib ${LIB_HEADERS} ${LIB_SOURCES})
-target_link_libraries(${PROJECT_NAME}_lib GLTF COLLADASaxFrameworkLoader)
+target_link_libraries(${PROJECT_NAME}_lib GLTF COLLADASaxFrameworkLoader  stdc++fs)
 
 # argparse
 include_directories(dependencies/argparse/argparse/)
 add_subdirectory(dependencies/argparse/modules/argparse)
 
 add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib argparse)
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib argparse stdc++fs)
 
 if(test)
   enable_testing()
