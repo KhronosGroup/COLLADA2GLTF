@@ -13,7 +13,7 @@ option(test "Build all tests." OFF)
 # RapidJSON
 include_directories(dependencies/rapidjson/include)
 
-# GLTF
+# gltf
 include_directories(include)
 file(GLOB HEADERS "include/*.h")
 file(GLOB SOURCES "src/*.cpp")

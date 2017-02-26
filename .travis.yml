@@ -1,10 +1,10 @@
 language: cpp
 compiler: g++
 git:
-    submodules: false
+  submodules: false
 before_install:
-    - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
-    - git submodule update --init --recursive
+  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+  - git submodule update --init --recursive
 install:
 - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
 addons:
@@ -18,3 +18,33 @@ addons:
       - cmake
       - cmake-data
 script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
+after_success:
+  # Point the master tag at the current head
+  - git config --global user.email "builds@travis-ci.com"
+  - git config --global user.name "Travis CI"
+  - git push origin :refs/tags/master
+  - git tag -fa master
+  - git push origin master --tags
+  # gzip linux build
+  - tar cvzf COLLADA2GLTF-linux.tar.gz
+    COLLADA2GLTF-bin
+    libCOLLADA2GLTF.a
+    GLTF/libGLTF.a
+    dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/libCOLLADASaxFrameworkLoader.a
+    dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/libCOLLADAFramework.a
+    dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/COLLADABaseUtils/libCOLLADABaseUtils.a
+    dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/COLLADABaseUtils/pcre/libpcre.a
+    dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/MathMLSolver/libMathMLSolver.a
+    dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/libGeneratedSaxParser.a
+    dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/expat/libexpat.a
+    dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/LibXML/libLibXML.a
+    dependencies/argparse/modules/argparse/libargparse.a
+deploy:
+  provider: releases
+  api_key:
+    secure: mwGqqeQMhaH2YZUKvv1sXrtrBDvGnWQIidy5dAKvUb0hIBdPZyy5VlfAzJ7EohqGVnpljHdUx7iROdSEfAWDy9G2nezCC0JrK4STnsJ2wrlNlUbRW3pu2EIHtdSVSeEN2+0+6tAQw2BEVT9ULtymHmxc8RdUKP1Emvms3c2HxbZxGh4YouCVvDZ7bGbqFNrQlE4NTj9Iwf8Epxwanb4Oj0iu6p/UQQ00ziUWhrrVObKcrenrbBOw1mqaflnyGVZMN60Ojh54qHhE7+LGC1TAKTG3RZa2QTBHUX0y0HygOwR+zP6hDWmJEHsaEL6XUHrJA1v7bWa4ltVOwLYSbYZ9rzuNbUEQL5/kjuYbgPhCDW9NYq904T1s/6W0jqvcikhWT7KgRhtMn8NOjnYYZGMJSAuZEl9pdbx+wydyWrx9+Q/Gb0VbZTDGVkAQNLUAxq/LeYpLQ02NE0GZTTSPrcUGZaLpMXcZgvdom8k+N2ms92cypMcNhLe9pHvh1OCYQ5pHRF0YIlvQfLHUd78uFaRexUPRbq4tt/qb5lRNCh2b0QobKHVg/1kaahMSfEFwclqWjmd3AgQWMNeeQC1QhHgx1vmJmLU2rJmGxBfvTNAmjkVhqjRm7UaILLOmj3VFWLJG1D/aYhkEm/1Ur9sgiJpE4qNR+t7uXUN+Aa3QPsuLkx4=
+  file: collada2gltf-linux-tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
+  overwrite: true

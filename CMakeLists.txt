@@ -63,7 +63,7 @@ if(test)
   file(GLOB TEST_SOURCES "test/src/*.cpp")
 
   add_executable(${PROJECT_NAME}_test ${TEST_HEADERS} ${TEST_SOURCES})
-  target_link_libraries(${PROJECT_NAME}_test  ${PROJECT_NAME}_lib GLTF gtest)
+  target_link_libraries(${PROJECT_NAME}_test  ${PROJECT_NAME} GLTF gtest)
 
   add_test(COLLADA2GLTFWriterTest ${PROJECT_NAME}_test)
 endif()
