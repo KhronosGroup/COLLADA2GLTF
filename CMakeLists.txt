@@ -31,15 +31,19 @@ add_subdirectory(GLTF)
 include_directories(include)
 file(GLOB LIB_HEADERS "include/*.h")
 set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp src/COLLADA2GLTFExtrasHandler.cpp)
-add_library(${PROJECT_NAME}_lib ${LIB_HEADERS} ${LIB_SOURCES})
-target_link_libraries(${PROJECT_NAME}_lib GLTF COLLADASaxFrameworkLoader  stdc++fs)
+add_library(${PROJECT_NAME} ${LIB_HEADERS} ${LIB_SOURCES})
+target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader  stdc++fs)
 
 # argparse
 include_directories(dependencies/argparse/argparse/)
 add_subdirectory(dependencies/argparse/modules/argparse)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib argparse stdc++fs)
+add_executable(${PROJECT_NAME}-bin src/main.cpp)
+if(MSVC)
+  target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse stdc++fs)
+endif()
 
 if(test)
   enable_testing()
