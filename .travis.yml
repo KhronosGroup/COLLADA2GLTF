@@ -26,7 +26,7 @@ after_success:
     git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1;
   fi;
 - if [ ! -z "$TRAVIS_TAG" ]; then
-    zip COLLADA2GLTF-linux.zip COLLADA2GLTF-bin libCOLLADA2GLTF.a GLTF/libGLTF.a
+    zip -j COLLADA2GLTF-linux.zip COLLADA2GLTF-bin libCOLLADA2GLTF.a GLTF/libGLTF.a
       dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/libCOLLADASaxFrameworkLoader.a
       dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/libCOLLADAFramework.a
       dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/COLLADABaseUtils/libCOLLADABaseUtils.a
