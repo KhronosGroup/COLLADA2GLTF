@@ -22,8 +22,8 @@ after_success:
   # Point the master tag at the current head
   - git config --global user.email "builds@travis-ci.com"
   - git config --global user.name "Travis CI"
-  - git push origin :refs/tags/master
-  - git tag -fa master
+  - git push origin :refs/tags/current
+  - git tag -fa current
   - git push origin master --tags
   # gzip linux build
   - tar cvzf COLLADA2GLTF-linux.tar.gz
