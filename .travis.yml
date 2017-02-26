@@ -19,7 +19,7 @@ addons:
       - cmake-data
 script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
 after_success:
-  # Point the master tag at the current head
+  # Point the 'current' tag at the head
   - git config --global user.email "builds@travis-ci.com"
   - git config --global user.name "Travis CI"
   - git push origin :refs/tags/current
