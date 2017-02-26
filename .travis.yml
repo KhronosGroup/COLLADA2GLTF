@@ -15,6 +15,7 @@ addons:
     packages:
       - gcc-5
       - g++-5
+      - libstdc++fs
       - cmake
       - cmake-data
 script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
