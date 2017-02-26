@@ -26,7 +26,7 @@ after_success:
     git tag -f -a current -m "Live build of current master from Travis CI"
     git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1
   fi
-  if [ ! -z "$TRAVIS_TAG"]; then
+  if [ ! -z "$TRAVIS_TAG" ]; then
     tar cvzf COLLADA2GLTF-linux.tar.gz COLLADA2GLTF-bin libCOLLADA2GLTF.a GLTF/libGLTF.a
       dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/libCOLLADASaxFrameworkLoader.a
       dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/libCOLLADAFramework.a
