@@ -20,12 +20,12 @@ addons:
 script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
 after_success:
 - if [ "$TRAVIS_BRANCH" == "master" ]; then
-    git config --global user.email "builds@travis-ci.com"
-    git config --global user.name "Travis CI"
-    git push origin :refs/tags/current
-    git tag -f -a current -m "Live build of current master from Travis CI"
-    git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1
-  fi
+    git config --global user.email "builds@travis-ci.com";
+    git config --global user.name "Travis CI";
+    git push origin :refs/tags/current;
+    git tag -f -a current -m "Live build of current master from Travis CI";
+    git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1;
+  fi;
 - if [ ! -z "$TRAVIS_TAG" ]; then
     tar cvzf COLLADA2GLTF-linux.tar.gz COLLADA2GLTF-bin libCOLLADA2GLTF.a GLTF/libGLTF.a
       dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/libCOLLADASaxFrameworkLoader.a
@@ -36,8 +36,8 @@ after_success:
       dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/libGeneratedSaxParser.a
       dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/expat/libexpat.a
       dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/LibXML/libLibXML.a
-      dependencies/argparse/modules/argparse/libargparse.a
-  fi
+      dependencies/argparse/modules/argparse/libargparse.a;
+  fi;
 env:
   global:
   - secure: JPnHWbNJDAiO/tfNomSPDXcwnPrVtrLOkL2apPtpPsXWluiWPzaqK07kwwOGSUqGPobW+n+5ZmW9HZG2ZykUyoPrj+bJGS0HJhRlE9D7QeVoWE6Dr5q6y1Dlvl0FMx9yc2By0C9Yplj3c24JbKhCMkSPZ9embiXl5dzCLCih5Pgc+MjKCjCyRUfHx8BdaI8UBtMqwupwYilzV9sbvCjcub0poWPyXC78g7mBOEy/pEMXIjpIsUcENbCxirhDa5lRkACU10i+/S6SonbEKkeX2lzXvMXt21jyxY3myMxkT/HgAW5Ef0rSgAxO7Zv/WIjXIBrzIeNTAV7pu6lx2AqX6pm0JMYTkSbMHMYT/r34y7EaqFeIswy7fRupMLygdezvJ3pOTvYbGJ5CWVa8ps34U5yFm9Q22f5UVFeSvnoGRZct8lGEzhaDBqpTNd+XL69Y+sSFyHqQwFNwwejHCqAWMCvdjAookFdTqGpzwVqSXppUUjhksmxI+jB3n90qMj+C5o0mNI06WHl8MdmuG+5XrVj0JVVZbrkvMyAR6qtqWymPUvRQA466r/TTaEk7LC5heq+WVFBCExOyC7VdUuYTl3UZRhvXQshXmLH4pAXxO6tNx83Za6PEue6rOoeyyfV2CD3vjpp+IZhDDzAi5cCaSO8Jm6hpp7BfAV91vEP2or4=
