@@ -19,25 +19,25 @@ addons:
     - cmake-data
 script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
 after_success:
-- git config --global user.email "builds@travis-ci.com"
-- git config --global user.name "Travis CI"
-- git push origin :refs/tags/current
-- git tag -f -a current -m "Changed current tag to HEAD"
-- git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags
-  > /dev/null 2>&1
-- tar cvzf COLLADA2GLTF-linux.tar.gz COLLADA2GLTF-bin libCOLLADA2GLTF.a GLTF/libGLTF.a
-  dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/libCOLLADASaxFrameworkLoader.a
-  dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/libCOLLADAFramework.a
-  dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/COLLADABaseUtils/libCOLLADABaseUtils.a
-  dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/COLLADABaseUtils/pcre/libpcre.a
-  dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/MathMLSolver/libMathMLSolver.a
-  dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/libGeneratedSaxParser.a
-  dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/expat/libexpat.a
-  dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/LibXML/libLibXML.a
-  dependencies/argparse/modules/argparse/libargparse.a
-branches:
-  except:
-  - current
+- if [ "$TRAVIS_BRANCH" == "master" ]; then
+    git config --global user.email "builds@travis-ci.com"
+    git config --global user.name "Travis CI"
+    git push origin :refs/tags/current
+    git tag -f -a current -m "Live build of current master from Travis CI"
+    git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1
+  fi
+- if [ "$TRAVIS_TAG" == "current"]; then
+    tar cvzf COLLADA2GLTF-linux.tar.gz COLLADA2GLTF-bin libCOLLADA2GLTF.a GLTF/libGLTF.a
+      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/libCOLLADASaxFrameworkLoader.a
+      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/libCOLLADAFramework.a
+      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/COLLADABaseUtils/libCOLLADABaseUtils.a
+      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/COLLADABaseUtils/pcre/libpcre.a
+      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/MathMLSolver/libMathMLSolver.a
+      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/libGeneratedSaxParser.a
+      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/expat/libexpat.a
+      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/LibXML/libLibXML.a
+      dependencies/argparse/modules/argparse/libargparse.a
+  fi
 env:
   global:
   - secure: JPnHWbNJDAiO/tfNomSPDXcwnPrVtrLOkL2apPtpPsXWluiWPzaqK07kwwOGSUqGPobW+n+5ZmW9HZG2ZykUyoPrj+bJGS0HJhRlE9D7QeVoWE6Dr5q6y1Dlvl0FMx9yc2By0C9Yplj3c24JbKhCMkSPZ9embiXl5dzCLCih5Pgc+MjKCjCyRUfHx8BdaI8UBtMqwupwYilzV9sbvCjcub0poWPyXC78g7mBOEy/pEMXIjpIsUcENbCxirhDa5lRkACU10i+/S6SonbEKkeX2lzXvMXt21jyxY3myMxkT/HgAW5Ef0rSgAxO7Zv/WIjXIBrzIeNTAV7pu6lx2AqX6pm0JMYTkSbMHMYT/r34y7EaqFeIswy7fRupMLygdezvJ3pOTvYbGJ5CWVa8ps34U5yFm9Q22f5UVFeSvnoGRZct8lGEzhaDBqpTNd+XL69Y+sSFyHqQwFNwwejHCqAWMCvdjAookFdTqGpzwVqSXppUUjhksmxI+jB3n90qMj+C5o0mNI06WHl8MdmuG+5XrVj0JVVZbrkvMyAR6qtqWymPUvRQA466r/TTaEk7LC5heq+WVFBCExOyC7VdUuYTl3UZRhvXQshXmLH4pAXxO6tNx83Za6PEue6rOoeyyfV2CD3vjpp+IZhDDzAi5cCaSO8Jm6hpp7BfAV91vEP2or4=
@@ -50,5 +50,3 @@ deploy:
   on:
     tags: true
   overwrite: true
-dd:
-  secure: QXKcERXhWljqGp8a+TEbP/lrFK6hNDs7+5r0bS4TQIVObb2XveDtdZ3bxn50Wi/TUnBfSMo063RcnouFym2JWKJWAsxY6OYcA+g4RYdqSQdBqek4NFCfw+mAvcKDIuuDrBgdRVZGgqSAbFDh0NiveJzozgMfMTHVrLJYpEFucqm8tadfxFA2GDEZcOh6OAXRwApuFz1FESIi+OdzdZDVPEFxkvN7QSqAEOe0xqX58nF9wxGxbmLW/Y1csBMHTkWWBvBEN1GRIKYm7r4B9+H0gx3D/tYit4gmn9uzKTPNtrCpyfD4WjdpQ8YL5Bb3OWUIiPTGJRX/uLUEB2rzZYfJMzdFLEFDLztwscXGVQr8jJPaAcXlSZbM2RSECeB8c18HA8SbROu/c+SpIsOBDoRxuWS/dCjlCSyfgNZtvTnKOsmYB+Wg2KSJ0zuKyIDpcFpKcFK8wdsOcaVLv8Jaqn7x0lA6yxPL4G8I6xvi5BFyCZ1vgC9yvTqC2Imftkjhk7MlK4lysMV33Qc8FOMSnVUzB8iR5lUv/6X+I0WzMt+dTeL/M41SbEBKus4IRput/Cth8rQVtjpKQ6c5KKVzOtGe/aJF7FnPbtYTY6bVu0TcNf4/sa+CrpzdEnHTGbOaamugem3s7IFCoMeu2m6uqK2nYBpPASLuYzEZtpz6pVhBmKQ=
