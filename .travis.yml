@@ -6,7 +6,7 @@ before_install:
     - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
     - git submodule update --init --recursive
 install:
-- if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+- if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
 addons:
   apt:
     sources:
