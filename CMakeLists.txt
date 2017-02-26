@@ -27,12 +27,16 @@ add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
 include_directories(GLTF/include)
 add_subdirectory(GLTF)
 
-# COLLADA2GLTF_lib
+# COLLADA2GLTF
 include_directories(include)
 file(GLOB LIB_HEADERS "include/*.h")
 set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp src/COLLADA2GLTFExtrasHandler.cpp)
 add_library(${PROJECT_NAME} ${LIB_HEADERS} ${LIB_SOURCES})
-target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader  stdc++fs)
+if(MSVC)
+  target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader  stdc++fs)
+endif()
 
 # argparse
 include_directories(dependencies/argparse/argparse/)
