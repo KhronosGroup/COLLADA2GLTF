@@ -161,8 +161,7 @@ int main(int argc, const char **argv) {
 	if (!options->embeddedTextures) {
 		for (GLTF::Image* image : asset->getAllImages()) {
 			path uri = outputDirectory / image->uri;
-			FILE* file = NULL;
-			fopen_s(&file, uri.generic_string().c_str(), "wb");
+			FILE* file = fopen(uri.generic_string().c_str(), "wb");
 			if (file != NULL) {
 				fwrite(image->data, sizeof(unsigned char), image->byteLength, file);
 				fclose(file);
@@ -175,8 +174,7 @@ int main(int argc, const char **argv) {
 
 	if (!options->embeddedBuffers) {
 		path uri = outputDirectory / buffer->uri;
-		FILE* file = NULL;
-		fopen_s(&file, uri.generic_string().c_str(), "wb");
+		FILE* file = fopen(uri.generic_string().c_str(), "wb");
 		if (file != NULL) {
 			fwrite(buffer->data, sizeof(unsigned char), buffer->byteLength, file);
 			fclose(file);
@@ -189,8 +187,7 @@ int main(int argc, const char **argv) {
 	if (!options->embeddedShaders) {
 		for (GLTF::Shader* shader : asset->getAllShaders()) {
 			path uri = outputDirectory / shader->uri;
-			FILE* file = NULL;
-			fopen_s(&file, uri.generic_string().c_str(), "wb");
+			FILE* file = fopen(uri.generic_string().c_str(), "wb");
 			if (file != NULL) {
 				fwrite(shader->source.c_str(), sizeof(unsigned char), shader->source.length(), file);
 				fclose(file);
@@ -224,8 +221,7 @@ int main(int argc, const char **argv) {
 			outputPath = outputPath.parent_path() / outputPath.stem();
 			outputPath += ".glb";
 		}
-		FILE* file = NULL;
-		fopen_s(&file, outputPath.generic_string().c_str(), "wb");
+		FILE* file = fopen(outputPath.generic_string().c_str(), "wb");
 		if (file != NULL) {
 			uint32_t* writeHeader = new uint32_t[4];
 			fwrite("glTF", sizeof(char), 4, file); // magic
