@@ -7,7 +7,7 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  add_compile_options(-std=c++11)
+  add_compile_options(-std=c++11 -lstdc++fs)
 endif()
 
 # cmake -Dtest=ON to build with tests
