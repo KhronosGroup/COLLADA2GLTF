@@ -5,7 +5,7 @@
 # COLLADA2GLTF
 ![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)
 
-A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF) 2.0.
+A command-line tool to convert COLLADA (`.dae`) files to [glTF 2.0](https://github.com/KhronosGroup/glTF).
 
 ## Compile from source
 
