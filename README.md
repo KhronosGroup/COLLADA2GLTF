@@ -2,11 +2,10 @@
   <img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png"/>
 </p>
 
+# COLLADA2GLTF
 ![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)
 
-# COLLADA to glTF converter
-
-A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
+A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF) 2.0.
 
 ## Compile from source
 
