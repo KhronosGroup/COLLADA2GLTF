@@ -13,8 +13,8 @@ addons:
       - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
       - ubuntu-toolchain-r-test
     packages:
-      - gcc-4.8
-      - g++-4.8
+      - gcc-5.3
+      - g++-5.3
       - cmake
       - cmake-data
 script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
