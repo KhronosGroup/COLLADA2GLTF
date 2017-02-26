@@ -3,7 +3,7 @@
 </p>
 
 # COLLADA2GLTF
-![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)
+[![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/lasalvavida/COLLADA2GLTF)
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF 2.0](https://github.com/KhronosGroup/glTF).
 
