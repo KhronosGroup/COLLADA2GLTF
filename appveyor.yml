@@ -22,8 +22,8 @@ configuration:
   - Release
 
 before_build:
-  mkdir cmake-build
-  cd cmake-build
+  mkdir cmake-build;
+  cd cmake-build;
   cmake .. -Dtest=ON
 
 build:
