@@ -3,9 +3,17 @@
 </p>
 
 # COLLADA2GLTF
-Linux [![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/lasalvavida/COLLADA2GLTF) Windows [![Build Status](https://ci.appveyor.com/api/projects/status/cmt54n4t1hqwtix9/branch/master)](https://ci.appveyor.com/project/lasalvavida/collada2gltf/history) 
+[![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/lasalvavida/COLLADA2GLTF)
+[![Build Status](https://ci.appveyor.com/api/projects/status/cmt54n4t1hqwtix9/branch/master)](https://ci.appveyor.com/project/lasalvavida/collada2gltf/history)
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF 2.0](https://github.com/KhronosGroup/glTF).
+
+## Releases
+
+Compiled binaries for Windows and Linux can be found under [releases](https://github.com/lasalvavida/COLLADA2GLTF/releases). It is recommended to use the last versioned release
+
+A live build of the current master branch is available as [latest](https://github.com/lasalvavida/COLLADA2GLTF/releases/tag/latest).
+These binaries are updated whenever master changes, the build succeeds, and the tests pass. These binaries are bleeding-edge and are not guaranteed to be stable.
 
 ## Compile from source
 
