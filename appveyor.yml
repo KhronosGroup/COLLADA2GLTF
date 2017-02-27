@@ -36,11 +36,11 @@ build:
   project: cmake-build/COLLADA2GLTF.sln
 
 test_script:
-- cmd: cmake-build\%CONFIGURATION%\COLLADA2GLTF-test.exe
-- cmd: cmake-build\GLTF\%CONFIGURATION%\GLTF-test.exe
+- ps: cmake-build\$env:CONFIGURATION\COLLADA2GLTF-test.exe
+- ps: cmake-build\GLTF\$env:CONFIGURATION\GLTF-test.exe
 
 before_deploy:
-  - 7z COLLADA2GLTF-windows-$(configuration)-$(platform).zip
+  - 7z COLLADA2GLTF-windows-%CONFIGURATION%-%PLATFORM%.zip
       cmake-build\%CONFIGURATION%\COLLADA2GLTF-bin.exe
       cmake-build\**\*.lib
 
