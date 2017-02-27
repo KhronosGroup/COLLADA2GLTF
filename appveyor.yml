@@ -28,7 +28,8 @@ install:
 before_build:
   - mkdir cmake-build
   - cd cmake-build
-  - cmake .. -Dtest=ON -G "Visual Studio 14 2015 Win64"
+  - IF "%PLATFORM%"=="x86" cmake .. -Dtest=ON -G "Visual Studio 14 2015"
+  - IF "%PLATFORM%"=="x64" cmake .. -Dtest=ON -G "Visual Studio 14 2015 Win64"
 
 build:
   parallel: true
