@@ -22,16 +22,16 @@ configuration:
 - Release
 
 clone_script:
-- cmd: >-
-  git clone -q --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
-  cd %APPVEYOR_BUILD_FOLDER%
-  git checkout -qf %APPVEYOR_REPO_COMMIT%
-  git submodule update --init --recursive
+  - cmd: >
+    git clone -q --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
+    cd %APPVEYOR_BUILD_FOLDER%
+    git checkout -qf %APPVEYOR_REPO_COMMIT%
+    git submodule update --init --recursive
 
 before_build:
-- mkdir cmake-build
-- cd cmake-build
-- cmake .. -Dtest=ON
+  - mkdir cmake-build
+  - cd cmake-build
+  - cmake .. -Dtest=ON
 
 build:
   parallel: true
@@ -41,13 +41,13 @@ test_script:
 - echo $(configuration)/COLLADA2GLTF-test.exe && GLTF/$(configuration)/GLTF-test.exe
 
 before_deploy:
-- 7z COLLADA2GLTF-windows-$(configuration)-$(platform).zip
-    $(configuration)/COLLADA2GLTF-bin.exe
-    **/*.lib
+  - 7z COLLADA2GLTF-windows-$(configuration)-$(platform).zip
+      $(configuration)/COLLADA2GLTF-bin.exe
+      **/*.lib
 
 artifacts:
-- path: COLLADA2GLTF-windows-$(configuration)-$(platform).zip
-  name: built-zip
+  - path: COLLADA2GLTF-windows-$(configuration)-$(platform).zip
+    name: built-zip
 
 deploy:
   description: Live build of current master from CI
