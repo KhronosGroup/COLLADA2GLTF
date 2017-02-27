@@ -22,7 +22,7 @@ configuration:
 - Release
 
 install:
-  - get-content .gitmodules | %{$_ -replace "git@github.com:","https:\/\/github.com\/"}
+  - get-content .gitmodules | %{$_ -replace '\[git@github.com:\]','https:\/\/github.com\/'}
   - git submodule update --init --recursive
 
 before_build:
