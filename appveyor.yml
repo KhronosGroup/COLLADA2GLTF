@@ -40,7 +40,7 @@ after_build:
   .\"%CONFIGURATION%"\COLLADA2GLTF-bin.exe
   .\"%CONFIGURATION%"\COLLADA2GLTF.lib
   .\GLTF\"%CONFIGURATION%"\GLTF.lib
-  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\"%CONFIGURATION%"\COLLADASaxFrameworkLoader.linb
+  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\"%CONFIGURATION%"\COLLADASaxFrameworkLoader.lib
   .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\COLLADAFramework\"%CONFIGURATION%"\COLLADAFramework.lib
   .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\COLLADAFramework\COLLADABaseUtils\"%CONFIGURATION%"\COLLADABaseUtils.lib
   .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\COLLADAFramework\COLLADABaseUtils\pcre\"%CONFIGURATION%"\pcre.lib
