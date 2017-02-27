@@ -32,15 +32,15 @@ before_build:
 
 build:
   parallel: true
-  project: COLLADA2GLTF.sln
+  project: cmake-build/COLLADA2GLTF.sln
 
 test_script:
-- echo $(configuration)/COLLADA2GLTF-test.exe && GLTF/$(configuration)/GLTF-test.exe
+- echo cmake-build/$(configuration)/COLLADA2GLTF-test.exe && cmake-build/GLTF/$(configuration)/GLTF-test.exe
 
 before_deploy:
   - 7z COLLADA2GLTF-windows-$(configuration)-$(platform).zip
-      $(configuration)/COLLADA2GLTF-bin.exe
-      **/*.lib
+      cmake-build/$(configuration)/COLLADA2GLTF-bin.exe
+      cmake-build/**/*.lib
 
 artifacts:
   - path: COLLADA2GLTF-windows-$(configuration)-$(platform).zip
