@@ -45,7 +45,7 @@ test_script:
 - "GLTF\\%CONFIGURATION%\\GLTF-test.exe"
 
 artifacts:
-- path: COLLADA2GLTF-windows-$(configuration)-$(platform).zip
+- path: cmake-build/COLLADA2GLTF-windows-$(configuration)-$(platform).zip
   name: built-zip
 
 deploy:
