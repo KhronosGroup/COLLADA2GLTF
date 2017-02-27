@@ -14,7 +14,7 @@ matrix:
       configuration: Release
 
 platform:
-- x86
+- Win32
 - x64
 
 configuration:
@@ -28,7 +28,7 @@ install:
 before_build:
   - mkdir cmake-build
   - cd cmake-build
-  - IF "%PLATFORM%"=="x86" cmake -G "Visual Studio 14 2015" .. -Dtest=ON
+  - IF "%PLATFORM%"=="Win32" cmake -G "Visual Studio 14 2015" .. -Dtest=ON
   - IF "%PLATFORM%"=="x64" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON
 
 build:
