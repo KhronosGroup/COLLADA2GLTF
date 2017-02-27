@@ -2,6 +2,11 @@ language: cpp
 compiler: g++
 git:
   submodules: false
+cache:
+- dependencies
+- GLTF/dependencies
+- build/dependencies
+- build/GLTF/dependencies
 before_install:
 - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
 - git submodule update --init --recursive
@@ -22,7 +27,7 @@ after_success:
 - if [ "$TRAVIS_BRANCH" == "master" ]; then
     git config --global user.email "builds@travis-ci.com";
     git config --global user.name "Travis CI";
-    git tag -f -a current -m "Live build of current master from CI";
+    git tag -f -a latest -m "Live build of latest master from CI";
     git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1;
   fi;
 - if [ ! -z "$TRAVIS_TAG" ]; then

@@ -21,12 +21,18 @@ configuration:
 - Debug
 - Release
 
+cache:
+- dependencies -> .gitmodules
+- GLTF/dependencies -> .gitmodules
+- cmake-build/dependencies -> .gitmodules
+- cmake-build/GLTF/dependencies -> .gitmodules
+
 install:
 - powershell -Command "(gc .gitmodules) -replace 'git@github.com:', 'https://github.com/' | Out-File .gitmodules" -encoding UTF8
 - git submodule update --init --recursive
 
 before_build:
-- mkdir cmake-build
+- mkdir -p cmake-build
 - cd cmake-build
 - IF "%PLATFORM%"=="Win32" cmake -G "Visual Studio 14 2015" .. -Dtest=ON
 - IF "%PLATFORM%"=="x64" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON
@@ -59,7 +65,7 @@ artifacts:
   name: built-zip
 
 deploy:
-  description: Live build of current master from CI
+  description: Live build of latest master from CI
   provider: GitHub
   auth_token:
     secure: Nh+ZPhrI2P9EmI/+YlHiY7Roj/4dYHM0XMXr8rFX6O8q9mujEMbBNdbLw0QZ5Nq7
