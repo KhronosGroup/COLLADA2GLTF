@@ -28,11 +28,8 @@ cache:
 - cmake-build/GLTF/dependencies -> .gitmodules
 
 install:
-- copy .gitmodules .gitmodules.bak
 - powershell -Command "(gc .gitmodules) -replace 'git@github.com:', 'https://github.com/' | Out-File .gitmodules" -encoding UTF8
 - git submodule update --init --recursive
-# Make sure that gitmodules stays unchanged so that caching works
-- copy /Y .gitmodules.bak .gitmodules
 
 before_build:
 - mkdir -p cmake-build
