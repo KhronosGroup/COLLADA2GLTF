@@ -22,7 +22,7 @@ configuration:
 - Release
 
 install:
-  - powershell -Command "(gc .gitmodules) -replace 'git@github.com:', 'https://github.com/' | Out-File .gitmodules"
+  - powershell -Command "(gc .gitmodules) -replace 'git@github.com:', 'https://github.com/' | Out-File .gitmodules" -encoding UTF8
   - git submodule update --init --recursive
 
 before_build:
