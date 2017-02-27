@@ -48,7 +48,7 @@ after_build:
   .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\GeneratedSaxParser\"%CONFIGURATION%"\GeneratedSaxParser.lib
   .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\GeneratedSaxParser\expat\"%CONFIGURATION%"\expat.lib
   .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\GeneratedSaxParser\LibXML\"%CONFIGURATION%"\LibXML.lib
-  .\dependencies\argparse\modules\argparse\"%CONFIGURATION%"\libargparse.lib
+  .\dependencies\argparse\modules\argparse\"%CONFIGURATION%"\argparse.lib
 
 test_script:
 - "%CONFIGURATION%\\COLLADA2GLTF-test.exe"
