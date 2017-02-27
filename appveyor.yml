@@ -62,8 +62,7 @@ deploy:
   description: Live build of current master from CI
   provider: GitHub
   auth_token:
-    secure: lYzyQVgU4+LdNDNbJbth3KzosZROFIxtprAv6zlmE8Uxk9yL2Lbri6yUKUCXyt8KmRrBlhyFjketQhUQ4zCy0y1T9lSPmadxiY+qxyqDzq27Z3vACWcId6WFFdVEuUHxHyJ63cGl4vRn11v+LEVc/sCf4Gxh2pcZtca9D/7v9ISeUpw4ItsBeUizwjcPuv5GMSg4xXZJWGYS7wJlWaB3RUZaM4ENzuUZG35hLoa4m8dymS6C9M+f6TTeGzS/b9qQ6Fkv/RjquP8HumY35vjSfkODJhpfBQSJHG7duz2uUsfa2hgJjJJCgQhajFB+7eJcA716bU2KgAfavNUfM/ciDUjma6Ubb5fES7ND5PktgZILKlPks7hqsqphbG0xbQchLroul35AIhI6vDsMYpbXNeZeXw71adM6bofULlpRZ7pxaD3hbUyhSy9MZk2oWpMvAJQ5Mreob/6LeG2ekRw4bRsDKp8E6lmfKs8vjHE6wxvBcVW9DKhSU4tjdDWGLweP7XAzzrXoxCoHHolmN9JTvun04H/rBjVNtXCZ4HoTE8nsaCR/9IGCVy6wNNb0hWLAIaqhCJt6N3bKjiuC3tSaWneQMfdOOYrjgJgxmcEMoRnA590N5+bgs8IvjZNp3q5Lz3PlzcBiE14pYDYj6A4erto+3H6jVYQkQvSnjFBBNLA=
-  artifact: built-zip
+    secure: Nh+ZPhrI2P9EmI/+YlHiY7Roj/4dYHM0XMXr8rFX6O8q9mujEMbBNdbLw0QZ5Nq7
   on:
     appveyor_repo_tag: true
   force_update: true

@@ -3,7 +3,9 @@
 </p>
 
 # COLLADA2GLTF
-[![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/lasalvavida/COLLADA2GLTF)
+| Linux | Windows |
+| --- | --- |
+| [![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/lasalvavida/COLLADA2GLTF) | [![Build Status](https://ci.appveyor.com/api/projects/status/cmt54n4t1hqwtix9/branch/master)](https://ci.appveyor.com/project/lasalvavida/collada2gltf/history) |
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF 2.0](https://github.com/KhronosGroup/glTF).
 
