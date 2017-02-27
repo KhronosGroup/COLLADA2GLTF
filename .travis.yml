@@ -3,8 +3,6 @@ compiler: g++
 git:
   submodules: false
 cache:
-- dependencies
-- GLTF/dependencies
 - build/dependencies
 - build/GLTF/dependencies
 before_install:

@@ -22,8 +22,6 @@ configuration:
 - Release
 
 cache:
-- dependencies -> .gitmodules
-- GLTF/dependencies -> .gitmodules
 - cmake-build/dependencies -> .gitmodules
 - cmake-build/GLTF/dependencies -> .gitmodules
 
