@@ -22,7 +22,7 @@ after_success:
 - if [ "$TRAVIS_BRANCH" == "master" ]; then
     git config --global user.email "builds@travis-ci.com";
     git config --global user.name "Travis CI";
-    git tag -f -a current -m "Live build of current master from Travis CI";
+    git tag -f -a current -m "Live build of current master from CI";
     git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1;
   fi;
 - if [ ! -z "$TRAVIS_TAG" ]; then
