@@ -14,17 +14,17 @@ matrix:
       configuration: Release
 
 platform:
-  - x86
-  - x64
+- x86
+- x64
 
 configuration:
-  - Debug
-  - Release
+- Debug
+- Release
 
 before_build:
-  mkdir cmake-build;
-  cd cmake-build;
-  cmake .. -Dtest=ON
+- mkdir cmake-build
+- cd cmake-build
+- cmake .. -Dtest=ON
 
 build:
   parallel: true
@@ -39,8 +39,8 @@ before_deploy:
     **/*.lib
 
 artifacts:
-  - path: COLLADA2GLTF-windows-$(configuration)-$(platform).zip
-    name: built-zip
+- path: COLLADA2GLTF-windows-$(configuration)-$(platform).zip
+  name: built-zip
 
 deploy:
   description: Live build of current master from CI
