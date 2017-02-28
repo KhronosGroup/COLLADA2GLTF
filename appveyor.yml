@@ -47,10 +47,6 @@ after_build:
   .\*.pdb
   .\*.dll
 
-test_script:
-- "%CONFIGURATION%\\COLLADA2GLTF-test.exe"
-- "GLTF\\%CONFIGURATION%\\GLTF-test.exe"
-
 artifacts:
 - path: cmake-build/COLLADA2GLTF-windows-$(configuration)-$(platform).zip
   name: built-zip
