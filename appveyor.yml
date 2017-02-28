@@ -40,7 +40,8 @@ build:
   project: cmake-build/COLLADA2GLTF.sln
 
 after_build:
-- 7z a COLLADA2GLTF-windows-"%CONFIGURATION%"-"%PLATFORM%".zip -r
+- for /R . %%f in (*.exe *.lib *.pdb *.dll) do copy %%f .
+- 7z a COLLADA2GLTF-windows-"%CONFIGURATION%"-"%PLATFORM%".zip
   .\*.exe
   .\*.lib
   .\*.pdb
