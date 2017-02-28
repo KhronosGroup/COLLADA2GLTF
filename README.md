@@ -28,7 +28,7 @@ These binaries are updated whenever master changes, the build succeeds, and the 
   cd COLLADA2GLTF
   mkdir build
   cd build
-  cmake ..
+  cmake .. #-Dtest=ON
   # Linux
   make
   # Windows
