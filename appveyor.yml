@@ -40,19 +40,12 @@ build:
   project: cmake-build/COLLADA2GLTF.sln
 
 after_build:
+- for /R . %%f in (*.exe *.lib *.pdb *.dll) do copy %%f .
 - 7z a COLLADA2GLTF-windows-"%CONFIGURATION%"-"%PLATFORM%".zip
-  .\"%CONFIGURATION%"\COLLADA2GLTF-bin.exe
-  .\"%CONFIGURATION%"\COLLADA2GLTF.lib
-  .\GLTF\"%CONFIGURATION%"\GLTF.lib
-  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\"%CONFIGURATION%"\COLLADASaxFrameworkLoader.lib
-  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\COLLADAFramework\"%CONFIGURATION%"\COLLADAFramework.lib
-  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\COLLADAFramework\COLLADABaseUtils\"%CONFIGURATION%"\COLLADABaseUtils.lib
-  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\COLLADAFramework\COLLADABaseUtils\pcre\"%CONFIGURATION%"\pcre.lib
-  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\COLLADAFramework\MathMLSolver\"%CONFIGURATION%"\MathMLSolver.lib
-  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\GeneratedSaxParser\"%CONFIGURATION%"\GeneratedSaxParser.lib
-  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\GeneratedSaxParser\expat\"%CONFIGURATION%"\expat.lib
-  .\dependencies\OpenCOLLADA\modules\COLLADASaxFrameworkLoader\GeneratedSaxParser\LibXML\"%CONFIGURATION%"\LibXML.lib
-  .\dependencies\argparse\modules\argparse\"%CONFIGURATION%"\argparse.lib
+  .\*.exe
+  .\*.lib
+  .\*.pdb
+  .\*.dll
 
 test_script:
 - "%CONFIGURATION%\\COLLADA2GLTF-test.exe"
