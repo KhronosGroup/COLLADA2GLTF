@@ -28,25 +28,38 @@ These binaries are updated whenever master changes, the build succeeds, and the 
   cd COLLADA2GLTF
   mkdir build
   cd build
-  cmake .. && make
+  cmake ..
+  # Linux
+  make
+  # Windows
+  ## Open the generated COLLADA2GLTF.sln in Visual Studio and build
   ```
 
 3. Run
 
   ```bash
-  ./bin/collada2gltf
+  COLLADA2GLTF-bin[.exe]
+  ```
+
+4. Run tests
+
+  ```bash
+  COLLADA2GLTF-test[.exe]
+  GLTF-test[.exe]
   ```
 
 ## Usage
 
+```bash
+COLLADA2GLTF[.exe] [input] [output] [options]
 ```
-collada2gltlf -f [file] [options]
-options:
--i --input -> path of input file, argument [string]
--o --output -> path of output file argument [string]
---basePath -> resolve external uris to a different path from the input [string]
--s --separate -> output separate binary buffer, shaders and textures [bool]
--t --separateImage -> output images separately, but embed buffers and shaders [bool]
--b --binary -> output binary glTF [bool]
--m --materialsCommon -> output materials using the KHR_materials_common extension
-```
+### Options
+| Flag | Default | Required | Description |
+| --- | --- | --- | --- |
+| -i, --input | | Yes :white_check_mark: | Path to the input COLLADA file |
+| -o, --output | output/${input}.gltf | No | Path to the output glTF file |
+| --basepath | Parent of input path | No | Resolve external uris using this as the reference path |
+| -s, --separate | false | No | Output separate binary buffer, shaders, and textures |
+| -t, --separateTextures | false | No | Output textures separately |
+| -b, --binary | false | No | Output Binary glTF |
+| -m, --materialsCommon | false | No | Output materials using the KHR_materials_common extension |

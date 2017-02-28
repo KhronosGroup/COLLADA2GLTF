@@ -29,16 +29,7 @@ after_success:
     git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1;
   fi;
 - if [ ! -z "$TRAVIS_TAG" ]; then
-    zip -j COLLADA2GLTF-linux.zip COLLADA2GLTF-bin libCOLLADA2GLTF.a GLTF/libGLTF.a
-      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/libCOLLADASaxFrameworkLoader.a
-      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/libCOLLADAFramework.a
-      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/COLLADABaseUtils/libCOLLADABaseUtils.a
-      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/COLLADABaseUtils/pcre/libpcre.a
-      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/COLLADAFramework/MathMLSolver/libMathMLSolver.a
-      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/libGeneratedSaxParser.a
-      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/expat/libexpat.a
-      dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader/GeneratedSaxParser/LibXML/libLibXML.a
-      dependencies/argparse/modules/argparse/libargparse.a;
+    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm /u+x | zip -@ -j COLLADA2GLTF-linux.zip
   fi;
 env:
   global:
