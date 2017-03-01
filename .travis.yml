@@ -29,7 +29,9 @@ after_success:
     git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1;
   fi;
 - if [ ! -z "$TRAVIS_TAG" ]; then
-    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm /u+x | zip -@ -j COLLADA2GLTF-linux.zip
+    export RELEASE=`echo "$TRAVIS_TAG"| awk -F"-" '{print $1}'`;
+    export RELEASE_FILE=COLLADA2GLTF-$RELEASE-linux.zip;
+    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm /u+x | zip -@ -j $RELEASE_FILE;
   fi;
 env:
   global:
