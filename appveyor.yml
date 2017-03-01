@@ -41,7 +41,7 @@ build:
 
 after_build:
 - for /R . %%f in (*.exe *.lib *.pdb *.dll) do copy %%f .
-- for /F "delims=-" %%a in ("1.0-release") do set RELEASE=%%a
+- for /F "delims=-" %%a in ("%APPVEYOR_REPO_BRANCH%") do set RELEASE=%%a
 - 7z a COLLADA2GLTF-"%RELEASE%"-windows-"%CONFIGURATION%"-"%PLATFORM%".zip
   .\*.exe
   .\*.lib
