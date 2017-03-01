@@ -41,7 +41,8 @@ build:
 
 after_build:
 - for /R . %%f in (*.exe *.lib *.pdb *.dll) do copy %%f .
-- 7z a COLLADA2GLTF-windows-"%CONFIGURATION%"-"%PLATFORM%".zip
+- for /F "delims=-" %a in ("1.0-release") do set RELEASE=%a
+- 7z a COLLADA2GLTF-windows-"%RELEASE"-"%CONFIGURATION%"-"%PLATFORM%".zip
   .\*.exe
   .\*.lib
   .\*.pdb
@@ -52,11 +53,10 @@ test_script:
 - "GLTF\\%CONFIGURATION%\\GLTF-test.exe"
 
 artifacts:
-- path: cmake-build/COLLADA2GLTF-windows-$(configuration)-$(platform).zip
+- path: cmake-build/*.zip
   name: built-zip
 
 deploy:
-  description: Live build of latest master from CI
   provider: GitHub
   auth_token:
     secure: Nh+ZPhrI2P9EmI/+YlHiY7Roj/4dYHM0XMXr8rFX6O8q9mujEMbBNdbLw0QZ5Nq7
