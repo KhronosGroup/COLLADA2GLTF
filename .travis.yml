@@ -31,7 +31,7 @@ after_success:
 - if [ ! -z "$TRAVIS_TAG" ]; then
     export RELEASE=`echo "$TRAVIS_TAG"| awk -F"-" '{print $1}'`;
     export RELEASE_FILE=COLLADA2GLTF-$RELEASE-linux.zip;
-    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm /u+x | zip -@ -j $RELEASE_FILE
+    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm /u+x | zip -@ -j $RELEASE_FILE;
   fi;
 env:
   global:
