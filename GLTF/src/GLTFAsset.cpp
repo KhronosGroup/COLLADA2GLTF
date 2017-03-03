@@ -1,5 +1,6 @@
 #include "GLTFAsset.h"
 
+#include <algorithm>
 #include <map>
 
 #include "rapidjson/stringbuffer.h"

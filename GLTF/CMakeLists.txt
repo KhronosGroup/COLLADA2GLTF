@@ -13,7 +13,7 @@ option(test "Build all tests." OFF)
 # RapidJSON
 include_directories(dependencies/rapidjson/include)
 
-# GLTF
+# gltf
 include_directories(include)
 file(GLOB HEADERS "include/*.h")
 file(GLOB SOURCES "src/*.cpp")
@@ -35,9 +35,9 @@ if (test)
   file(GLOB TEST_HEADERS "test/include/*.h")
   file(GLOB TEST_SOURCES "test/src/*.cpp")
 
-  add_executable(${PROJECT_NAME}_TEST ${TEST_HEADERS} ${TEST_SOURCES})
-  target_link_libraries(${PROJECT_NAME}_TEST ${PROJECT_NAME} gtest)
+  add_executable(${PROJECT_NAME}-test ${TEST_HEADERS} ${TEST_SOURCES})
+  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} gtest)
 
-  add_test(GLTFAccessorTest ${PROJECT_NAME}_TEST)
-  add_test(GLTFObjectTest ${PROJECT_NAME}_TEST)
+  add_test(GLTFAccessorTest ${PROJECT_NAME}-test)
+  add_test(GLTFObjectTest ${PROJECT_NAME}-test)
 endif()

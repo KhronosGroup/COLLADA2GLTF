@@ -1,19 +1,6 @@
 #include "GLTFAccessor.h"
 #include "GLTFAccessorTest.h"
 
-TEST(GLTFAccessorTest, NewAccessorId) {
-  GLTF::Accessor::INSTANCE_COUNT = 0;
-  GLTF::Accessor* accessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT);
-  EXPECT_STREQ(accessor->id.c_str(), "accessor_0");
-  delete accessor;
-  accessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT);
-  EXPECT_STREQ(accessor->id.c_str(), "accessor_1");
-  delete accessor;
-  accessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT);
-  EXPECT_STREQ(accessor->id.c_str(), "accessor_2");
-  delete accessor;
-}
-
 TEST(GLTFAccessorTest, CreateFromData) {
   float points[12] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
   GLTF::Accessor* accessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3,

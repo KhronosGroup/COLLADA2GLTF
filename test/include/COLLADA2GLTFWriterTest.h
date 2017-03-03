@@ -8,6 +8,7 @@ namespace {
   public:
 	  COLLADA2GLTF::Writer* writer;
 	  COLLADA2GLTF::Options* options;
+	  COLLADA2GLTF::ExtrasHandler* extrasHandler;
 	  GLTF::Asset* asset;
 
 	  COLLADA2GLTFWriterTest();

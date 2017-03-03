@@ -6,6 +6,7 @@ project(${PROJECT_NAME})
 if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   add_compile_options(-std=c++11)
 endif()
@@ -27,19 +28,19 @@ add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
 include_directories(GLTF/include)
 add_subdirectory(GLTF)
 
-# COLLADA2GLTF_lib
+# COLLADA2GLTF-lib
 include_directories(include)
 file(GLOB LIB_HEADERS "include/*.h")
 set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp src/COLLADA2GLTFExtrasHandler.cpp)
-add_library(${PROJECT_NAME}_lib ${LIB_HEADERS} ${LIB_SOURCES})
-target_link_libraries(${PROJECT_NAME}_lib GLTF COLLADASaxFrameworkLoader)
+add_library(${PROJECT_NAME}-lib ${LIB_HEADERS} ${LIB_SOURCES})
+target_link_libraries(${PROJECT_NAME}-lib GLTF COLLADASaxFrameworkLoader)
 
 # argparse
 include_directories(dependencies/argparse/argparse/)
 add_subdirectory(dependencies/argparse/modules/argparse)
 
 add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib argparse)
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}-lib argparse)
 
 if(test)
   enable_testing()
@@ -54,8 +55,8 @@ if(test)
   file(GLOB TEST_HEADERS "test/include/*.h")
   file(GLOB TEST_SOURCES "test/src/*.cpp")
 
-  add_executable(${PROJECT_NAME}_TEST ${TEST_HEADERS} ${TEST_SOURCES})
-  target_link_libraries(${PROJECT_NAME}_TEST  ${PROJECT_NAME}_lib GLTF gtest)
+  add_executable(${PROJECT_NAME}-test ${TEST_HEADERS} ${TEST_SOURCES})
+  target_link_libraries(${PROJECT_NAME}-test  ${PROJECT_NAME}-lib GLTF gtest)
 
-  add_test(COLLADA2GLTFWriterTest ${PROJECT_NAME}_TEST)
+  add_test(COLLADA2GLTFWriterTest ${PROJECT_NAME}-test)
 endif()
