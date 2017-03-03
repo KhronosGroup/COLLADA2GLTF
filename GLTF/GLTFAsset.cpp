@@ -956,7 +956,7 @@ namespace GLTF
 
             for (unsigned int j = 0 ; j < primitivesCount ; j++) {
                 shared_ptr<GLTFPrimitive> primitive = static_pointer_cast<GLTFPrimitive>(primitives[j]);
-				std::string materialId = primitive->getMaterialID();
+                std::string materialId = primitive->getMaterialID();
                 //WORK-AROUND: we don't want meshes without material, which can happen if a mesh is not associated with a node.
                 //In this case, the material binding - isn't resolved.
                 if (materialId == "") {
@@ -965,33 +965,33 @@ namespace GLTF
                 }
                 //WORK-AROUND: TEXCOORD from the Collada model can be removed if it isn't bound to a technique
                 else {
-					shared_ptr <GLTF::GLTFEffect> material = static_pointer_cast<GLTF::GLTFEffect>(materials->getObject(materialId));
-					shared_ptr <JSONObject> technique = material->getTechniqueGenerator();
-					shared_ptr <JSONObject> texcoordBindings = technique->getObject("texcoordBindings");
-					SemanticArrayPtr unboundTextures = material->getSemanticsForTexcoordName("");
-					// If there are unbound textures in the model, it is impossible to determine which TEXCOORD semantics are unused
-					if (unboundTextures == NULL || unboundTextures->size() == 0) {
-						for (unsigned int k = 0; k < primitive->getVertexAttributes().size(); k++) {
-							shared_ptr <JSONVertexAttribute> vertexAttribute = static_pointer_cast<JSONVertexAttribute>(primitive->getVertexAttributes()[k]);
-							if (vertexAttribute->getSemantic() == GLTF::TEXCOORD) {
-								std::string attribute = "TEXCOORD_" + std::to_string(vertexAttribute->getIndexOfSet());
-								bool bound = false;
-								for (unsigned int m = 0; m < texcoordBindings->getKeysCount(); m++) {
-									std::string key = texcoordBindings->getAllKeys()[m];
-									std::string binding = texcoordBindings->getString(key);
+                    shared_ptr <GLTF::GLTFEffect> material = static_pointer_cast<GLTF::GLTFEffect>(materials->getObject(materialId));
+                    shared_ptr <JSONObject> technique = material->getTechniqueGenerator();
+                    shared_ptr <JSONObject> texcoordBindings = technique->getObject("texcoordBindings");
+                    SemanticArrayPtr unboundTextures = material->getSemanticsForTexcoordName("");
+                    // If there are unbound textures in the model, it is impossible to determine which TEXCOORD semantics are unused
+                    if (unboundTextures == NULL || unboundTextures->size() == 0) {
+                        for (unsigned int k = 0; k < primitive->getVertexAttributes().size(); k++) {
+                            shared_ptr <JSONVertexAttribute> vertexAttribute = static_pointer_cast<JSONVertexAttribute>(primitive->getVertexAttributes()[k]);
+                            if (vertexAttribute->getSemantic() == GLTF::TEXCOORD) {
+                                std::string attribute = "TEXCOORD_" + std::to_string(vertexAttribute->getIndexOfSet());
+                                bool bound = false;
+                                for (unsigned int m = 0; m < texcoordBindings->getKeysCount(); m++) {
+                                    std::string key = texcoordBindings->getAllKeys()[m];
+                                    std::string binding = texcoordBindings->getString(key);
 
-									if (attribute == binding) {
-										bound = true;
-										break;
-									}
-								}
-								if (!bound) {
-									primitive->removeVertexAttribute(k);
-									k--;
-								}
-							}
-						}
-					}
+                                    if (attribute == binding) {
+                                        bound = true;
+                                        break;
+                                    }
+                                }
+                                if (!bound) {
+                                    primitive->removeVertexAttribute(k);
+                                    k--;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             mesh->resolveAttributes();
@@ -1121,11 +1121,11 @@ namespace GLTF
         for (size_t skinIndex = 0 ; skinIndex < skinsUIDs.size() ; skinIndex++) {
             shared_ptr <GLTFSkin> skin = static_pointer_cast<GLTFSkin>(skins->getObject(skinsUIDs[skinIndex]));
             shared_ptr<JSONArray> joints = skin->getJointNames();
-			if (joints == NULL) {
-				// This skin was never instanced, remove it
-				skins->removeValue(skin->getId());
-				continue;
-			}
+            if (joints == NULL) {
+                // This skin was never instanced, remove it
+                skins->removeValue(skin->getId());
+                continue;
+            }
             shared_ptr<JSONArray> jointsWithOriginalSids(new JSONArray());
             
             //resolve the sid and use the original ones
