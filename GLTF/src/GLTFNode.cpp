@@ -98,9 +98,9 @@ void GLTF::Node::TransformMatrix::getTransformTRS(GLTF::Node::TransformTRS* trs)
 	float x, y, z, w;
 
 	if (trace > 0) {
-		root = sqrtf(trace + 1.0);
-		w = 0.5 * root;
-		root = 0.5 / root;
+		root = sqrtf((float)(trace + 1.0));
+		w = (float)(0.5 * root);
+		root = (float)(0.5 / root);
 
 		x = (matrix[6] - matrix[9]) * root;
 		y = (matrix[8] - matrix[2]) * root;
@@ -116,9 +116,9 @@ void GLTF::Node::TransformMatrix::getTransformTRS(GLTF::Node::TransformTRS* trs)
 		int j = rotationMatrixNext[i];
 		int k = rotationMatrixNext[j];
 
-		root = sqrtf(matrix[i * 4 + i] - matrix[j * 4 + j] - matrix[k * 4 + k] + 1.0);
-		trs->rotation[i] = 0.5 * root;
-		root = 0.5 / root;
+		root = sqrtf((float)(matrix[i * 4 + i] - matrix[j * 4 + j] - matrix[k * 4 + k] + 1.0));
+		trs->rotation[i] = (float)(0.5 * root);
+		root = (float)(0.5 / root);
 		w = (matrix[k * 4 + j] - matrix[j * 4 + k]) * root;
 		trs->rotation[j] = (matrix[j * 4 + i] + matrix[i * 4 + j]) * root;
 		trs->rotation[k] = (matrix[k * 4 + i] + matrix[i * 4 + k]) * root;
@@ -161,15 +161,15 @@ GLTF::Node::TransformMatrix* GLTF::Node::TransformTRS::getTransformMatrix() {
 	float w2 = rotationW * rotationW;
 
 	float m00 = x2 - y2 - z2 + w2;
-	float m01 = 2.0 * (xy - zw);
-	float m02 = 2.0 * (xz + yw);
+	float m01 = (float)(2.0 * (xy - zw));
+	float m02 = (float)(2.0 * (xz + yw));
 	
-	float m10 = 2.0 * (xy + zw);
+	float m10 = (float)(2.0 * (xy + zw));
 	float m11 = -x2 + y2 - z2 + w2;
-	float m12 = 2.0 * (yz - xw);
+	float m12 = (float)(2.0 * (yz - xw));
 
-	float m20 = 2.0 * (xz - yw);
-	float m21 = 2.0 * (yz + xw);
+	float m20 = (float)(2.0 * (xz - yw));
+	float m21 = (float)(2.0 * (yz + xw));
 	float m22 = -x2 - y2 + z2 + w2;
 
 	result->matrix[0] = m00 * scaleX;

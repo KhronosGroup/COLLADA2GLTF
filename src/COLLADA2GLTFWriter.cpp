@@ -30,6 +30,7 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		);
+		_rootNode->name = "X_UP";
 	} else if (asset->getUpAxisType() == COLLADAFW::FileInfo::Z_UP) {
 		_rootNode = new GLTF::Node();
 		_rootNode->transform = new GLTF::Node::TransformMatrix(
@@ -38,6 +39,7 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 			0, -1, 0, 0,
 			0, 0, 0, 1
 		);
+		_rootNode->name = "Z_UP";
 	}
 	return true;
 }
@@ -128,12 +130,15 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	const COLLADAFW::UniqueId& colladaNodeId = colladaNode->getUniqueId();
 	std::string id = colladaNode->getOriginalId();
 	node->name = colladaNode->getName();
+	if (node->name == "") {
+		node->name = id;
+	}
 	COLLADAFW::TransformationPointerArray transformations = colladaNode->getTransformations();
 
 	std::vector<const COLLADAFW::Transformation*> nodeTransforms;
 	bool isAnimated = false;
 	int bufferNodes = 0;
-	for (int i = 0; i < transformations.getCount(); i++) {
+	for (size_t i = 0; i < transformations.getCount(); i++) {
 		const COLLADAFW::Transformation* transformation = transformations[i];
 		const COLLADAFW::UniqueId& animationListId = transformation->getAnimationList();
 		if (animationListId.isValid()) {
@@ -282,9 +287,9 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 
 	// Instance Geometries
 	const COLLADAFW::InstanceGeometryPointerArray& instanceGeometries = colladaNode->getInstanceGeometries();
-	int count = instanceGeometries.getCount();
+	size_t count = instanceGeometries.getCount();
 	if (count > 0) {
-		for (int i = 0; i < count; i++) {
+		for (size_t i = 0; i < count; i++) {
 			COLLADAFW::InstanceGeometry* instanceGeometry = instanceGeometries[i];
 			COLLADAFW::MaterialBindingArray& materialBindings = instanceGeometry->getMaterialBindings();
 			const COLLADAFW::UniqueId& objectId = instanceGeometry->getInstanciatedObjectId();
@@ -292,7 +297,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			std::map<COLLADAFW::UniqueId, GLTF::Mesh*>::iterator iter = _meshInstances.find(objectId);
 			if (iter != _meshInstances.end()) {
 				GLTF::Mesh* mesh = iter->second;
-				for (int j = 0; j < materialBindings.getCount(); j++) {
+				for (size_t j = 0; j < materialBindings.getCount(); j++) {
 					COLLADAFW::MaterialBinding materialBinding = materialBindings[j];
 					COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
 					COLLADAFW::UniqueId effectId = this->_materialEffects[materialId];
@@ -799,15 +804,15 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 	GLTF::Camera* writeCamera = NULL;
 	if (colladaCamera->getCameraType() == COLLADAFW::Camera::ORTHOGRAPHIC) {
 		GLTF::CameraOrthographic* camera = new GLTF::CameraOrthographic();
-		camera->xmag = colladaCamera->getXMag();
-		camera->ymag = colladaCamera->getYMag();
+		camera->xmag = (float)colladaCamera->getXMag();
+		camera->ymag = (float)colladaCamera->getYMag();
 		writeCamera = camera;
 	}
 	else if (colladaCamera->getCameraType() == COLLADAFW::Camera::PERSPECTIVE) {
 		GLTF::CameraPerspective* camera = new GLTF::CameraPerspective();
-		float x = colladaCamera->getXFov().getValue() * (180.0 / 3.14);
-		float y = colladaCamera->getYFov().getValue() * (180 / 3.14);
-		float aspectRatio = colladaCamera->getAspectRatio().getValue();
+		float x = (float)(colladaCamera->getXFov().getValue() * (180.0 / 3.14));
+		float y = (float)(colladaCamera->getYFov().getValue() * (180 / 3.14));
+		float aspectRatio = (float)colladaCamera->getAspectRatio().getValue();
 		switch (colladaCamera->getDescriptionType()) {
 		case COLLADAFW::Camera::UNDEFINED:
 		case COLLADAFW::Camera::SINGLE_X:
@@ -832,8 +837,8 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 		writeCamera = camera;
 	}
 	if (writeCamera != NULL) {
-		writeCamera->zfar = colladaCamera->getFarClippingPlane().getValue();
-		writeCamera->znear = colladaCamera->getNearClippingPlane().getValue();
+		writeCamera->zfar = (float)colladaCamera->getFarClippingPlane().getValue();
+		writeCamera->znear = (float)colladaCamera->getNearClippingPlane().getValue();
 		_cameraInstances[colladaCamera->getUniqueId()] = writeCamera;
 		return true;
 	}
@@ -876,9 +881,9 @@ bool COLLADA2GLTF::Writer::writeLight(const COLLADAFW::Light* colladaLight) {
 		break;
 	case COLLADAFW::Light::POINT_LIGHT:
 		light->type = GLTF::MaterialCommon::Light::Type::POINT;
-		light->constantAttenuation = colladaLight->getConstantAttenuation();
-		light->linearAttenuation = colladaLight->getLinearAttenuation();
-		light->quadraticAttenuation = colladaLight->getQuadraticAttenuation();
+		light->constantAttenuation = (float)colladaLight->getConstantAttenuation();
+		light->linearAttenuation = (float)colladaLight->getLinearAttenuation();
+		light->quadraticAttenuation = (float)colladaLight->getQuadraticAttenuation();
 		break;
 	}
 
@@ -942,7 +947,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 	GLTF::Animation* animation = new GLTF::Animation();
 
 	double* component = new double[1];
-	for (int i = 0; i < bindings.getCount(); i++) {
+	for (size_t i = 0; i < bindings.getCount(); i++) {
 		const COLLADAFW::AnimationList::AnimationBinding& binding = bindings[i];
 		GLTF::Animation::Channel* channel = new GLTF::Animation::Channel();
 		GLTF::Animation::Channel::Target* target = new GLTF::Animation::Channel::Target();
@@ -976,7 +981,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 				for (int m = 0; m < 4; m++) {
 					for (int n = 0; n < 4; n++) {
 						output->getComponentAtIndex(j * 16 + m * 4 + n, component);
-						transformMatrix->matrix[n * 4 + m] = component[0];
+						transformMatrix->matrix[n * 4 + m] = (float)component[0];
 					}
 				}
 				transformMatrix->getTransformTRS(transformTRS);
@@ -1145,12 +1150,12 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 	// Cache joint and weight data
 	// COLLADA can have different numbers of joints for a single vertex
 	// We have to make this uniform across all vertices to make it into a GLTF primitive attribute
-	int maxJointsPerVertex = 0;
+	size_t maxJointsPerVertex = 0;
 	const COLLADAFW::UIntValuesArray& jointsPerVertexArray = skinControllerData->getJointsPerVertex();
 	
 	size_t totalVertices = 0;
 	for (size_t i = 0; i < jointsPerVertexArray.getCount(); i++) {
-		int jointsPerVertex = jointsPerVertexArray[i];
+		size_t jointsPerVertex = jointsPerVertexArray[i];
 		totalVertices += jointsPerVertex;
 		if (jointsPerVertex > maxJointsPerVertex) {
 			maxJointsPerVertex = jointsPerVertex;
@@ -1235,7 +1240,7 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 		COLLADAFW::UniqueId skinControllerId = skinController->getUniqueId();
 		GLTF::Skin* skin = _skinInstances[skinControllerDataId];
 		COLLADAFW::UniqueIdArray& jointIds = skinController->getJoints();
-		for (int i = 0; i < jointIds.getCount(); i++) {
+		for (size_t i = 0; i < jointIds.getCount(); i++) {
 			_skinJointNodes[skinControllerId].push_back(jointIds[i]);
 		}
 		GLTF::Accessor::Type type;

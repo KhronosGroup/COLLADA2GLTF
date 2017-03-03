@@ -133,7 +133,7 @@ void GLTF::MaterialCommon::Light::writeJSON(void* writer, GLTF::Options* options
 		jsonWriter->Key("color");
 		jsonWriter->StartArray();
 		for (int i = 0; i < 4; i++) {
-			jsonWriter->Int(color[i]);
+			jsonWriter->Double(color[i]);
 		}
 		jsonWriter->EndArray();
 		jsonWriter->EndObject();
@@ -256,7 +256,7 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialComm
 	std::vector<std::string> ambientLights;
 	std::map<std::string, GLTF::MaterialCommon::Light::Type> nonAmbientLights;
 	// Add parameters and uniforms from lights
-	for (int i = 0; i < lights.size(); i++) {
+	for (size_t i = 0; i < lights.size(); i++) {
 		GLTF::MaterialCommon::Light* light = lights[i];
 		std::string name = "light" + std::to_string(i);
 		std::string colorName = name + "Color";
