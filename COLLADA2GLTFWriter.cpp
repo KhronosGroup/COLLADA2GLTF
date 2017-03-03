@@ -505,7 +505,7 @@ namespace GLTF
             for (unsigned int i = 0; i < count; i++) {
                 InstanceGeometry* instanceGeometry = instanceGeometries[i];
                 COLLADAFW::UniqueId uniqueId = instanceGeometry->getInstanciatedObjectId();
-				std::string meshUID = uniqueId.toAscii();
+                std::string meshUID = uniqueId.toAscii();
                 MaterialBindingArray& materialBindings = instanceGeometry->getMaterialBindings();
                 if (materialBindings.getCount() > 0) {
                     MaterialBinding materialBinding = materialBindings[0];
