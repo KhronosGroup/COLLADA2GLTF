@@ -58,7 +58,7 @@ int main(int argc, const char **argv) {
 			rawPosition++;
 		}
 		else {
-			std::cout << "Error: Missing required argument: input COLLADA file\n" << std::endl;
+			std::cout << "ERROR: Missing required argument: input COLLADA file\n" << std::endl;
 			argparse_usage(&argparse);
 			return 1;
 		}
@@ -122,7 +122,7 @@ int main(int argc, const char **argv) {
 	loader->registerExtraDataCallbackHandler((COLLADASaxFWL::IExtraDataCallbackHandler*)extrasHandler);
 	COLLADAFW::Root root(loader, writer);
 	if (!root.loadDocument(options->inputPath)) {
-		std::cout << "Error: Unable to load input from path '" << options->inputPath << "'" << std::endl;
+		std::cout << "ERROR: Unable to load input from path '" << options->inputPath << "'" << std::endl;
 		return -1;
 	}
 
@@ -167,7 +167,7 @@ int main(int argc, const char **argv) {
 				fclose(file);
 			}
 			else {
-				std::cout << "Error: Couldn't write image to path '" << uri << "'" << std::endl;
+				std::cout << "ERROR: Couldn't write image to path '" << uri << "'" << std::endl;
 			}
 		}
 	}
@@ -180,7 +180,7 @@ int main(int argc, const char **argv) {
 			fclose(file);
 		}
 		else {
-			std::cout << "Error: Couldn't write buffer to path '" << uri << "'" << std::endl;
+			std::cout << "ERROR: Couldn't write buffer to path '" << uri << "'" << std::endl;
 		}
 	}
 
@@ -193,7 +193,7 @@ int main(int argc, const char **argv) {
 				fclose(file);
 			}
 			else {
-				std::cout << "Error: Couldn't write shader to path '" << uri << "'" << std::endl;
+				std::cout << "ERROR: Couldn't write shader to path '" << uri << "'" << std::endl;
 			}
 		}
 	}
@@ -213,7 +213,7 @@ int main(int argc, const char **argv) {
 			file.close();
 		}
 		else {
-			std::cout << "Error: couldn't write glTF to path '" << options->outputPath << "'" << std::endl;
+			std::cout << "ERROR: couldn't write glTF to path '" << options->outputPath << "'" << std::endl;
 		}
 	}
 	else {
@@ -242,7 +242,7 @@ int main(int argc, const char **argv) {
 			fclose(file);
 		}
 		else {
-			std::cout << "Error couldn't write binary glTF to path '" << outputPath << "'" << std::endl;
+			std::cout << "ERROR couldn't write binary glTF to path '" << outputPath << "'" << std::endl;
 		}
 	}
 

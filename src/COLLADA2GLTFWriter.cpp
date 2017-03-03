@@ -449,6 +449,9 @@ std::string buildAttributeId(const COLLADAFW::MeshVertexData& data, int index, i
 bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	GLTF::Mesh* mesh = new GLTF::Mesh();
 	mesh->name = colladaMesh->getName();
+	if (mesh->name == "") {
+		mesh->name = colladaMesh->getOriginalId();
+	}
 	const COLLADAFW::UniqueId& uniqueId = colladaMesh->getUniqueId();
 	std::map<GLTF::Primitive*, std::vector<int>> positionMapping;
 
@@ -712,6 +715,10 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 	const COLLADAFW::CommonEffectPointerArray& commonEffects = effect->getCommonEffects();
 	if (commonEffects.getCount() > 0) {
 		GLTF::MaterialCommon* material = new GLTF::MaterialCommon();
+		material->name = effect->getName();
+		if (material->name == "") {
+			material->name = effect->getOriginalId();
+		}
 
 		// One effect makes one template material, it really isn't possible to process more than one of these
 		const COLLADAFW::EffectCommon* effectCommon = commonEffects[0];
@@ -854,17 +861,19 @@ bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	GLTF::Image* image;
 	FILE* file = fopen(fileString.c_str(), "rb");
 	if (file == NULL) {
-		return false;
+		std::cout << "WARNING: Image uri: " << imageUri.getURIString() << " could not be resolved " << std::endl;
+		image = new GLTF::Image(imageUri.getPathFile());
 	}
-	fseek(file, 0, SEEK_END);
-	long int size = ftell(file);
-	fclose(file);
-	file = fopen(fileString.c_str(), "rb");
-	unsigned char* buffer = (unsigned char*)malloc(size);
-	int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
-	fclose(file);
-
-	image = new GLTF::Image(imageUri.getPathFile(), buffer, bytesRead, fileExtension);
+	else {
+		fseek(file, 0, SEEK_END);
+		long int size = ftell(file);
+		fclose(file);
+		file = fopen(fileString.c_str(), "rb");
+		unsigned char* buffer = (unsigned char*)malloc(size);
+		int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
+		fclose(file);
+		image = new GLTF::Image(imageUri.getPathFile(), buffer, bytesRead, fileExtension);
+	}
 
 	_images[colladaImage->getUniqueId()] = image;
 	return true;
@@ -1136,6 +1145,9 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 	GLTF::Skin* skin = new GLTF::Skin();
 	COLLADAFW::UniqueId uniqueId = skinControllerData->getUniqueId();
 	skin->name = skinControllerData->getName();
+	if (skin->name == "") {
+		skin->name = skinControllerData->getOriginalId();
+	}
 
 	// Write inverseBindMatrices and bindShapeMatrix
 	const COLLADAFW::Matrix4Array& matrixArray = skinControllerData->getInverseBindMatrices();

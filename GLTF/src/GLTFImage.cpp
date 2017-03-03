@@ -4,6 +4,8 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+GLTF::Image::Image(std::string uri) : uri(uri) {}
+
 GLTF::Image::Image(std::string uri, unsigned char* data, size_t byteLength, std::string fileExtension) : uri(uri), data(data), byteLength(byteLength) {
 	if (std::string((char*)data, 1, 8) == "PNG\r\n\x1a\n") {
 		mimeType = "image/png";
@@ -66,17 +68,13 @@ std::pair<int, int> GLTF::Image::getDimensions() {
 void GLTF::Image::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
-	if (options->embeddedTextures) {
+	if (options->embeddedTextures && data != NULL) {
 		if (!options->binary) {
 			jsonWriter->Key("uri");
 			std::string embeddedUri = "data:" + mimeType + ";base64," + Base64::encode(data, byteLength);
 			jsonWriter->String(embeddedUri.c_str());
 		}
 		else {
-			jsonWriter->Key("extensions");
-			jsonWriter->StartObject();
-			jsonWriter->Key("KHR_binary_glTF");
-			jsonWriter->StartObject();
 			jsonWriter->Key("bufferView");
 			jsonWriter->Int(bufferView->id);
 			jsonWriter->Key("mimeType");
@@ -86,8 +84,6 @@ void GLTF::Image::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->Int(dimensions.first);
 			jsonWriter->Key("height");
 			jsonWriter->Int(dimensions.second);
-			jsonWriter->EndObject();
-			jsonWriter->EndObject();
 		}
 	}
 	else {
