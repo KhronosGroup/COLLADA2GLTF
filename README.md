@@ -1,56 +1,65 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png">
+  <img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png"/>
 </p>
 
-# COLLADA to glTF converter
+# COLLADA2GLTF
+[![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/lasalvavida/COLLADA2GLTF)
+[![Build Status](https://ci.appveyor.com/api/projects/status/cmt54n4t1hqwtix9/branch/master)](https://ci.appveyor.com/project/lasalvavida/collada2gltf/history)
 
-A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
+A command-line tool to convert COLLADA (`.dae`) files to [glTF 2.0](https://github.com/KhronosGroup/glTF).
+
+## Releases
+
+Compiled binaries for Windows and Linux can be found under [releases](https://github.com/lasalvavida/COLLADA2GLTF/releases). It is recommended to use the last versioned release
+
+A live build of the current master branch is available as [latest](https://github.com/lasalvavida/COLLADA2GLTF/releases/tag/latest).
+These binaries are updated whenever master changes, the build succeeds, and the tests pass. These binaries are bleeding-edge and are not guaranteed to be stable.
 
 ## Compile from source
 
 1. Clone repository
- 
- ```
-git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
-```
 
-2. Install dependencies (packages names for Debian)
- ```
-apt-get install cmake libxml2-dev libpcre3-dev libpng-dev zlib1g-dev
-```
+  ```bash
+  git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
+  ```
+2. Compile
 
-3. Compile
- ```
-cd COLLADA2GLTF
-cmake . && make
-```
+  ```bash
+  cd COLLADA2GLTF
+  mkdir build
+  cd build
+  cmake .. #-Dtest=ON
+  # Linux
+  make
+  # Windows
+  ## Open the generated COLLADA2GLTF.sln in Visual Studio and build
+  ```
 
-4. Run
- ```
-./bin/collada2gltf
-```
+3. Run
+
+  ```bash
+  COLLADA2GLTF-bin[.exe]
+  ```
+
+4. Run tests
+
+  ```bash
+  COLLADA2GLTF-test[.exe]
+  GLTF-test[.exe]
+  ```
 
 ## Usage
 
+```bash
+COLLADA2GLTF[.exe] [input] [output] [options]
 ```
-collada2gltlf -f [file] [options]
-options:
--z -> path of configuration file [string]
--f -> path of input file, argument [string]
--o -> path of output file argument [string]
--b -> path of output bundle argument [string]
--g -> [experimental] GLSL version to output in generated shaders
--i -> invert-transparency
--d -> export pass details to be able to regenerate shaders and states
--p -> output progress
--l -> enable default lighting (if no lights in scene) [bool], default:true
--c -> compression type: available: Open3DGC [string]
--m -> compression mode: for Open3DGC can be "ascii"(default) or "binary" [string]
--v -> print version
--s -> experimental mode
--h -> help
--r -> verbose logging
--e -> embed resources (bin, shaders, available textures) in glTF file
--n -> don't combine animations with the same target
--k -> export materials and lights using KHR_materials_common extension
-```
+### Options
+| Flag | Default | Required | Description |
+| --- | --- | --- | --- |
+| -i, --input | | Yes :white_check_mark: | Path to the input COLLADA file |
+| -o, --output | output/${input}.gltf | No | Path to the output glTF file |
+| --basepath | Parent of input path | No | Resolve external uris using this as the reference path |
+| -s, --separate | false | No | Output separate binary buffer, shaders, and textures |
+| -t, --separateTextures | false | No | Output textures separately |
+| -b, --binary | false | No | Output Binary glTF |
+| -m, --materialsCommon | false | No | Output materials using the KHR_materials_common extension |
