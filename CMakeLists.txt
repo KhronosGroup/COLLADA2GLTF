@@ -5,10 +5,12 @@ set(PROJECT_NAME COLLADA2GLTF)
 project(${PROJECT_NAME})
 if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  add_compile_options(-std=c++11)
+  add_compile_options(-std=c++11 -lstdc++fs)
 endif()
 
 # cmake -Dtest=ON to build with tests
