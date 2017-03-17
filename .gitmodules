@@ -10,3 +10,6 @@
 [submodule "dependencies/argparse/argparse"]
 	path = dependencies/argparse/argparse
 	url = git@github.com:cofyc/argparse.git
+[submodule "dependencies/draco"]
+	path = dependencies/draco
+	url = https://github.com/google/draco

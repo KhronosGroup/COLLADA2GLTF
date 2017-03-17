@@ -9,6 +9,10 @@
 #include "COLLADA2GLTFOptions.h"
 #include "COLLADA2GLTFExtrasHandler.h"
 
+#ifdef USE_DRACO
+#include "encode.h"
+#endif
+
 namespace COLLADA2GLTF {
 	class Writer : public COLLADAFW::IWriter {
 	private:
@@ -68,6 +72,9 @@ namespace COLLADA2GLTF {
 		virtual bool writeLibraryNodes(const COLLADAFW::LibraryNodes* libraryNodes);
 
 		bool writeMesh(const COLLADAFW::Mesh* mesh);
+    bool writeCompressedPrimitive(GLTF::Primitive* primitive,
+        const std::map<std::string, std::vector<float>>& buildAttributes,
+        const std::vector<unsigned short>& buildIndices);
 
 		/** Writes the geometry.
 		 @return True on succeeded, false otherwise.*/

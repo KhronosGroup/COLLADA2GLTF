@@ -4,6 +4,16 @@
 
 #include "Base64.h"
 
+#define TEST_DRACO
+#ifdef TEST_DRACO
+#include "mesh_io.h"
+#include "obj_encoder.h"
+#include <ctime>
+#include <chrono>
+#include <sstream>
+#include <iostream>
+#endif
+
 using namespace std::experimental::filesystem;
 
 COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _asset(asset), _options(options), _extrasHandler(extrasHandler) {
@@ -537,7 +547,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			}
 			if (colladaPrimitive->hasTangentIndices()) {
 				semantic = "TANGENT";
-;				buildAttributes[semantic] = std::vector<float>();
+				buildAttributes[semantic] = std::vector<float>();
 				semanticIndices[semantic] = colladaPrimitive->getTangentIndices().getData();
 				semanticData[semantic] = &colladaMesh->getTangents();
 				primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
@@ -649,13 +659,17 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				buildIndices.push_back(buildIndices[end]);
 				buildIndices.push_back(buildIndices[startFace]);
 			}
-			// Create indices accessor
-			GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
-			primitive->indices = indices;
-			mesh->primitives.push_back(primitive);
-			// Create attribute accessors
-			for (const auto& entry : buildAttributes) {
-				std::string semantic = entry.first;
+      if (_options->dracoCompression &&
+          primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
+        // TODO: Support other modes.
+        writeCompressedPrimitive(primitive, buildAttributes, buildIndices);
+      } else {
+        // Create indices accessor
+        GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
+			  primitive->indices = indices;
+			  // Create attribute accessors
+			  for (const auto& entry : buildAttributes) {
+			    	std::string semantic = entry.first;
 				std::vector<float> attributeData = entry.second;
 				GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC3;
 				if (semantic.find("TEXCOORD") == 0) {
@@ -663,7 +677,9 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				}
 				GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)&attributeData[0], attributeData.size() / GLTF::Accessor::getNumberOfComponents(type), GLTF::Constants::WebGL::ARRAY_BUFFER);
 				primitive->attributes[semantic] = accessor;
-			}
+			  }
+      }
+			mesh->primitives.push_back(primitive);
 			positionMapping[primitive] = mapping;
 		}
 	}
@@ -671,6 +687,118 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	_meshPositionMapping[uniqueId] = positionMapping;
 	_meshInstances[uniqueId] = mesh;
 	return true;
+}
+
+bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
+			const std::map<std::string, std::vector<float>>& buildAttributes,
+			const std::vector<unsigned short>& buildIndices) {
+  // Create Draco mesh for compression.
+  std::unique_ptr<draco::Mesh> draco_mesh(new draco::Mesh());
+  // Add extension for primitive.
+  GLTF::DracoExtension* draco_extension = new GLTF::DracoExtension();
+  primitive->extensions["KHR_draco_compression_extension"] = (GLTF::Extension*)draco_extension;
+
+  // Add faces to Draco mesh.
+  draco_extension->indexCount = buildIndices.size();
+  const int numTriangles = buildIndices.size() / 3;
+  draco_mesh->SetNumFaces(numTriangles);
+  for (draco::FaceIndex i(0); i < numTriangles; ++i) {
+    draco::Mesh::Face face;
+    face[0] = buildIndices[i.value() * 3];
+    face[1] = buildIndices[i.value() * 3 + 1];
+    face[2] = buildIndices[i.value() * 3 + 2];
+    draco_mesh->SetFace(i, face);
+  }
+  
+  // Add attributes to Draco mesh.
+  // TODO: Right now we are writing each attributes compactly. Need to support
+  // interleaved attributes.
+  int totalByteOffset = 0; 
+  for (const auto& entry : buildAttributes) {
+    // First create Accessor without data.
+    std::string semantic = entry.first;
+    std::vector<float> attributeData = entry.second;
+    GLTF::Accessor::Type type = semantic.find("TEXCOORD") == 0 ?
+      GLTF::Accessor::Type::VEC2 : GLTF::Accessor::Type::VEC3;
+    const int componentCount = GLTF::Accessor::getNumberOfComponents(type);
+    const int vertexCount = attributeData.size() / componentCount;
+    // TODO: Verify all attributes have the same number.
+    draco_extension->vertexCount = vertexCount;
+
+    GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, totalByteOffset, 0, vertexCount,
+                                                  (GLTF::BufferView*)NULL);
+    primitive->attributes[semantic] = accessor;
+
+    // Create attributes for Draco mesh.
+    draco::GeometryAttribute::Type att_type = draco::GeometryAttribute::GENERIC;
+    if (semantic == "POSITION")
+      att_type = draco::GeometryAttribute::POSITION;
+    else if (semantic == "NORMAL")
+      att_type = draco::GeometryAttribute::NORMAL;
+    else if (semantic.find("TEXCOORD") == 0)
+      att_type = draco::GeometryAttribute::TEX_COORD;
+    else if (semantic.find("COLOR") == 0)
+      att_type = draco::GeometryAttribute::COLOR;
+    
+    // Create DracoAttribute in the extension
+    GLTF::DracoAttribute* draco_att = new GLTF::DracoAttribute(semantic, GLTF::Constants::WebGL::FLOAT, type);
+    draco_extension->attributes.push_back(draco_att);
+
+    draco::PointAttribute att;
+    // TODO: Use accessor's normalized field.
+    att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false,
+             /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
+    // First set to use identity mapping and do deduplication later.
+    int att_id = draco_mesh->AddAttribute(att, /* identity_mapping */ true, vertexCount);
+
+    draco::PointAttribute *att_ptr = draco_mesh->attribute(att_id);
+
+    for (draco::PointIndex i(0); i < vertexCount; ++i) {
+      std::vector<float> vertex_data(componentCount);
+      memcpy(&vertex_data[0], &attributeData[i.value() * sizeof(float) * componentCount], sizeof(float) * componentCount);
+      att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data);
+    }
+
+    totalByteOffset += sizeof(float) * attributeData.size();
+  }
+#ifdef TEST_DRACO
+  draco::ObjEncoder obj_encoder;
+  std::time_t result = std::time(nullptr);
+  std::ostringstream oss;
+  oss << "draco_" << result << ".obj";
+  if (!obj_encoder.EncodeToFile(*draco_mesh, oss.str())) {
+    std::cerr << "Error: write to obj file.\n";
+  }
+#endif
+  
+  // Compress the mesh
+  int position_quantization = 12;
+  int texcoord_quantization = 10;
+  int normal_quantization = 10;
+      
+  draco::EncoderOptions encoder_options = draco::CreateDefaultEncoderOptions();
+  draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh.get(),
+                                       draco::GeometryAttribute::POSITION, position_quantization);
+  draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh.get(),
+                                       draco::GeometryAttribute::TEX_COORD, texcoord_quantization);
+  draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh.get(),
+                                       draco::GeometryAttribute::NORMAL, normal_quantization);
+      
+  const int speed = 5; 
+  draco::SetSpeedOptions(&encoder_options, speed, speed);
+     
+  draco::EncoderBuffer buffer;
+  if (!draco::EncodeMeshToBuffer(*draco_mesh, encoder_options, &buffer)) {
+    std::cerr << "Error: Encode mesh.\n";
+    return false;
+  }
+  // Add data to bufferview
+  unsigned char* allocatedData = (unsigned char*)malloc(buffer.size());
+  std::memcpy(allocatedData, buffer.data(), buffer.size());
+  GLTF::BufferView* bufferView = new GLTF::BufferView(allocatedData, buffer.size());
+  draco_extension->bufferView = bufferView;
+  return true;
+
 }
 
 bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {

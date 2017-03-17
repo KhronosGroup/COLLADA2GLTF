@@ -13,6 +13,7 @@ endif()
 
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
+option(USE_DRACO "Use Draco Compression Extension." ON)
 
 # RapidJSON
 include_directories(GLTF/dependencies/rapidjson/include)
@@ -35,12 +36,31 @@ set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp src/COLLADA2GLTFExtrasHandler.cpp)
 add_library(${PROJECT_NAME}-lib ${LIB_HEADERS} ${LIB_SOURCES})
 target_link_libraries(${PROJECT_NAME}-lib GLTF COLLADASaxFrameworkLoader -lstdc++fs)
 
+# Draco
+if (USE_DRACO)
+  add_definitions( -DUSE_DRACO )
+  include_directories(dependencies/draco/)
+  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/compression)
+  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/compression/config)
+  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/core)
+  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/io)
+  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/mesh)
+  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/point_cloud)
+  add_subdirectory(dependencies/draco)
+endif()
+
 # argparse
 include_directories(dependencies/argparse/argparse/)
 add_subdirectory(dependencies/argparse/modules/argparse)
 
+set(TARGET_LIBS ${PROJECT_NAME}-lib argparse -lstdc++fs)
+if (USE_DRACO)
+  list(APPEND TARGET_LIBS draco dracodec)
+endif()
+
+# executable
 add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}-lib argparse -lstdc++fs)
+target_link_libraries(${PROJECT_NAME} ${TARGET_LIBS})
 
 if(test)
   enable_testing()
@@ -56,7 +76,7 @@ if(test)
   file(GLOB TEST_SOURCES "test/src/*.cpp")
 
   add_executable(${PROJECT_NAME}-test ${TEST_HEADERS} ${TEST_SOURCES})
-  target_link_libraries(${PROJECT_NAME}-test  ${PROJECT_NAME}-lib GLTF gtest)
+  target_link_libraries(${PROJECT_NAME}-test ${TARGET_LIBS} gtest)
 
   add_test(COLLADA2GLTFWriterTest ${PROJECT_NAME}-test)
 endif()
