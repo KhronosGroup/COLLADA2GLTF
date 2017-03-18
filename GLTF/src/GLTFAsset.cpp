@@ -330,6 +330,7 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 	std::vector<GLTF::Accessor*> attributeAccessors;
 	std::vector<GLTF::Accessor*> indicesAccessors;
 	std::vector<GLTF::Accessor*> animationAccessors;
+  std::vector<GLTF::BufferView*> compressedBufferViews;
 
 	for (GLTF::Skin* skin : getAllSkins()) {
 		GLTF::Accessor* inverseBindMatrices = skin->inverseBindMatrices;
@@ -342,17 +343,27 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 	}
 
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+    // For primitives using compressed data.
+    auto draco_ext_itr = primitive->extensions.find("KHR_draco_compression_extension");
+    if (draco_ext_itr != primitive->extensions.end()) {
+      compressedBufferViews.push_back(((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView);
+      continue;
+    }
+
 		for (const auto attribute : primitive->attributes) {
 			GLTF::Accessor* attributeAccessor = attribute.second;
 			std::vector<GLTF::Accessor*>::iterator it = std::find(attributeAccessors.begin(), attributeAccessors.end(), attributeAccessor);
-			if (it == attributeAccessors.end()) {
+      // Accessors might not have bufferViews.
+			if (it == attributeAccessors.end() &&
+          attributeAccessor->bufferView != NULL) {
 				attributeAccessors.push_back(attributeAccessor);
 			}
 		}
 		GLTF::Accessor* indicesAccessor = primitive->indices;
 		if (indicesAccessor != NULL) {
 			std::vector<GLTF::Accessor*>::iterator it = std::find(indicesAccessors.begin(), indicesAccessors.end(), indicesAccessor);
-			if (it == indicesAccessors.end()) {
+			if (it == indicesAccessors.end() &&
+          indicesAccessor->bufferView != NULL) {
 				indicesAccessors.push_back(indicesAccessor);
 			}
 		}
@@ -385,10 +396,26 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 	}
 	byteLength += padding + animationBufferView->byteLength;
 
+  // Add length of compressed data.
+  for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
+    byteLength += compressedBufferView->byteLength;
+  }
+
 	unsigned char* bufferData = new unsigned char[byteLength];
 	std::memcpy(bufferData, attributeBufferView->buffer->data, attributeBufferView->byteLength);
 	std::memcpy(bufferData + attributeBufferView->byteLength, indicesBufferView->buffer->data, indicesBufferView->byteLength);
 	std::memcpy(bufferData + attributeBufferView->byteLength + indicesBufferView->byteLength + padding, animationBufferView->buffer->data, animationBufferView->byteLength);
+ 
+  // Add compressed data to buffer
+  std::map<GLTF::BufferView*, size_t> byteOffsets;
+  size_t byteOffset = attributeBufferView->byteLength + indicesBufferView->byteLength + padding + animationBufferView->byteLength;
+  for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
+    byteOffsets[compressedBufferView] = byteOffset;
+    std::memcpy(bufferData + byteOffset,
+        compressedBufferView->buffer->data, compressedBufferView->byteLength);
+    compressedBufferView->byteOffset = byteOffset;
+    byteOffset += compressedBufferView->byteLength;
+  }
 	
 	GLTF::Buffer* buffer = new GLTF::Buffer(bufferData, byteLength);
 	attributeBufferView->buffer = buffer;
@@ -396,6 +423,10 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 	indicesBufferView->byteOffset = attributeBufferView->byteLength;
 	animationBufferView->buffer = buffer;
 	animationBufferView->byteOffset = attributeBufferView->byteLength + indicesBufferView->byteLength + padding;
+
+  for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
+    compressedBufferView->buffer = buffer;
+  }
 
 	return buffer;
 }
@@ -556,7 +587,6 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 		}
 		jsonWriter->EndArray();
 	}
-	meshes.clear();
 
 	// Write animations and add accessors to the accessor array
 	if (animations.size() > 0) {
@@ -622,8 +652,22 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 			accessor->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
+    // BufferView of compressed data does not belong to Accessors.
+		for (GLTF::Mesh* mesh : meshes) {
+      for (GLTF::Primitive* primitive : mesh->primitives) {
+        auto draco_ext_itr = primitive->extensions.find("KHR_draco_compression_extension");
+        if (draco_ext_itr == primitive->extensions.end())
+          break;
+        GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView;
+        if (bufferView->id < 0) {
+          bufferView->id = bufferViews.size();
+          bufferViews.push_back(bufferView);
+        }
+      }
+    }
 		jsonWriter->EndArray();
 	}
+	meshes.clear();
 	accessors.clear();
 
 	// Write materials and build technique and texture arrays

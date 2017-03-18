@@ -3,6 +3,11 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+#define TEST_DRACO
+#ifdef TEST_DRACO
+#include <iostream>
+#endif
+
 const char* GLTF::DracoAttribute::getTypeName() {
 	switch (this->type) {
 	case GLTF::Accessor::Type::SCALAR:
@@ -35,8 +40,11 @@ void GLTF::DracoAttribute::writeJSON(void* writer, GLTF::Options* options) {
 
 void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
   rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+
+  std::cout << "Writing draco extension.\n";
+
   jsonWriter->Key("bufferView");
-  //jsonWriter->
+  jsonWriter->Int(this->bufferView->id);
   jsonWriter->Key("indexCount");
   jsonWriter->Int(this->indexCount);
   jsonWriter->Key("vertexCount");

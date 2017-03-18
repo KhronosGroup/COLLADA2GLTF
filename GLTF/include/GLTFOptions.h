@@ -11,6 +11,6 @@ namespace GLTF {
 		bool embeddedShaders = true;
 		bool binary = false;
 		bool materialsCommon = false;
-                bool dracoCompression = false;
+    bool dracoCompression = true;
 	};
 }

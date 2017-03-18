@@ -42,7 +42,7 @@ int main(int argc, const char **argv) {
 		OPT_BOOLEAN('t', "separateTextures", &separateTextures, "output images separately, but embed buffers and shaders [default: false]"),
 		OPT_BOOLEAN('b', "binary", &binary, "output binary glTF [default: false]"),
 		OPT_BOOLEAN('m', "materialsCommon", &options->materialsCommon, "output materials using the KHR_materials_common extension [default: false]"),
-		OPT_BOOLEAN('d', "dracoCompression", &options->dracoCompression, "output primitives using the KHR_draco_compression_extension [default: false]"),
+		//OPT_BOOLEAN('d', "dracoCompression", &options->dracoCompression, "output primitives using the KHR_draco_compression_extension [default: false]"),
 		OPT_END()
 	};
 	

@@ -709,6 +709,8 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
     face[2] = buildIndices[i.value() * 3 + 2];
     draco_mesh->SetFace(i, face);
   }
+
+  std::cout << "Added " << numTriangles << " faces.\n";
   
   // Add attributes to Draco mesh.
   // TODO: Right now we are writing each attributes compactly. Need to support
@@ -728,6 +730,8 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
     GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, totalByteOffset, 0, vertexCount,
                                                   (GLTF::BufferView*)NULL);
     primitive->attributes[semantic] = accessor;
+
+    std::cout << "Adding " << semantic << " attribute (" << buildAttributes.size() << ") to mesh.\n";
 
     // Create attributes for Draco mesh.
     draco::GeometryAttribute::Type att_type = draco::GeometryAttribute::GENERIC;
@@ -750,12 +754,12 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
              /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
     // First set to use identity mapping and do deduplication later.
     int att_id = draco_mesh->AddAttribute(att, /* identity_mapping */ true, vertexCount);
-
     draco::PointAttribute *att_ptr = draco_mesh->attribute(att_id);
 
+    std::cout << "Adding " << vertexCount << " vertex data.\n";
     for (draco::PointIndex i(0); i < vertexCount; ++i) {
       std::vector<float> vertex_data(componentCount);
-      memcpy(&vertex_data[0], &attributeData[i.value() * sizeof(float) * componentCount], sizeof(float) * componentCount);
+      memcpy(&vertex_data[0], &attributeData[i.value() * componentCount], sizeof(float) * componentCount);
       att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data);
     }
 
@@ -792,13 +796,14 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
     std::cerr << "Error: Encode mesh.\n";
     return false;
   }
+
   // Add data to bufferview
   unsigned char* allocatedData = (unsigned char*)malloc(buffer.size());
   std::memcpy(allocatedData, buffer.data(), buffer.size());
   GLTF::BufferView* bufferView = new GLTF::BufferView(allocatedData, buffer.size());
   draco_extension->bufferView = bufferView;
+  std::cout << "Done! Encoded mesh.\n";
   return true;
-
 }
 
 bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
