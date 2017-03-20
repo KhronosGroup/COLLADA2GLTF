@@ -760,7 +760,7 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
     for (draco::PointIndex i(0); i < vertexCount; ++i) {
       std::vector<float> vertex_data(componentCount);
       memcpy(&vertex_data[0], &attributeData[i.value() * componentCount], sizeof(float) * componentCount);
-      att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data);
+      att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
     }
 
     totalByteOffset += sizeof(float) * attributeData.size();

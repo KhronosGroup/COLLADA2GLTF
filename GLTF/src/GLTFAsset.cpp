@@ -584,12 +584,12 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
     
         // BufferView of compressed data does not belong to Accessors.
         auto draco_ext_itr = primitive->extensions.find("KHR_draco_compression_extension");
-        if (draco_ext_itr == primitive->extensions.end())
-          break;
-        GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView;
-        if (bufferView->id < 0) {
-          bufferView->id = bufferViews.size();
-          bufferViews.push_back(bufferView);
+        if (draco_ext_itr != primitive->extensions.end()) {
+          GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView;
+          if (bufferView->id < 0) {
+            bufferView->id = bufferViews.size();
+            bufferViews.push_back(bufferView);
+          }
         }
 			}
 			jsonWriter->StartObject();
