@@ -534,6 +534,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 
 	// Write meshes and build accessor and material arrays
 	std::vector<GLTF::Accessor*> accessors;
+	std::vector<GLTF::BufferView*> bufferViews;
 	std::vector<GLTF::Material*> materials;
 	std::map<std::string, GLTF::Technique*> generatedTechniques;
 	if (meshes.size() > 0) {
@@ -580,6 +581,16 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 						accessors.push_back(attribute);
 					}
 				}
+    
+        // BufferView of compressed data does not belong to Accessors.
+        auto draco_ext_itr = primitive->extensions.find("KHR_draco_compression_extension");
+        if (draco_ext_itr == primitive->extensions.end())
+          break;
+        GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView;
+        if (bufferView->id < 0) {
+          bufferView->id = bufferViews.size();
+          bufferViews.push_back(bufferView);
+        }
 			}
 			jsonWriter->StartObject();
 			mesh->writeJSON(writer, options);
@@ -636,7 +647,6 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	skins.clear();
 
 	// Write accessors and add bufferViews to the bufferView array
-	std::vector<GLTF::BufferView*> bufferViews;
 	if (accessors.size() > 0) {
 		jsonWriter->Key("accessors");
 		jsonWriter->StartArray();
@@ -652,21 +662,10 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 			accessor->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
-    // BufferView of compressed data does not belong to Accessors.
-		for (GLTF::Mesh* mesh : meshes) {
-      for (GLTF::Primitive* primitive : mesh->primitives) {
-        auto draco_ext_itr = primitive->extensions.find("KHR_draco_compression_extension");
-        if (draco_ext_itr == primitive->extensions.end())
-          break;
-        GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView;
-        if (bufferView->id < 0) {
-          bufferView->id = bufferViews.size();
-          bufferViews.push_back(bufferView);
-        }
-      }
-    }
 		jsonWriter->EndArray();
 	}
+  if (options->dracoCompression)
+    this->extensions.insert("KHR_draco_mesh_compression");
 	meshes.clear();
 	accessors.clear();
 
