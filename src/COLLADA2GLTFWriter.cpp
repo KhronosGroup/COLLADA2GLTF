@@ -696,7 +696,7 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
   std::unique_ptr<draco::Mesh> draco_mesh(new draco::Mesh());
   // Add extension for primitive.
   GLTF::DracoExtension* draco_extension = new GLTF::DracoExtension();
-  primitive->extensions["KHR_draco_compression_extension"] = (GLTF::Extension*)draco_extension;
+  primitive->extensions["KHR_draco_mesh_compression"] = (GLTF::Extension*)draco_extension;
 
   // Add faces to Draco mesh.
   draco_extension->indexCount = buildIndices.size();
