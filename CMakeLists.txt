@@ -1,222 +1,72 @@
-cmake_minimum_required(VERSION 2.8)
-project(COLLADA2GLTF)
+cmake_minimum_required (VERSION 3.1.0)
 
-if (NOT WIN32)
-#http://www.guyrutenberg.com/2014/01/05/enabling-c11-c0x-in-cmake/
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX11)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    message("-- C++11 Enabled")
-elseif(COMPILER_SUPPORTS_CXX0X)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-    message("-- C++0x Enabled")
-else()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
-endif()
+set(PROJECT_NAME COLLADA2GLTF)
+
+project(${PROJECT_NAME})
+if(MSVC)
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  add_compile_options(-std=c++11 -lstdc++fs)
 endif()
 
-set(USE_OPEN3DGC "ON")
-set(WITH_IN_SOURCE_BUILD "ON")
-set(COLLADA2GLTF_BINARY_DIR, COLLADA2GLTF_SOURCE_DIR)
-set(BUILD_SHARED_LIBS "OFF")
+# cmake -Dtest=ON to build with tests
+option(test "Build all tests." OFF)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+# RapidJSON
+include_directories(GLTF/dependencies/rapidjson/include)
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/GitSHA1.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp" @ONLY)
+# COLLADASaxFrameworkLoader/BaseUtils/Framework, GeneratedSaxParser
+include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADASaxFrameworkLoader/include)
+include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
+include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
+include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/GeneratedSaxParser/include)
+add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
 
-set(TARGET_LIBS GeneratedSaxParser_static OpenCOLLADABaseUtils_static UTF_static ftoa_static MathMLSolver_static OpenCOLLADASaxFrameworkLoader_static OpenCOLLADAFramework_static buffer_static)
+# GLTF
+include_directories(GLTF/include)
+add_subdirectory(GLTF)
 
-if (NOT WIN32)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a .dylib)
+# COLLADA2GLTF
+include_directories(include)
+file(GLOB LIB_HEADERS "include/*.h")
+set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp src/COLLADA2GLTFExtrasHandler.cpp)
+add_library(${PROJECT_NAME} ${LIB_HEADERS} ${LIB_SOURCES})
+if(MSVC)
+   target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+   target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader stdc++fs)
 endif()
 
-# Lets libxml2 work in a shared library
-add_definitions(-DLIBXML_STATIC_FOR_DLL)
+# argparse
+include_directories(dependencies/argparse/argparse/)
+add_subdirectory(dependencies/argparse/modules/argparse)
 
-IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") 
- ADD_DEFINITIONS(-fPIC) 
-ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-
-include_directories(${COLLADA2GLTF_SOURCE_DIR})
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/GLTF)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/JSON)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/shaders)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/helpers)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/convert)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/assetModifiers)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/json/include/rapidjson)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/COLLADAFramework/include)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/COLLADABaseUtils/include)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/COLLADASaxFrameworkLoader/include)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/GeneratedSaxParser/include)
-if (WIN32)
-    include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc)
+add_executable(${PROJECT_NAME}-bin src/main.cpp)
+if(MSVC)
+   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse stdc++fs)
 endif()
 
-if (USE_OPEN3DGC)
-    add_definitions( -DUSE_OPEN3DGC )
-    include_directories(${COLLADA2GLTF_SOURCE_DIR}/extensions/o3dgc-compression)
+if(test)
+  enable_testing()
 
-    include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/o3dgc/src)
-    include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/o3dgc/src/o3dgc_common_lib/inc)
-    include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/o3dgc/src/o3dgc_encode_lib/inc)
-    include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/o3dgc/src/o3dgc_decode_lib/inc)
+  # gtest
+  set(GTEST_LINKED 1)
+  include_directories(GLTF/dependencies/googletest/googletest/include)
+  add_subdirectory(GLTF/dependencies/googletest/googletest)
+
+  # Unit Tests
+  include_directories(test/include)
+  file(GLOB TEST_HEADERS "test/include/*.h")
+  file(GLOB TEST_SOURCES "test/src/*.cpp")
+
+  add_executable(${PROJECT_NAME}-test ${TEST_HEADERS} ${TEST_SOURCES})
+  target_link_libraries(${PROJECT_NAME}-test  ${PROJECT_NAME} GLTF gtest)
+
+  add_test(COLLADA2GLTFWriterTest ${PROJECT_NAME}-test)
 endif()
-
-find_package(PNG)
-if (PNG_FOUND)
-    include_directories(${PNG_INCLUDE_DIR})
-    include_directories(${ZLIB_INCLUDE_DIR})
-    add_definitions(-DUSE_LIBPNG)
-else()
-    message(WARNING "libpng or one of its dependencies couldn't be found. Transparency may not be correctly detected.")
-endif()
-
-link_directories(${COLLADA2GLTF_BINARY_DIR}/lib)
-
-if (WIN32)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
-    add_definitions(-DWIN32)
-    add_definitions(-EHsc)
-endif()
-
-add_subdirectory(dependencies/OpenCOLLADA)
-
-if (USE_OPEN3DGC)
-    add_subdirectory(dependencies/o3dgc/src)
-endif()
-
-set(GLTF_SOURCES
-    COLLADA2GLTFWriter.h
-    COLLADA2GLTFWriter.cpp
-    GLTFOpenCOLLADA.h
-    GLTFOpenCOLLADAUtils.h
-    GLTFOpenCOLLADAUtils.cpp
-
-    GLTF/GLTFAccessorCache.cpp
-    GLTF/GLTFAccessorCache.h
-    GLTF/GLTFAsset.cpp
-    GLTF/GLTFAnimation.cpp
-    GLTF/GLTFAccessor.cpp
-    GLTF/GLTFBuffer.cpp
-    GLTF/GLTFEffect.cpp
-    GLTF/GLTFExtras.cpp
-    GLTF/GLTFMesh.cpp
-    GLTF/GLTFPrimitive.cpp
-    GLTF/GLTFUtils.cpp
-    GLTF/GLTFWriter.cpp
-    GLTF/GLTFDefaultWriter.cpp
-    GLTF/GLTFSkin.cpp
-    GLTF/GLTF.h
-    GLTF/GLTFTypesAndConstants.h
-    GLTF/GLTFAsset.h
-    GLTF/GLTFAnimation.h
-    GLTF/GLTFAccessor.h
-    GLTF/GLTFBuffer.h
-    GLTF/GLTFEffect.h
-    GLTF/GLTFExtras.h
-    GLTF/GLTFMesh.h
-    GLTF/GLTFPrimitive.h
-    GLTF/GLTFUtils.h
-    GLTF/GLTFWriter.h
-    GLTF/GLTFDefaultWriter.h
-    GLTF/GLTFSkin.h
-    GLTF/GLTFExtraDataHandler.h
-    GLTF/GLTFExtraDataHandler.cpp
-    GLTF/GLTFProfile.h
-    GLTF/GLTFProfile.cpp
-    GLTF/GLTFInputStream.h
-    GLTF/GLTFInputStream.cpp
-    GLTF/GLTFOutputStream.h
-    GLTF/GLTFOutputStream.cpp
-    GLTF/GLTFConfig.cpp
-    GLTF/GLTFConfig.h
-    GLTF/GLTFCleanupEvaluator.h
-    GLTF/GLTFCleanupEvaluator.cpp
-
-    profiles/webgl-1.0/webgl-idl.h
-    profiles/webgl-1.0/GLTFWebGL_1_0_Profile.cpp
-    profiles/webgl-1.0/GLTFWebGL_1_0_Profile.h
-
-    shaders/commonProfileShaders.h
-    shaders/commonProfileShaders.cpp
-
-    helpers/geometryHelpers.h
-    helpers/geometryHelpers.cpp
-    helpers/mathHelpers.h
-    helpers/mathHelpers.cpp
-    helpers/encodingHelpers.h
-    helpers/encodingHelpers.cpp
-
-    convert/meshConverter.cpp
-    convert/meshConverter.h
-
-    JSON/JSONArray.cpp
-    JSON/JSONNumber.cpp
-    JSON/JSONObject.cpp
-    JSON/JSONString.cpp
-    JSON/JSONValue.cpp
-    JSON/JSONArray.h
-    JSON/JSONNumber.h
-    JSON/JSONObject.h
-    JSON/JSONString.h
-    JSON/JSONValue.h
-    
-    assetModifiers/GLTFAssetModifier.h
-    assetModifiers/GLTFFlipUVModifier.h
-    assetModifiers/GLTFFlipUVModifier.cpp
-
-    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
-    GitSHA1.h)
-
-if (USE_OPEN3DGC)
-LIST(APPEND GLTF_SOURCES
-    extensions/o3dgc-compression/GLTF-Open3DGC.cpp
-    extensions/o3dgc-compression/GLTF-Open3DGC.h)
-endif()
-
-option(CONVERT_SHARED "CONVERT_SHARED" OFF)
-if (CONVERT_SHARED)
-    add_library(collada2gltfConvert SHARED ${GLTF_SOURCES})
-    #Make sure the dll is in the same directory as the executable
-    if (WIN32)
-        set_target_properties(collada2gltfConvert PROPERTIES RUNTIME_OUTPUT_DIRECTORY "bin")
-    endif()
-else()
-    add_library(collada2gltfConvert STATIC ${GLTF_SOURCES})
-    add_definitions(-DSTATIC_COLLADA2GLTF)
-endif()
-
-if (PNG_FOUND)
-    LIST(APPEND TARGET_LIBS ${PNG_LIBRARY} ${ZLIB_LIBRARY})
-endif()
-
-if (USE_OPEN3DGC)
-LIST(APPEND TARGET_LIBS o3dgc_common_lib o3dgc_enc_lib o3dgc_dec_lib)
-endif()
-
-IF("${CMAKE_SYSTEM}" MATCHES "Linux")
-    LIST(APPEND TARGET_LIBS rt)
-endif("${CMAKE_SYSTEM}" MATCHES "Linux")
-
-if (WIN32)
-    LIST(APPEND TARGET_LIBS ws2_32.lib)
-endif ()
-
-target_link_libraries (collada2gltfConvert ${TARGET_LIBS})
-
-set(GLTF_EXE_SOURCES  main.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
-    GitSHA1.h)
-
-if (WIN32)
-LIST(APPEND GLTF_EXE_SOURCES ${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc/getopt_long.c ${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc/getopt.c ${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc/getopt.h)
-endif()
-
-add_executable(collada2gltf ${GLTF_EXE_SOURCES})
-target_link_libraries (collada2gltf collada2gltfConvert)

@@ -1,0 +1,47 @@
+language: cpp
+compiler: g++
+git:
+  submodules: false
+cache:
+- build/dependencies
+- build/GLTF/dependencies
+before_install:
+- sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+- git submodule update --init --recursive
+install:
+- if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
+addons:
+  apt:
+    sources:
+    - george-edison55-precise-backports
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-5
+    - g++-5
+    - cmake
+    - cmake-data
+script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
+after_success:
+- if [ "$TRAVIS_BRANCH" == "master" ]; then
+    git config --global user.email "builds@travis-ci.com";
+    git config --global user.name "Travis CI";
+    git tag -f -a latest -m "Live build of latest master from CI";
+    git push --quiet https://${GH_TOKEN}@github.com/lasalvavida/COLLADA2GLTF -f --tags > /dev/null 2>&1;
+  fi;
+- if [ ! -z "$TRAVIS_TAG" ]; then
+    export RELEASE=`echo "$TRAVIS_TAG"| awk -F"-" '{print $1}'`;
+    export RELEASE_FILE=COLLADA2GLTF-$RELEASE-linux.zip;
+    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm /u+x | zip -@ -j $RELEASE_FILE;
+  fi;
+env:
+  global:
+  - secure: JPnHWbNJDAiO/tfNomSPDXcwnPrVtrLOkL2apPtpPsXWluiWPzaqK07kwwOGSUqGPobW+n+5ZmW9HZG2ZykUyoPrj+bJGS0HJhRlE9D7QeVoWE6Dr5q6y1Dlvl0FMx9yc2By0C9Yplj3c24JbKhCMkSPZ9embiXl5dzCLCih5Pgc+MjKCjCyRUfHx8BdaI8UBtMqwupwYilzV9sbvCjcub0poWPyXC78g7mBOEy/pEMXIjpIsUcENbCxirhDa5lRkACU10i+/S6SonbEKkeX2lzXvMXt21jyxY3myMxkT/HgAW5Ef0rSgAxO7Zv/WIjXIBrzIeNTAV7pu6lx2AqX6pm0JMYTkSbMHMYT/r34y7EaqFeIswy7fRupMLygdezvJ3pOTvYbGJ5CWVa8ps34U5yFm9Q22f5UVFeSvnoGRZct8lGEzhaDBqpTNd+XL69Y+sSFyHqQwFNwwejHCqAWMCvdjAookFdTqGpzwVqSXppUUjhksmxI+jB3n90qMj+C5o0mNI06WHl8MdmuG+5XrVj0JVVZbrkvMyAR6qtqWymPUvRQA466r/TTaEk7LC5heq+WVFBCExOyC7VdUuYTl3UZRhvXQshXmLH4pAXxO6tNx83Za6PEue6rOoeyyfV2CD3vjpp+IZhDDzAi5cCaSO8Jm6hpp7BfAV91vEP2or4=
+deploy:
+  provider: releases
+  api_key:
+    secure: lYzyQVgU4+LdNDNbJbth3KzosZROFIxtprAv6zlmE8Uxk9yL2Lbri6yUKUCXyt8KmRrBlhyFjketQhUQ4zCy0y1T9lSPmadxiY+qxyqDzq27Z3vACWcId6WFFdVEuUHxHyJ63cGl4vRn11v+LEVc/sCf4Gxh2pcZtca9D/7v9ISeUpw4ItsBeUizwjcPuv5GMSg4xXZJWGYS7wJlWaB3RUZaM4ENzuUZG35hLoa4m8dymS6C9M+f6TTeGzS/b9qQ6Fkv/RjquP8HumY35vjSfkODJhpfBQSJHG7duz2uUsfa2hgJjJJCgQhajFB+7eJcA716bU2KgAfavNUfM/ciDUjma6Ubb5fES7ND5PktgZILKlPks7hqsqphbG0xbQchLroul35AIhI6vDsMYpbXNeZeXw71adM6bofULlpRZ7pxaD3hbUyhSy9MZk2oWpMvAJQ5Mreob/6LeG2ekRw4bRsDKp8E6lmfKs8vjHE6wxvBcVW9DKhSU4tjdDWGLweP7XAzzrXoxCoHHolmN9JTvun04H/rBjVNtXCZ4HoTE8nsaCR/9IGCVy6wNNb0hWLAIaqhCJt6N3bKjiuC3tSaWneQMfdOOYrjgJgxmcEMoRnA590N5+bgs8IvjZNp3q5Lz3PlzcBiE14pYDYj6A4erto+3H6jVYQkQvSnjFBBNLA=
+  file: $RELEASE_FILE
+  skip_cleanup: true
+  on:
+    tags: true
+  overwrite: true
