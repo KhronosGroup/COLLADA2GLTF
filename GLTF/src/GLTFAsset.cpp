@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <map>
+#include <set>
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
@@ -444,17 +445,22 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 					if (!options->materialsCommon) {
 						if (material->type == GLTF::Material::Type::MATERIAL_COMMON) {
 							GLTF::MaterialCommon* materialCommon = (GLTF::MaterialCommon*)material;
-							std::string techniqueKey = materialCommon->getTechniqueKey();
-							std::map<std::string, GLTF::Technique*>::iterator findTechnique = generatedTechniques.find(techniqueKey);
-							if (findTechnique != generatedTechniques.end()) {
-								material = new GLTF::Material();
-								material->name = materialCommon->name;
-								material->values = materialCommon->values;
-								material->technique = findTechnique->second;
+							if (options->glsl) {
+								std::string techniqueKey = materialCommon->getTechniqueKey();
+								std::map<std::string, GLTF::Technique*>::iterator findTechnique = generatedTechniques.find(techniqueKey);
+								if (findTechnique != generatedTechniques.end()) {
+									material = new GLTF::Material();
+									material->name = materialCommon->name;
+									material->values = materialCommon->values;
+									material->technique = findTechnique->second;
+								}
+								else {
+									material = materialCommon->getMaterial(lights);
+									generatedTechniques[techniqueKey] = material->technique;
+								}
 							}
 							else {
-								material = ((GLTF::MaterialCommon*)material)->getMaterial(lights);
-								generatedTechniques[techniqueKey] = material->technique;
+								material = materialCommon->getMaterialPBR();
 							}
 						}
 					}
@@ -558,42 +564,90 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	// Write materials and build technique and texture arrays
 	std::vector<GLTF::Technique*> techniques;
 	std::vector<GLTF::Texture*> textures;
+	bool usesTechniqueWebGL = false;
 	bool usesMaterialsCommon = false;
+	bool usesSpecularGlossiness = false;
 	if (materials.size() > 0) {
 		jsonWriter->Key("materials");
 		jsonWriter->StartArray();
 		for (GLTF::Material* material : materials) {
-			if (material->type == GLTF::Material::Type::MATERIAL) {
-				GLTF::Technique* technique = material->technique;
-				if (technique && technique->id < 0) {
-					technique->id = techniques.size();
-					techniques.push_back(technique);
+			if (material->type == GLTF::Material::Type::MATERIAL || material->type == GLTF::Material::Type::MATERIAL_COMMON) {
+				if (material->type == GLTF::Material::Type::MATERIAL) {
+					GLTF::Technique* technique = material->technique;
+					if (technique && technique->id < 0) {
+						technique->id = techniques.size();
+						techniques.push_back(technique);
+					}
+					if (!usesTechniqueWebGL) {
+						this->extensions.insert("KHR_technique_webgl");
+						usesTechniqueWebGL = true;
+					}
+				}
+				else if (material->type == GLTF::Material::Type::MATERIAL_COMMON && !usesMaterialsCommon) {
+					this->extensions.insert("KHR_materials_common");
+					usesMaterialsCommon = true;
+				}
+				GLTF::Texture* ambientTexture = material->values->ambientTexture;
+				if (ambientTexture != NULL && ambientTexture->id < 0) {
+					ambientTexture->id = textures.size();
+					textures.push_back(ambientTexture);
+				}
+				GLTF::Texture* diffuseTexture = material->values->diffuseTexture;
+				if (diffuseTexture != NULL && diffuseTexture->id < 0) {
+					diffuseTexture->id = textures.size();
+					textures.push_back(diffuseTexture);
+				}
+				GLTF::Texture* emissionTexture = material->values->emissionTexture;
+				if (emissionTexture != NULL && emissionTexture->id < 0) {
+					emissionTexture->id = textures.size();
+					textures.push_back(emissionTexture);
+				}
+				GLTF::Texture* specularTexture = material->values->specularTexture;
+				if (specularTexture != NULL && specularTexture->id < 0) {
+					specularTexture->id = textures.size();
+					textures.push_back(specularTexture);
 				}
 			}
-			else if (material->type == GLTF::Material::Type::MATERIAL_COMMON && !usesMaterialsCommon) {
-				this->extensions.insert("KHR_materials_common");
-				usesMaterialsCommon = true;
+			else if (material->type == GLTF::Material::Type::PBR_METALLIC_ROUGHNESS) {
+				GLTF::MaterialPBR* materialPBR = (GLTF::MaterialPBR*)material;
+				GLTF::MaterialPBR::Texture* baseColorTexture = materialPBR->metallicRoughness->baseColorTexture;
+				if (baseColorTexture != NULL && baseColorTexture->texture->id < 0) {
+					baseColorTexture->texture->id = textures.size();
+					textures.push_back(baseColorTexture->texture);
+				}
+				GLTF::MaterialPBR::Texture* metallicRoughnessTexture = materialPBR->metallicRoughness->metallicRoughnessTexture;
+				if (metallicRoughnessTexture != NULL && metallicRoughnessTexture->texture->id < 0) {
+					metallicRoughnessTexture->texture->id = textures.size();
+					textures.push_back(metallicRoughnessTexture->texture);
+				}
+				GLTF::MaterialPBR::Texture* normalTexture = materialPBR->normalTexture;
+				if (normalTexture != NULL && normalTexture->texture->id < 0) {
+					normalTexture->texture->id = textures.size();
+					textures.push_back(normalTexture->texture);
+				}
+				GLTF::MaterialPBR::Texture* occlusionTexture = materialPBR->occlusionTexture;
+				if (occlusionTexture != NULL && occlusionTexture->texture->id < 0) {
+					occlusionTexture->texture->id = textures.size();
+					textures.push_back(occlusionTexture->texture);
+				}
+				if (options->specularGlossiness) {
+					if (!usesSpecularGlossiness) {
+						this->extensions.insert("KHR_materials_pbrSpecularGlossiness");
+						usesSpecularGlossiness = true;
+					}
+					GLTF::MaterialPBR::Texture* diffuseTexture = materialPBR->specularGlossiness->diffuseTexture;
+					if (diffuseTexture != NULL && diffuseTexture->texture->id < 0) {
+						diffuseTexture->texture->id = textures.size();
+						textures.push_back(diffuseTexture->texture);
+					}
+					GLTF::MaterialPBR::Texture* specularGlossinessTexture = materialPBR->specularGlossiness->specularGlossinessTexture;
+					if (specularGlossinessTexture != NULL && specularGlossinessTexture->texture->id < 0) {
+						specularGlossinessTexture->texture->id = textures.size();
+						textures.push_back(specularGlossinessTexture->texture);
+					}
+				}
 			}
-			GLTF::Texture* ambientTexture = material->values->ambientTexture;
-			if (ambientTexture != NULL && ambientTexture->id < 0) {
-				ambientTexture->id = textures.size();
-				textures.push_back(ambientTexture);
-			}
-			GLTF::Texture* diffuseTexture = material->values->diffuseTexture;
-			if (diffuseTexture != NULL && diffuseTexture->id < 0) {
-				diffuseTexture->id = textures.size();
-				textures.push_back(diffuseTexture);
-			}
-			GLTF::Texture* emissionTexture = material->values->emissionTexture;
-			if (emissionTexture != NULL && emissionTexture->id < 0) {
-				emissionTexture->id = textures.size();
-				textures.push_back(emissionTexture);
-			}
-			GLTF::Texture* specularTexture = material->values->specularTexture;
-			if (specularTexture != NULL && specularTexture->id < 0) {
-				specularTexture->id = textures.size();
-				textures.push_back(specularTexture);
-			}
+			
 			jsonWriter->StartObject();
 			material->writeJSON(writer, options);
 			jsonWriter->EndObject();

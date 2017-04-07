@@ -11,5 +11,7 @@ namespace GLTF {
 		bool embeddedShaders = true;
 		bool binary = false;
 		bool materialsCommon = false;
+		bool glsl = false;
+		bool specularGlossiness = false;
 	};
 }

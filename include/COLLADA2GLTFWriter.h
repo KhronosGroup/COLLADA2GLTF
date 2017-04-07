@@ -35,6 +35,7 @@ namespace COLLADA2GLTF {
 
 		bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
 		bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);
+		GLTF::Texture* fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::SamplerID samplerId);
 		GLTF::Texture* fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::Texture texture);
 
 	public:

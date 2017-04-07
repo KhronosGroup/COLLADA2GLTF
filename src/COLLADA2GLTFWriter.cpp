@@ -705,18 +705,25 @@ void packColladaColor(COLLADAFW::Color color, float* packArray) {
 // Re-use this instance since the values don't change
 GLTF::Sampler* globalSampler = new GLTF::Sampler();
 
-GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::Texture colladaTexture) {
+
+
+GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::SamplerID samplerId) {
 	GLTF::Texture* texture = new GLTF::Texture();
 	const COLLADAFW::SamplerPointerArray& samplers = effectCommon->getSamplerPointerArray();
-	COLLADAFW::Sampler* colladaSampler = (COLLADAFW::Sampler*)samplers[colladaTexture.getSamplerId()];
+	COLLADAFW::Sampler* colladaSampler = (COLLADAFW::Sampler*)samplers[samplerId];
 	GLTF::Image* image = _images[colladaSampler->getSourceImage()];
 	texture->source = image;
 	texture->sampler = globalSampler;
 	return texture;
 }
 
+GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::Texture colladaTexture) {
+	return fromColladaTexture(effectCommon, colladaTexture.getSamplerId());
+}
+
 bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 	const COLLADAFW::CommonEffectPointerArray& commonEffects = effect->getCommonEffects();
+
 	if (commonEffects.getCount() > 0) {
 		GLTF::MaterialCommon* material = new GLTF::MaterialCommon();
 		material->name = effect->getName();
@@ -803,6 +810,11 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 				material->values->transparency = new float[1];
 				material->values->transparency[0] = transparencyValue;
 			}
+		}
+
+		if (_extrasHandler->bumpTexture != NULL) {
+			material->values->bumpTexture = fromColladaTexture(effectCommon, _extrasHandler->bumpTexture->samplerId);
+			_extrasHandler->bumpTexture = NULL;
 		}
 
 		this->_effectInstances[effect->getUniqueId()] = material;
