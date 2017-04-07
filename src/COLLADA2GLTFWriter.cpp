@@ -217,6 +217,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 
 	// Instance skinning
 	const COLLADAFW::InstanceControllerPointerArray& instanceControllers = colladaNode->getInstanceControllers();
+	GLTF::Node* skeletonNode = NULL;
 	for (size_t i = 0; i < instanceControllers.getCount(); i++) {
 		COLLADAFW::InstanceController* instanceController = instanceControllers[i];
 		COLLADAFW::UniqueId uniqueId = instanceController->getInstanciatedObjectId();
@@ -248,11 +249,14 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				std::string skeletonId = skeletonURI.getFragment();
 				std::map<std::string, GLTF::Node*>::iterator iter = _nodes.find(skeletonId);
 				if (iter != _nodes.end()) {
-					node->skeletons.push_back(iter->second);
-				} else {
-					// The skeleton node hasn't been created yet, mark it as unbound
-					GLTF::Node* unboundNodePointer = NULL;
-					_unboundSkeletonNodes[skeletonId] = &node->skeletons;
+					if (skeletonNode == NULL) {
+						skeletonNode = node;
+					}
+					else {
+						skeletonNode = new GLTF::Node();
+						node->children.push_back(skeletonNode);
+					}
+					skeletonNode->skeleton = iter->second;
 				}
 			}
 		}

@@ -78,8 +78,8 @@ std::set<GLTF::Node*> GLTF::Asset::getAllNodes() {
 		for (GLTF::Node* child : node->children) {
 			nodeStack.push_back(child);
 		}
-		for (GLTF::Node* skeleton : node->skeletons) {
-			nodeStack.push_back(skeleton);
+		if (node->skeleton != NULL) {
+			nodeStack.push_back(node->skeleton);
 		}
 	}
 	return nodes;
@@ -220,56 +220,7 @@ void GLTF::Asset::removeUnusedSemantics() {
 	}
 }
 
-void GLTF::Asset::separateSkeletonNodes() {
-	std::vector<GLTF::Node*> nodeStack;
-	std::vector<GLTF::Node*> skinnedNodes;
-	std::map<GLTF::Node*, GLTF::Node*> parents;
 
-	for (GLTF::Node* node : getDefaultScene()->nodes) {
-		nodeStack.push_back(node);
-	}
-	while (nodeStack.size() > 0) {
-		GLTF::Node* node = nodeStack.back();
-		nodeStack.pop_back();
-		for (GLTF::Node* child : node->children) {
-			parents[child] = node; 
-			nodeStack.push_back(child);
-		}
-		if (node->skeletons.size() > 0) {
-			skinnedNodes.push_back(node);
-		}
-	}
-	for (GLTF::Node* skinnedNode : skinnedNodes) {
-		std::vector<GLTF::Node*> skeletons = skinnedNode->skeletons;
-		for (size_t i = 0; i < skeletons.size(); i++) {
-			GLTF::Node* skeletonNode = skeletons[i];
-			GLTF::Node::TransformMatrix* transform = NULL;
-			auto it = parents.find(skeletonNode);
-			GLTF::Node* skeletonParent = NULL;
-			while (it != parents.end()) {
-				GLTF::Node* parent = it->second;
-				if (transform == NULL) {
-					skeletonParent = parent;
-					transform = new GLTF::Node::TransformMatrix();
-				}
-				transform->premultiply((GLTF::Node::TransformMatrix*)parent->transform);
-				it = parents.find(parent);
-			}
-			if (transform != NULL) {
-				auto removeChild = std::find(skeletonParent->children.begin(), skeletonParent->children.end(), skeletonNode);
-				if (removeChild != skeletonParent->children.end()) {
-					skeletonParent->children.erase(removeChild);
-				}
-				if (!transform->isIdentity()) {
-					GLTF::Node* newRoot = new GLTF::Node();
-					newRoot->transform = transform;
-					newRoot->children.push_back(skeletonNode);
-					skinnedNode->skeletons[i] = newRoot;
-				}
-			}
-		}
-	}
-}
 
 void GLTF::Asset::removeUnusedNodes() {
 	std::vector<GLTF::Node*> nodeStack;
@@ -282,7 +233,7 @@ void GLTF::Asset::removeUnusedNodes() {
 		nodeStack.pop_back();
 		for (size_t i = 0; i < node->children.size(); i++) {
 			GLTF::Node* child = node->children[i];
-			if (child->children.size() == 0 && child->skeletons.size() == 0 && child->mesh == NULL && child->camera == NULL && child->light == NULL && child->skin == NULL && child->jointName == "") {
+			if (child->children.size() == 0 && child->skeleton == NULL && child->mesh == NULL && child->camera == NULL && child->light == NULL && child->skin == NULL && child->jointName == "") {
 				// this node is extraneous, remove it
 				node->children.erase(node->children.begin() + i);
 				i--;
@@ -437,8 +388,8 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 				for (GLTF::Node* child : node->children) {
 					nodeStack.push_back(child);
 				}
-				for (GLTF::Node* skeleton : node->skeletons) {
-					nodeStack.push_back(skeleton);
+				if (node->skeleton != NULL) {
+					nodeStack.push_back(node->skeleton);
 				}
 			}
 			jsonWriter->StartObject();
