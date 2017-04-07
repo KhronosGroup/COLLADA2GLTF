@@ -11,19 +11,10 @@
 namespace GLTF {
 	class Asset : public GLTF::Object {
 	public:
-		class Profile : public GLTF::Object {
-		public:
-			std::string api = "WebGL";
-			std::string version = "1.0";
-			virtual void writeJSON(void* writer, GLTF::Options* options);
-		};
-
 		class Metadata : public GLTF::Object {
 		public:
 			std::string copyright;
 			std::string generator = "COLLADA2GLTF";
-			bool premultipliedAlpha = true;
-			Profile* profile = NULL;
 			std::string version = "2.0";
 			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};

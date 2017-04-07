@@ -8,20 +8,6 @@
 
 GLTF::Asset::Asset() {
 	metadata = new GLTF::Asset::Metadata();
-	metadata->profile = new GLTF::Asset::Profile();
-}
-
-void GLTF::Asset::Profile::writeJSON(void* writer, GLTF::Options* options) {
-	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
-	if (api.length() > 0) {
-		jsonWriter->Key("api");
-		jsonWriter->String(api.c_str());
-	}
-	if (version.length() > 0) {
-		jsonWriter->Key("version");
-		jsonWriter->String(version.c_str());
-	}
-	GLTF::Object::writeJSON(writer, options);
 }
 
 void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
@@ -33,14 +19,6 @@ void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
 	if (generator.length() > 0) {
 		jsonWriter->Key("generator");
 		jsonWriter->String(generator.c_str());
-	}
-	jsonWriter->Key("premultipliedAlpha");
-	jsonWriter->Bool(premultipliedAlpha);
-	if (profile) {
-		jsonWriter->Key("profile");
-		jsonWriter->StartObject();
-		profile->writeJSON(writer, options);
-		jsonWriter->EndObject();
 	}
 	if (version.length() > 0) {
 		jsonWriter->Key("version");
