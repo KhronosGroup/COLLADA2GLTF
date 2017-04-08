@@ -24,6 +24,7 @@ int main(int argc, const char **argv) {
 	const char* inputPathArg = NULL;
 	const char* outputPathArg = NULL;
 	const char* basePathArg = NULL;
+	const char* metallicRoughnessTexturePathArg = NULL;
 	int binary = 0;
 	int glsl = 0;
 	int materialsCommon = 0;
@@ -45,6 +46,7 @@ int main(int argc, const char **argv) {
 		OPT_BOOLEAN('t', "separateTextures", &separateTextures, "output images separately, but embed buffers and shaders [default: false]"),
 		OPT_BOOLEAN('b', "binary", &binary, "output binary glTF [default: false]"),
 		OPT_BOOLEAN('g', "glsl", &glsl, "output materials with glsl shaders using the KHR_technique_webgl extension [default: false]"),
+		OPT_STRING('\0', "metallicRoughnessTexture", &metallicRoughnessTexturePathArg, "path to an image to use as the PBR metallicRoughness texture"),
 		OPT_BOOLEAN('\0', "specularGlossiness", &specularGlossiness, "output PBR materials with the KHR_materials_pbrSpecularGlossiness extension [default: false]"),
 		OPT_BOOLEAN('m', "materialsCommon", &materialsCommon, "output materials using the KHR_materials_common extension [default: false]"),
 		OPT_END()
@@ -116,6 +118,9 @@ int main(int argc, const char **argv) {
 	}
 	if (materialsCommon != 0) {
 		options->materialsCommon = true;
+	}
+	if (metallicRoughnessTexturePathArg != NULL) {
+		options->metallicRoughnessTexturePath = path(metallicRoughnessTexturePathArg);
 	}
 	if (specularGlossiness != 0) {
 		options->specularGlossiness = true;

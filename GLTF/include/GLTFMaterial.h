@@ -122,7 +122,7 @@ namespace GLTF {
 		const char* getTechniqueName();
 		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights);
 		std::string getTechniqueKey();
-		GLTF::MaterialPBR* getMaterialPBR();
+		GLTF::MaterialPBR* getMaterialPBR(bool specularGlossiness);
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

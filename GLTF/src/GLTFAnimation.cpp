@@ -64,11 +64,6 @@ void GLTF::Animation::Channel::Target::writeJSON(void* writer, GLTF::Options* op
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	
 	jsonWriter->Key("id");
-
-	if (node->id < 0) {
-		std::string pointBreak = "break point";
-	}
-
 	jsonWriter->Int(node->id);
 	jsonWriter->Key("path");
 	switch (path) {

@@ -19,6 +19,8 @@ namespace GLTF {
 			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};
 
+		GLTF::Sampler* globalSampler = NULL;
+
 		Metadata* metadata = NULL;
 		std::set<std::string> extensions;
 

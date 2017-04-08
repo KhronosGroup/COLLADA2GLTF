@@ -197,7 +197,9 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->EndArray();
 	}
 	if (options->specularGlossiness) {
-		if (specularGlossiness) {
+		if (specularGlossiness && 
+			(specularGlossiness->diffuseTexture != NULL ||
+				specularGlossiness->specularGlossinessTexture != NULL)) {
 			jsonWriter->Key("extensions");
 			jsonWriter->StartObject();
 			jsonWriter->Key("KHR_materials_pbrSpecularGlossiness");
@@ -746,7 +748,7 @@ GLTF::MaterialPBR::MaterialPBR() {
 	this->specularGlossiness = new GLTF::MaterialPBR::SpecularGlossiness();
 }
 
-GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR() {
+GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness) {
 	GLTF::MaterialPBR* material = new GLTF::MaterialPBR();
 	if (values->diffuse) {
 		material->metallicRoughness->baseColorFactor = values->diffuse;
@@ -760,9 +762,11 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR() {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
 		texture->texture = values->diffuseTexture;
 		material->metallicRoughness->baseColorTexture = texture;
-		material->specularGlossiness->diffuseTexture = texture;
+		if (specularGlossiness) {
+			material->specularGlossiness->diffuseTexture = texture;
+		}
 	}
-	if (values->specularTexture) {
+	if (values->specularTexture && specularGlossiness) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
 		texture->texture = values->specularTexture;
 		material->specularGlossiness->specularGlossinessTexture = texture;

@@ -9,6 +9,7 @@
 
 GLTF::Asset::Asset() {
 	metadata = new GLTF::Asset::Metadata();
+	globalSampler = new GLTF::Sampler();
 }
 
 void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
@@ -145,18 +146,41 @@ std::set<GLTF::Shader*> GLTF::Asset::getAllShaders() {
 std::set<GLTF::Texture*> GLTF::Asset::getAllTextures() {
 	std::set<GLTF::Texture*> textures;
 	for (GLTF::Material* material : getAllMaterials()) {
-		GLTF::Material::Values* values = material->values;
-		if (values->ambientTexture != NULL) {
-			textures.insert(values->ambientTexture);
+		if (material->type == GLTF::Material::MATERIAL || material->type == GLTF::Material::MATERIAL_COMMON) {
+			GLTF::Material::Values* values = material->values;
+			if (values->ambientTexture != NULL) {
+				textures.insert(values->ambientTexture);
+			}
+			if (values->diffuseTexture != NULL) {
+				textures.insert(values->diffuseTexture);
+			}
+			if (values->emissionTexture != NULL) {
+				textures.insert(values->emissionTexture);
+			}
+			if (values->specularTexture != NULL) {
+				textures.insert(values->specularTexture);
+			}
 		}
-		if (values->diffuseTexture != NULL) {
-			textures.insert(values->diffuseTexture);
-		}
-		if (values->emissionTexture != NULL) {
-			textures.insert(values->emissionTexture);
-		}
-		if (values->specularTexture != NULL) {
-			textures.insert(values->specularTexture);
+		else if (material->type == GLTF::Material::PBR_METALLIC_ROUGHNESS) {
+			GLTF::MaterialPBR* materialPBR = (GLTF::MaterialPBR*)material;
+			if (materialPBR->metallicRoughness->baseColorTexture != NULL) {
+				textures.insert(materialPBR->metallicRoughness->baseColorTexture->texture);
+			}
+			if (materialPBR->metallicRoughness->metallicRoughnessTexture != NULL) {
+				textures.insert(materialPBR->metallicRoughness->metallicRoughnessTexture->texture);
+			}
+			if (materialPBR->normalTexture != NULL) {
+				textures.insert(materialPBR->normalTexture->texture);
+			}
+			if (materialPBR->occlusionTexture != NULL) {
+				textures.insert(materialPBR->occlusionTexture->texture);
+			}
+			if (materialPBR->specularGlossiness->diffuseTexture != NULL) {
+				textures.insert(materialPBR->specularGlossiness->diffuseTexture->texture);
+			}
+			if (materialPBR->specularGlossiness->specularGlossinessTexture != NULL) {
+				textures.insert(materialPBR->specularGlossiness->specularGlossinessTexture->texture);
+			}
 		}
 	}
 	return textures;
@@ -460,7 +484,16 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 								}
 							}
 							else {
-								material = materialCommon->getMaterialPBR();
+								material = materialCommon->getMaterialPBR(options->specularGlossiness);
+								if (options->metallicRoughnessTexturePath != "") {
+									GLTF::MaterialPBR::Texture* metallicRoughnessTexture = new GLTF::MaterialPBR::Texture();
+									GLTF::Image* image = GLTF::Image::load(options->metallicRoughnessTexturePath);
+									GLTF::Texture* texture = new GLTF::Texture();
+									texture->sampler = globalSampler;
+									texture->source = image;
+									metallicRoughnessTexture->texture = texture;
+									((GLTF::MaterialPBR*)material)->metallicRoughness->metallicRoughnessTexture = metallicRoughnessTexture;
+								}
 							}
 						}
 					}

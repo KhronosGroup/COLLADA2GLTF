@@ -6,8 +6,7 @@
 
 using namespace std::experimental::filesystem;
 
-COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _asset(asset), _options(options), _extrasHandler(extrasHandler) {
-}
+COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _asset(asset), _options(options), _extrasHandler(extrasHandler) {}
 
 void COLLADA2GLTF::Writer::cancel(const std::string& errorMessage) {
 
@@ -703,9 +702,6 @@ void packColladaColor(COLLADAFW::Color color, float* packArray) {
 }
 
 // Re-use this instance since the values don't change
-GLTF::Sampler* globalSampler = new GLTF::Sampler();
-
-
 
 GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::SamplerID samplerId) {
 	GLTF::Texture* texture = new GLTF::Texture();
@@ -713,7 +709,7 @@ GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectC
 	COLLADAFW::Sampler* colladaSampler = (COLLADAFW::Sampler*)samplers[samplerId];
 	GLTF::Image* image = _images[colladaSampler->getSourceImage()];
 	texture->source = image;
-	texture->sampler = globalSampler;
+	texture->sampler = _asset->globalSampler;
 	return texture;
 }
 
@@ -871,27 +867,7 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	const COLLADABU::URI imageUri = colladaImage->getImageURI();
 	path imagePath = path(_options->basePath) / imageUri.getURIString();
-	std::string fileString = imagePath.string();
-	std::string fileExtension = imagePath.extension().string();
-
-	GLTF::Image* image;
-	FILE* file = fopen(fileString.c_str(), "rb");
-	if (file == NULL) {
-		std::cout << "WARNING: Image uri: " << imageUri.getURIString() << " could not be resolved " << std::endl;
-		image = new GLTF::Image(imageUri.getPathFile());
-	}
-	else {
-		fseek(file, 0, SEEK_END);
-		long int size = ftell(file);
-		fclose(file);
-		file = fopen(fileString.c_str(), "rb");
-		unsigned char* buffer = (unsigned char*)malloc(size);
-		int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
-		fclose(file);
-		image = new GLTF::Image(imageUri.getPathFile(), buffer, bytesRead, fileExtension);
-	}
-
-	_images[colladaImage->getUniqueId()] = image;
+	_images[colladaImage->getUniqueId()] = GLTF::Image::load(imagePath);
 	return true;
 }
 
