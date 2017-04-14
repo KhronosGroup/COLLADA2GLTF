@@ -3,12 +3,18 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-GLTF::Object* GLTF::Mesh::clone() {
-	GLTF::Mesh* clone = (GLTF::Mesh*)GLTF::Object::clone();
-	for (GLTF::Primitive* primitive : this->primitives) {
-		clone->primitives.push_back((GLTF::Primitive*)primitive->clone());
+GLTF::Object* GLTF::Mesh::clone(GLTF::Object* clone) {
+	GLTF::Mesh* mesh = dynamic_cast<GLTF::Mesh*>(clone);
+	if (mesh != NULL) {
+		for (GLTF::Primitive* primitive : this->primitives) {
+			GLTF::Primitive* clonePrimitive = new GLTF::Primitive();
+			primitive->clone(clonePrimitive);
+			if (clonePrimitive != NULL) {
+				mesh->primitives.push_back(clonePrimitive);
+			}
+		}
 	}
-	return clone;
+	return mesh;
 }
 
 void GLTF::Mesh::writeJSON(void* writer, GLTF::Options* options) {

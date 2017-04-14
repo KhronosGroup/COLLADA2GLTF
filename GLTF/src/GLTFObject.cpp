@@ -4,8 +4,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-GLTF::Object* GLTF::Object::clone() {
-	GLTF::Object* clone = new GLTF::Object();
+GLTF::Object* GLTF::Object::clone(GLTF::Object* clone) {
 	clone->id = this->id;
 	clone->name = this->name;
 	for (const auto extra : this->extras) {

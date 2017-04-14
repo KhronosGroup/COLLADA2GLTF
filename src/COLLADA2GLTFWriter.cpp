@@ -308,7 +308,8 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					for (GLTF::Primitive* primitive : primitiveMaterialMapping[materialBinding.getMaterialId()]) {
 						if (primitive->material != NULL && primitive->material != material) {
 							// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
-							mesh = (GLTF::Mesh*)mesh->clone();
+							GLTF::Mesh* cloneMesh = new GLTF::Mesh();
+							mesh = (GLTF::Mesh*)mesh->clone(cloneMesh);
 							primitive = mesh->primitives[j];
 						}
 						primitive->material = material;

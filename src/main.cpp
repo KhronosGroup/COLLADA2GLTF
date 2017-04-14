@@ -250,21 +250,25 @@ int main(int argc, const char **argv) {
 		}
 		FILE* file = fopen(outputPath.generic_string().c_str(), "wb");
 		if (file != NULL) {
-			uint32_t* writeHeader = new uint32_t[4];
+			uint32_t* writeHeader = new uint32_t[2];
 			fwrite("glTF", sizeof(char), 4, file); // magic
-			writeHeader[0] = 1; // version
+			writeHeader[0] = 2; // version
 			int padding = (20 + jsonString.length()) % 4;
 			if (padding != 0) {
 				padding = 4 - padding;
 			}
 			writeHeader[1] = 20 + jsonString.length() + padding + buffer->byteLength; // length
-			writeHeader[2] = jsonString.length() + padding; // contentLength
-			writeHeader[3] = 0; // contentFormat
-			fwrite(writeHeader, sizeof(uint32_t), 4, file); 
+			fwrite(writeHeader, sizeof(uint32_t), 2, file);
+			writeHeader[0] = jsonString.length() + padding; // chunkLength
+			writeHeader[1] = 0x4E4F534A; // chunkType JSON
+			fwrite(writeHeader, sizeof(uint32_t), 2, file); 
 			fwrite(jsonString.c_str(), sizeof(char), jsonString.length(), file);
 			for (int i = 0; i < padding; i++) {
 				fwrite(" ", sizeof(char), 1, file);
 			}
+			writeHeader[0] = buffer->byteLength; // chunkLength
+			writeHeader[1] = 0x004E4942; // chunkType BIN
+			fwrite(writeHeader, sizeof(uint32_t), 2, file);
 			fwrite(buffer->data, sizeof(unsigned char), buffer->byteLength, file);
 			fclose(file);
 		}

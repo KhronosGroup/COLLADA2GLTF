@@ -843,24 +843,13 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	// Write buffers
 	if (buffers.size() > 0) {
 		jsonWriter->Key("buffers");
-		if (options->binary) {
-			jsonWriter->StartObject();
-			jsonWriter->String("binary_glTF");
-		}
-		else {
-			jsonWriter->StartArray();
-		}
+		jsonWriter->StartArray();
 		for (GLTF::Buffer* buffer : buffers) {
 			jsonWriter->StartObject();
 			buffer->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
-		if (options->binary) {
-			jsonWriter->EndObject();
-		}
-		else {
-			jsonWriter->EndArray();
-		}
+		jsonWriter->EndArray();
 	}
 	buffers.clear();
 
