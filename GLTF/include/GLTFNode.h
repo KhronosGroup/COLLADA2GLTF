@@ -51,7 +51,7 @@ namespace GLTF {
 
 		GLTF::Camera* camera;
 		std::vector<GLTF::Node*> children;
-		std::vector<GLTF::Node*> skeletons;
+		GLTF::Node* skeleton;
 		GLTF::Skin* skin = NULL;
 		std::string jointName;
 		GLTF::Mesh* mesh = NULL;

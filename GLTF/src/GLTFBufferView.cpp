@@ -23,12 +23,7 @@ void GLTF::BufferView::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (this->buffer) {
 		jsonWriter->Key("buffer");
-		if (options->binary) {
-			jsonWriter->String("binary_glTF");
-		}
-		else {
-			jsonWriter->Int(this->buffer->id);
-		}
+		jsonWriter->Int(this->buffer->id);
 	}
 	jsonWriter->Key("byteOffset");
 	jsonWriter->Int(this->byteOffset);

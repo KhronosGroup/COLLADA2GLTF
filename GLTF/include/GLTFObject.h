@@ -15,7 +15,7 @@ namespace GLTF {
 	std::map<std::string, GLTF::Extension*> extensions;
 	std::map<std::string, GLTF::Object*> extras;
 
-	virtual GLTF::Object* clone();
+	virtual GLTF::Object* clone(GLTF::Object* clone);
     virtual void writeJSON(void* writer, GLTF::Options* options);
   };
 }

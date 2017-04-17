@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Base64.h"
 #include "GLTFImage.h"
 
@@ -16,6 +18,29 @@ GLTF::Image::Image(std::string uri, unsigned char* data, size_t byteLength, std:
 	else {
 		mimeType = "image/" + fileExtension;
 	}
+}
+
+GLTF::Image* GLTF::Image::load(path imagePath) {
+	std::string fileString = imagePath.string();
+	std::string fileExtension = imagePath.extension().string();
+
+	GLTF::Image* image = NULL;
+	FILE* file = fopen(fileString.c_str(), "rb");
+	if (file == NULL) {
+		std::cout << "WARNING: Image uri: " << fileString << " could not be resolved " << std::endl;
+		image = new GLTF::Image(imagePath.filename().string());
+	}
+	else {
+		fseek(file, 0, SEEK_END);
+		long int size = ftell(file);
+		fclose(file);
+		file = fopen(fileString.c_str(), "rb");
+		unsigned char* buffer = (unsigned char*)malloc(size);
+		int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
+		fclose(file);
+		image = new GLTF::Image(imagePath.filename().string(), buffer, bytesRead, fileExtension);
+	}
+	return image;
 }
 
 uint16_t endianSwap16(uint16_t x){

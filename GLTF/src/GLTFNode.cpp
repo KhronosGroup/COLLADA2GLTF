@@ -250,13 +250,9 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->EndArray();
 		}
 	}
-	if (skeletons.size() > 0) {
-		jsonWriter->Key("skeletons");
-		jsonWriter->StartArray();
-		for (GLTF::Node* skeleton : skeletons) {
-			jsonWriter->Int(skeleton->id);
-		}
-		jsonWriter->EndArray();
+	if (skeleton != NULL) {
+		jsonWriter->Key("skeleton");
+		jsonWriter->Int(skeleton->id);
 	}
 	if (jointName != "") {
 		jsonWriter->Key("jointName");

@@ -24,9 +24,13 @@ int main(int argc, const char **argv) {
 	const char* inputPathArg = NULL;
 	const char* outputPathArg = NULL;
 	const char* basePathArg = NULL;
+	const char* metallicRoughnessTexturePathArg = NULL;
 	int binary = 0;
+	int glsl = 0;
+	int materialsCommon = 0;
 	int separate = 0;
 	int separateTextures = 0;
+	int specularGlossiness = 0;
 
 	struct argparse argparse;
 	static const char* usage[] = {
@@ -41,7 +45,10 @@ int main(int argc, const char **argv) {
 		OPT_BOOLEAN('s', "separate", &separate, "output separate binary buffer, shaders, and textures [default: false]"),
 		OPT_BOOLEAN('t', "separateTextures", &separateTextures, "output images separately, but embed buffers and shaders [default: false]"),
 		OPT_BOOLEAN('b', "binary", &binary, "output binary glTF [default: false]"),
-		OPT_BOOLEAN('m', "materialsCommon", &options->materialsCommon, "output materials using the KHR_materials_common extension [default: false]"),
+		OPT_BOOLEAN('g', "glsl", &glsl, "output materials with glsl shaders using the KHR_technique_webgl extension [default: false]"),
+		OPT_STRING('\0', "metallicRoughnessTexture", &metallicRoughnessTexturePathArg, "path to an image to use as the PBR metallicRoughness texture"),
+		OPT_BOOLEAN('\0', "specularGlossiness", &specularGlossiness, "output PBR materials with the KHR_materials_pbrSpecularGlossiness extension [default: false]"),
+		OPT_BOOLEAN('m', "materialsCommon", &materialsCommon, "output materials using the KHR_materials_common extension [default: false]"),
 		//OPT_BOOLEAN('d', "dracoCompression", &options->dracoCompression, "output primitives using the KHR_draco_compression_extension [default: false]"),
 		OPT_END()
 	};
@@ -107,12 +114,33 @@ int main(int argc, const char **argv) {
 	if (binary != 0) {
 		options->binary = true;
 	}
-  if (options->dracoCompression != 0) {
+        if (options->dracoCompression != 0) {
 #ifndef USE_DRACO
-    std::cout << "Warning: Draco compression extension is not enabled. Please rebuild the project using flag -DUSE_DRACO.\n";
-    options->dracoCompression = 0;
+                std::cout << "Warning: Draco compression extension is not enabled. Please rebuild the project using flag -DUSE_DRACO.\n";
+                options->dracoCompression = 0;
 #endif
-  }
+        }
+	if (glsl != 0) {
+		options->glsl = true;
+	}
+	if (materialsCommon != 0) {
+		options->materialsCommon = true;
+	}
+	if (metallicRoughnessTexturePathArg != NULL) {
+		options->metallicRoughnessTexturePath = path(metallicRoughnessTexturePathArg);
+	}
+	if (specularGlossiness != 0) {
+		options->specularGlossiness = true;
+	}
+
+	if (glsl && materialsCommon) {
+		std::cout << "ERROR: Cannot export with both glsl and materialsCommon enabled" << std::endl;
+		return -1;
+	}
+	if ((glsl || materialsCommon) && specularGlossiness) {
+		std::cout << "ERROR: Cannot enable specularGlossiness unless the materials are exported as PBR" << std::endl;
+		return -1;
+	}
 
 	// Create the output directory if it does not exist
 	path outputDirectory = outputPath.parent_path();
@@ -123,9 +151,9 @@ int main(int argc, const char **argv) {
 	std::cout << "Converting " << options->inputPath << " -> " << options->outputPath << std::endl;
 	std::clock_t start = std::clock();
 
-	COLLADA2GLTF::ExtrasHandler* extrasHandler = new COLLADA2GLTF::ExtrasHandler();
-	COLLADA2GLTF::Writer* writer = new COLLADA2GLTF::Writer(asset, options, extrasHandler);
 	COLLADASaxFWL::Loader* loader = new COLLADASaxFWL::Loader();
+	COLLADA2GLTF::ExtrasHandler* extrasHandler = new COLLADA2GLTF::ExtrasHandler(loader);
+	COLLADA2GLTF::Writer* writer = new COLLADA2GLTF::Writer(asset, options, extrasHandler);
 	loader->registerExtraDataCallbackHandler((COLLADASaxFWL::IExtraDataCallbackHandler*)extrasHandler);
 	COLLADAFW::Root root(loader, writer);
 	if (!root.loadDocument(options->inputPath)) {
@@ -133,7 +161,6 @@ int main(int argc, const char **argv) {
 		return -1;
 	}
 
-	asset->separateSkeletonNodes();
 	asset->removeUnusedNodes();
 	asset->removeUnusedSemantics();
 	GLTF::Buffer* buffer = asset->packAccessors();
@@ -230,21 +257,25 @@ int main(int argc, const char **argv) {
 		}
 		FILE* file = fopen(outputPath.generic_string().c_str(), "wb");
 		if (file != NULL) {
-			uint32_t* writeHeader = new uint32_t[4];
+			uint32_t* writeHeader = new uint32_t[2];
 			fwrite("glTF", sizeof(char), 4, file); // magic
-			writeHeader[0] = 1; // version
+			writeHeader[0] = 2; // version
 			int padding = (20 + jsonString.length()) % 4;
 			if (padding != 0) {
 				padding = 4 - padding;
 			}
 			writeHeader[1] = 20 + jsonString.length() + padding + buffer->byteLength; // length
-			writeHeader[2] = jsonString.length() + padding; // contentLength
-			writeHeader[3] = 0; // contentFormat
-			fwrite(writeHeader, sizeof(uint32_t), 4, file); 
+			fwrite(writeHeader, sizeof(uint32_t), 2, file);
+			writeHeader[0] = jsonString.length() + padding; // chunkLength
+			writeHeader[1] = 0x4E4F534A; // chunkType JSON
+			fwrite(writeHeader, sizeof(uint32_t), 2, file); 
 			fwrite(jsonString.c_str(), sizeof(char), jsonString.length(), file);
 			for (int i = 0; i < padding; i++) {
 				fwrite(" ", sizeof(char), 1, file);
 			}
+			writeHeader[0] = buffer->byteLength; // chunkLength
+			writeHeader[1] = 0x004E4942; // chunkType BIN
+			fwrite(writeHeader, sizeof(uint32_t), 2, file);
 			fwrite(buffer->data, sizeof(unsigned char), buffer->byteLength, file);
 			fclose(file);
 		}

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <string>
+#include <experimental/filesystem>
+
+using namespace std::experimental::filesystem;
 
 namespace GLTF {
 	class Options {
@@ -11,6 +14,9 @@ namespace GLTF {
 		bool embeddedShaders = true;
 		bool binary = false;
 		bool materialsCommon = false;
-    bool dracoCompression = true;
+                bool dracoCompression = true;
+		bool glsl = false;
+		bool specularGlossiness = false;
+		path metallicRoughnessTexturePath = "";
 	};
 }

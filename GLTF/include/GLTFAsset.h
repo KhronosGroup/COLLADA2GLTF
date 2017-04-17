@@ -11,22 +11,15 @@
 namespace GLTF {
 	class Asset : public GLTF::Object {
 	public:
-		class Profile : public GLTF::Object {
-		public:
-			std::string api = "WebGL";
-			std::string version = "1.0";
-			virtual void writeJSON(void* writer, GLTF::Options* options);
-		};
-
 		class Metadata : public GLTF::Object {
 		public:
 			std::string copyright;
 			std::string generator = "COLLADA2GLTF";
-			bool premultipliedAlpha = true;
-			Profile* profile = NULL;
 			std::string version = "2.0";
 			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};
+
+		GLTF::Sampler* globalSampler = NULL;
 
 		Metadata* metadata = NULL;
 		std::set<std::string> extensions;
@@ -48,7 +41,6 @@ namespace GLTF {
 		std::set<GLTF::Texture*> getAllTextures();
 		std::set<GLTF::Image*> getAllImages();
 		void removeUnusedSemantics();
-		void separateSkeletonNodes();
 		void removeUnusedNodes();
 		GLTF::Buffer* packAccessors();
 		virtual void writeJSON(void* writer, GLTF::Options* options);

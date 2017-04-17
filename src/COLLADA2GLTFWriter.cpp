@@ -16,8 +16,7 @@
 
 using namespace std::experimental::filesystem;
 
-COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _asset(asset), _options(options), _extrasHandler(extrasHandler) {
-}
+COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _asset(asset), _options(options), _extrasHandler(extrasHandler) {}
 
 void COLLADA2GLTF::Writer::cancel(const std::string& errorMessage) {
 
@@ -227,6 +226,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 
 	// Instance skinning
 	const COLLADAFW::InstanceControllerPointerArray& instanceControllers = colladaNode->getInstanceControllers();
+	GLTF::Node* skeletonNode = NULL;
 	for (size_t i = 0; i < instanceControllers.getCount(); i++) {
 		COLLADAFW::InstanceController* instanceController = instanceControllers[i];
 		COLLADAFW::UniqueId uniqueId = instanceController->getInstanciatedObjectId();
@@ -258,11 +258,14 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				std::string skeletonId = skeletonURI.getFragment();
 				std::map<std::string, GLTF::Node*>::iterator iter = _nodes.find(skeletonId);
 				if (iter != _nodes.end()) {
-					node->skeletons.push_back(iter->second);
-				} else {
-					// The skeleton node hasn't been created yet, mark it as unbound
-					GLTF::Node* unboundNodePointer = NULL;
-					_unboundSkeletonNodes[skeletonId] = &node->skeletons;
+					if (skeletonNode == NULL) {
+						skeletonNode = node;
+					}
+					else {
+						skeletonNode = new GLTF::Node();
+						node->children.push_back(skeletonNode);
+					}
+					skeletonNode->skeleton = iter->second;
 				}
 			}
 		}
@@ -315,7 +318,8 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					for (GLTF::Primitive* primitive : primitiveMaterialMapping[materialBinding.getMaterialId()]) {
 						if (primitive->material != NULL && primitive->material != material) {
 							// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
-							mesh = (GLTF::Mesh*)mesh->clone();
+							GLTF::Mesh* cloneMesh = new GLTF::Mesh();
+							mesh = (GLTF::Mesh*)mesh->clone(cloneMesh);
 							primitive = mesh->primitives[j];
 						}
 						primitive->material = material;
@@ -832,20 +836,24 @@ void packColladaColor(COLLADAFW::Color color, float* packArray) {
 }
 
 // Re-use this instance since the values don't change
-GLTF::Sampler* globalSampler = new GLTF::Sampler();
 
-GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::Texture colladaTexture) {
+GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::SamplerID samplerId) {
 	GLTF::Texture* texture = new GLTF::Texture();
 	const COLLADAFW::SamplerPointerArray& samplers = effectCommon->getSamplerPointerArray();
-	COLLADAFW::Sampler* colladaSampler = (COLLADAFW::Sampler*)samplers[colladaTexture.getSamplerId()];
+	COLLADAFW::Sampler* colladaSampler = (COLLADAFW::Sampler*)samplers[samplerId];
 	GLTF::Image* image = _images[colladaSampler->getSourceImage()];
 	texture->source = image;
-	texture->sampler = globalSampler;
+	texture->sampler = _asset->globalSampler;
 	return texture;
+}
+
+GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::Texture colladaTexture) {
+	return fromColladaTexture(effectCommon, colladaTexture.getSamplerId());
 }
 
 bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 	const COLLADAFW::CommonEffectPointerArray& commonEffects = effect->getCommonEffects();
+
 	if (commonEffects.getCount() > 0) {
 		GLTF::MaterialCommon* material = new GLTF::MaterialCommon();
 		material->name = effect->getName();
@@ -934,6 +942,11 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			}
 		}
 
+		if (_extrasHandler->bumpTexture != NULL) {
+			material->values->bumpTexture = fromColladaTexture(effectCommon, _extrasHandler->bumpTexture->samplerId);
+			_extrasHandler->bumpTexture = NULL;
+		}
+
 		this->_effectInstances[effect->getUniqueId()] = material;
 	}
 
@@ -988,27 +1001,7 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	const COLLADABU::URI imageUri = colladaImage->getImageURI();
 	path imagePath = path(_options->basePath) / imageUri.getURIString();
-	std::string fileString = imagePath.string();
-	std::string fileExtension = imagePath.extension().string();
-
-	GLTF::Image* image;
-	FILE* file = fopen(fileString.c_str(), "rb");
-	if (file == NULL) {
-		std::cout << "WARNING: Image uri: " << imageUri.getURIString() << " could not be resolved " << std::endl;
-		image = new GLTF::Image(imageUri.getPathFile());
-	}
-	else {
-		fseek(file, 0, SEEK_END);
-		long int size = ftell(file);
-		fclose(file);
-		file = fopen(fileString.c_str(), "rb");
-		unsigned char* buffer = (unsigned char*)malloc(size);
-		int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
-		fclose(file);
-		image = new GLTF::Image(imageUri.getPathFile(), buffer, bytesRead, fileExtension);
-	}
-
-	_images[colladaImage->getUniqueId()] = image;
+	_images[colladaImage->getUniqueId()] = GLTF::Image::load(imagePath);
 	return true;
 }
 

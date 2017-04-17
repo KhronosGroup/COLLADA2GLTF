@@ -3,24 +3,22 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-#include <iostream>
-
-GLTF::Object* GLTF::Primitive::clone() {
-	GLTF::Primitive* clone = (GLTF::Primitive*)GLTF::Object::clone();
-	for (const auto& attribute : this->attributes) {
-		clone->attributes.insert(attribute);
+GLTF::Object* GLTF::Primitive::clone(GLTF::Object* clone) {
+	GLTF::Primitive* primitive = dynamic_cast<GLTF::Primitive*>(clone);
+	if (primitive != NULL) {
+		primitive->attributes = std::map<std::string, GLTF::Accessor*>();
+		for (const auto& attribute : this->attributes) {
+			primitive->attributes.insert(attribute);
+		}
+		primitive->indices = this->indices;
+		primitive->material = this->material;
+		primitive->mode = this->mode;
 	}
-	clone->indices = this->indices;
-	clone->material = this->material;
-	clone->mode = this->mode;
-	return clone;
+	return primitive;
 }
 
 void GLTF::Primitive::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
-
-  std::cout << "Writing primitive.\n";
-
 	jsonWriter->Key("attributes");
 	jsonWriter->StartObject();
 	for (const auto& attribute : this->attributes) {

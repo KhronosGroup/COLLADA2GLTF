@@ -5,10 +5,12 @@ set(PROJECT_NAME COLLADA2GLTF)
 project(${PROJECT_NAME})
 if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  add_compile_options(-std=c++11)
+  add_compile_options(-std=c++11 -lstdc++fs)
 endif()
 
 # cmake -Dtest=ON to build with tests
@@ -29,12 +31,16 @@ add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
 include_directories(GLTF/include)
 add_subdirectory(GLTF)
 
-# COLLADA2GLTF-lib
+# COLLADA2GLTF
 include_directories(include)
 file(GLOB LIB_HEADERS "include/*.h")
 set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp src/COLLADA2GLTFExtrasHandler.cpp)
-add_library(${PROJECT_NAME}-lib ${LIB_HEADERS} ${LIB_SOURCES})
-target_link_libraries(${PROJECT_NAME}-lib GLTF COLLADASaxFrameworkLoader -lstdc++fs)
+add_library(${PROJECT_NAME} ${LIB_HEADERS} ${LIB_SOURCES})
+if(MSVC)
+   target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+   target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader stdc++fs)
+endif()
 
 # Draco
 if (USE_DRACO)
@@ -53,6 +59,7 @@ endif()
 include_directories(dependencies/argparse/argparse/)
 add_subdirectory(dependencies/argparse/modules/argparse)
 
+<<<<<<< HEAD
 set(TARGET_LIBS ${PROJECT_NAME}-lib argparse -lstdc++fs)
 if (USE_DRACO)
   list(APPEND TARGET_LIBS draco dracodec)
@@ -61,6 +68,14 @@ endif()
 # executable
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} ${TARGET_LIBS})
+=======
+add_executable(${PROJECT_NAME}-bin src/main.cpp)
+if(MSVC)
+   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse stdc++fs)
+endif()
+>>>>>>> 2.0
 
 if(test)
   enable_testing()
@@ -76,7 +91,7 @@ if(test)
   file(GLOB TEST_SOURCES "test/src/*.cpp")
 
   add_executable(${PROJECT_NAME}-test ${TEST_HEADERS} ${TEST_SOURCES})
-  target_link_libraries(${PROJECT_NAME}-test ${TARGET_LIBS} gtest)
+  target_link_libraries(${PROJECT_NAME}-test  ${PROJECT_NAME} GLTF gtest)
 
   add_test(COLLADA2GLTFWriterTest ${PROJECT_NAME}-test)
 endif()
