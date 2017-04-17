@@ -59,23 +59,16 @@ endif()
 include_directories(dependencies/argparse/argparse/)
 add_subdirectory(dependencies/argparse/modules/argparse)
 
-<<<<<<< HEAD
-set(TARGET_LIBS ${PROJECT_NAME}-lib argparse -lstdc++fs)
+set(TARGET_LIBS ${PROJECT_NAME} argparse )
+if (MSVC)
+  list(APPEND TARGET_LIBS stdc++fs)
+endif()
 if (USE_DRACO)
   list(APPEND TARGET_LIBS draco dracodec)
 endif()
 
-# executable
-add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${TARGET_LIBS})
-=======
 add_executable(${PROJECT_NAME}-bin src/main.cpp)
-if(MSVC)
-   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse)
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse stdc++fs)
-endif()
->>>>>>> 2.0
+target_link_libraries(${PROJECT_NAME}-bin ${TARGET_LIBS})
 
 if(test)
   enable_testing()
