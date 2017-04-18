@@ -7,7 +7,8 @@
 COLLADA2GLTFWriterTest::COLLADA2GLTFWriterTest() {
 	asset = new GLTF::Asset();
 	options = new COLLADA2GLTF::Options();
-	extrasHandler = new COLLADA2GLTF::ExtrasHandler();
+	COLLADASaxFWL::Loader* loader = new COLLADASaxFWL::Loader();
+	extrasHandler = new COLLADA2GLTF::ExtrasHandler(loader);
 	writer = new COLLADA2GLTF::Writer(asset, options, extrasHandler);
 }
 
