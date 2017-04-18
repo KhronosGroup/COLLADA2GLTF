@@ -4,7 +4,7 @@ set(PROJECT_NAME GLTF)
 
 project(${PROJECT_NAME})
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  add_compile_options(-std=c++11)
+  add_compile_options(-std=c++11 -lstdc++fs)
 endif()
 
 # cmake -Dtest=ON to build with tests
@@ -19,7 +19,11 @@ file(GLOB HEADERS "include/*.h")
 file(GLOB SOURCES "src/*.cpp")
 
 add_library(GLTF ${HEADERS} ${SOURCES})
-target_link_libraries(${PROJECT_NAME})
+if(MSVC)
+   target_link_libraries(${PROJECT_NAME})
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+   target_link_libraries(${PROJECT_NAME} stdc++fs)
+endif()
 
 if (test)
   enable_testing()
