@@ -946,7 +946,7 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 	return true;
 }
 
-void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, size_t index, size_t offset, float time, float* translationOut) {
+void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, int index, size_t offset, float time, float* translationOut) {
 	float startTime = 0;
 	float startTranslation = NULL;
 	float endTime = 0;
@@ -959,10 +959,19 @@ void interpolateTranslation(float* base, std::vector<float> input, std::vector<f
 		startTime = input[index];
 		startTranslation = output[index];
 	}
-	endTime = input[index + 1];
-	endTranslation = output[index + 1];
+	if (index + 1 >= input.size()) {
+		endTime = input.back();
+		endTranslation = output.back();
+	}
+	else {
+		endTime = input[index + 1];
+		endTranslation = output[index + 1];
+	}
 
-	double value = startTranslation + (endTranslation - startTranslation) * (time - startTime) / (endTime - startTime);
+	double value = startTranslation;
+	if (endTime != startTime) {
+		value = startTranslation + (endTranslation - startTranslation) * (time - startTime) / (endTime - startTime);
+	}
 	translationOut[offset] = value;
 }
 
@@ -1083,12 +1092,12 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		std::vector<float> input;
 		std::vector<float> output;
 		std::tie(input, output) = animationData;
-		size_t index = -1;
+		int index = -1;
 
 		for (size_t j = 0; j < times.size(); j++) {
 			float time = times[j];
 			// If true, this keyframe has no value in this animation
-			bool needsInterpolation = time != input[index + 1];
+			bool needsInterpolation = index + 1 >= input.size() || time != input[index + 1];
 			if (!needsInterpolation) {
 				index++;
 			}
