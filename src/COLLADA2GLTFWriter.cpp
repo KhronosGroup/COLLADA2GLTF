@@ -493,7 +493,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			case COLLADAFW::MeshPrimitive::LINE_STRIPS:
 				primitive->mode = GLTF::Primitive::Mode::LINE_STRIP;
 				break;
-			// Having POLYLIST and POLYGONS map to TRIANGLES produces good output for cases where the polygons are already triangles, 
+			// Having POLYLIST and POLYGONS map to TRIANGLES produces good output for cases where the polygons are already triangles,
 			// but in other cases, we may need to triangulate
 			case COLLADAFW::MeshPrimitive::POLYLIST:
 			case COLLADAFW::MeshPrimitive::POLYGONS:
@@ -731,16 +731,16 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 		// One effect makes one template material, it really isn't possible to process more than one of these
 		const COLLADAFW::EffectCommon* effectCommon = commonEffects[0];
 		switch (effectCommon->getShaderType()) {
-		case COLLADAFW::EffectCommon::SHADER_BLINN: 
+		case COLLADAFW::EffectCommon::SHADER_BLINN:
 			material->technique = GLTF::MaterialCommon::BLINN;
 			break;
-		case COLLADAFW::EffectCommon::SHADER_CONSTANT: 
+		case COLLADAFW::EffectCommon::SHADER_CONSTANT:
 			material->technique = GLTF::MaterialCommon::CONSTANT;
 			break;
-		case COLLADAFW::EffectCommon::SHADER_PHONG: 
+		case COLLADAFW::EffectCommon::SHADER_PHONG:
 			material->technique = GLTF::MaterialCommon::PHONG;
 			break;
-		case COLLADAFW::EffectCommon::SHADER_LAMBERT: 
+		case COLLADAFW::EffectCommon::SHADER_LAMBERT:
 			material->technique = GLTF::MaterialCommon::LAMBERT;
 			break;
 		}
@@ -901,7 +901,7 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 		COLLADAFW::AnimationCurve *animationCurve = (COLLADAFW::AnimationCurve*)animation;
 		COLLADAFW::FloatOrDoubleArray inputArray = animationCurve->getInputValues();
 		COLLADAFW::FloatOrDoubleArray outputArray = animationCurve->getOutputValues();
-		
+
 		int inputLength = inputArray.getValuesCount();
 		float* inputValues = new float[inputLength];
 		int outputLength = outputArray.getValuesCount();
@@ -934,10 +934,10 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 		GLTF::Accessor* inputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)inputValues, inputLength, (GLTF::Constants::WebGL)-1);
 		// The type is unknown at this point; this may get replaced during writeAnimationList
 		GLTF::Accessor* outputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputValues, outputLength, (GLTF::Constants::WebGL)-1);
-		
+
 		sampler->input = inputAccessor;
 		sampler->output = outputAccessor;
-		
+
 		_animationSamplers[animation->getUniqueId()] = sampler;
 	}
 	return true;
@@ -1072,7 +1072,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			if (usesIndex < 0) {
 				usesIndex = 2;
 			}
-			// The output data needs to be padded with 0's 
+			// The output data needs to be padded with 0's
 			float* outputData = new float[count * 3];
 			type = GLTF::Accessor::Type::VEC3;
 			target->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
@@ -1157,7 +1157,7 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 	// We have to make this uniform across all vertices to make it into a GLTF primitive attribute
 	size_t maxJointsPerVertex = 0;
 	const COLLADAFW::UIntValuesArray& jointsPerVertexArray = skinControllerData->getJointsPerVertex();
-	
+
 	size_t totalVertices = 0;
 	for (size_t i = 0; i < jointsPerVertexArray.getCount(); i++) {
 		size_t jointsPerVertex = jointsPerVertexArray[i];
