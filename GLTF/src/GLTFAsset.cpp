@@ -479,7 +479,8 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 									material->technique = findTechnique->second;
 								}
 								else {
-									material = materialCommon->getMaterial(lights);
+									bool hasColor = primitive->attributes.find("COLOR_0") != primitive->attributes.end();
+									material = materialCommon->getMaterial(lights, hasColor);
 									generatedTechniques[techniqueKey] = material->technique;
 								}
 							}

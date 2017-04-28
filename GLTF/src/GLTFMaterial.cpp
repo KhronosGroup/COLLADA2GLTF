@@ -271,6 +271,10 @@ const char* GLTF::MaterialCommon::getTechniqueName() {
 }
 
 GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights) {
+	return getMaterial(lights, false);
+}
+
+GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColor) {
 	GLTF::Material* material = new GLTF::Material();
 	material->values = values;
 	GLTF::Technique* technique = new GLTF::Technique();
@@ -414,6 +418,11 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialComm
 		technique->attributes["a_texcoord0"] = "texcoord0";
 		program->attributes.insert("a_texcoord0");
 	}
+	if (hasColor) {
+		technique->parameters["color0"] = new GLTF::Technique::Parameter("COLOR_0", GLTF::Constants::WebGL::FLOAT_VEC3);
+		technique->attributes["a_color0"] = "color0";
+		program->attributes.insert("a_color0");
+	}
 	if (hasSkinning) {
 		technique->parameters["joint"] = new GLTF::Technique::Parameter("JOINT", GLTF::Constants::WebGL::FLOAT_VEC4);
 		technique->attributes["a_joint"] = "joint";
@@ -492,6 +501,15 @@ attribute vec2 a_texcoord0;\n\
 varying vec2 " + v_texcoord + ";\n";
 		vertexShaderMain += "    " + v_texcoord + " = a_texcoord0;\n";
 		fragmentShaderSource += "varying vec2 " + v_texcoord + ";\n";
+	}
+
+	// Add color if a color attribute exists
+	if (hasColor) {
+		vertexShaderSource += "\
+attribute vec3 a_color0;\n\
+varying vec3 v_color0;\n";
+		vertexShaderMain += "    v_color0 = a_color0;\n";
+		fragmentShaderSource += "varying vec3 v_color0;\n";
 	}
 
 	if (hasSkinning) {
@@ -613,7 +631,14 @@ void main(void) {\n\
 
 	fragmentShaderSource += "\
 void main(void) {\n";
-	std::string colorCreationBlock = "    vec3 color = vec3(0.0, 0.0, 0.0);\n";
+	
+	std::string colorCreationBlock;
+	if (!hasColor) {
+		colorCreationBlock = "    vec3 color = vec3(0.0, 0.0, 0.0);\n";
+	}
+	else {
+		colorCreationBlock = "    vec3 color = v_color0;\n";
+	}
 	if (hasNormals) {
 		fragmentShaderSource += "    vec3 normal = normalize(v_normal);\n";
 		if (doubleSided) {

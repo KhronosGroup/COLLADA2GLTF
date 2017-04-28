@@ -121,6 +121,7 @@ namespace GLTF {
 		MaterialCommon();
 		const char* getTechniqueName();
 		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights);
+		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColorAttribute);
 		std::string getTechniqueKey();
 		GLTF::MaterialPBR* getMaterialPBR(bool specularGlossiness);
 		virtual void writeJSON(void* writer, GLTF::Options* options);
