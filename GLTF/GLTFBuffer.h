@@ -34,9 +34,7 @@
 
 namespace GLTF 
 {
-    class JSONObject;
-
-    class COLLADA2GLTF_EXPORT GLTFBuffer : public JSONObject {
+    class GLTFBuffer : public JSONObject {
     private:
         GLTFBuffer();
     public:
@@ -52,15 +50,13 @@ namespace GLTF
         
         virtual void evaluate(void*);
         
-        virtual std::string valueType();
-
     private:
         std::string  _ID;
         unsigned char* _data;
         bool _ownData;
     };
     
-    class COLLADA2GLTF_EXPORT GLTFBufferView : public JSONObject {
+    class GLTFBufferView : public JSONObject {
     public:
         GLTFBufferView();
         GLTFBufferView(std::shared_ptr <GLTF::GLTFBuffer> buffer, size_t byteOffset, size_t byteLength);
@@ -79,9 +75,6 @@ namespace GLTF
         std::string const getID();
     
         void* getBufferDataByApplyingOffset();
-        
-        virtual std::string valueType();
-
     private:
         void _setBuffer(std::shared_ptr <GLTFBuffer>);
     private:
@@ -92,6 +85,7 @@ namespace GLTF
     //conveniences functions
     std::shared_ptr <GLTFBufferView>  createBufferViewWithAllocatedBuffer(std::string ID, void *data, size_t byteOffset, size_t byteLength, bool ownData);
     std::shared_ptr <GLTFBufferView>  createBufferViewWithAllocatedBuffer(void *data, size_t byteOffset, size_t byteLength, bool ownData);
+
 }
 
 #endif

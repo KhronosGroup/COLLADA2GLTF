@@ -26,15 +26,14 @@ namespace GLTF
 			EXTRA_TAG_TYPE_UNKNOWN = 0,
 			EXTRA_TAG_TYPE_DOUBLE_SIDED,
             EXTRA_TAG_TYPE_LOCK_AMBIENT_DIFFUSE,
-			EXTRA_TAG_TYPE_BUMP,
-            EXTRA_TAG_TYPE_HAS_ALPHA
+			EXTRA_TAG_TYPE_BUMP
 		};
 
 	private:
         std::string mTextBuffer;
 		ExtraTagType mExtraTagType;
 		COLLADAFW::UniqueId mCurrentElementUniqueId;
-		COLLADAFW::Object* mCurrentObject = NULL;
+		COLLADAFW::Object* mCurrentObject;
 
 	public:
 		ExtraDataHandler();
@@ -50,8 +49,6 @@ namespace GLTF
         std::shared_ptr <JSONObject> getExtras(COLLADAFW::UniqueId uniqueId);
         std::shared_ptr <JSONObject> allExtras() { return this->_allExtras; }
         
-        void determineBumpTextureSamplerAndTexCoord( const GeneratedSaxParser::xmlChar** attributes );
-
 	private:
         std::shared_ptr <JSONObject> _allExtras;
 	};

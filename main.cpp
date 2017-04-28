@@ -39,8 +39,8 @@
 
 #include "COLLADA2GLTFWriter.h"
 #include "JSONObject.h"
-#include "GLTFOpenCOLLADAUtils.h"
 
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -51,6 +51,12 @@ using namespace std;
 #endif
 
 #define STDOUT_OUTPUT 0
+#if USE_OPEN3DGC
+#define OPTIONS_COUNT 15
+#else
+#define OPTIONS_COUNT 13
+#endif
+
 
 typedef struct {
     const char* name;
@@ -66,8 +72,7 @@ static const OptionDescriptor options[] = {
 	{ "f",				required_argument,  "-f -> path of input file, argument [string]" },
 	{ "o",				required_argument,  "-o -> path of output file argument [string]" },
 	{ "b",				required_argument,  "-b -> path of output bundle argument [string]" },
-	//{ "a",              required_argument,  "-a -> export animations, argument [bool], default:true" },  // Code for this option is currently commented out.
-    { "g",              required_argument,  "-g -> [experimental] GLSL version to output in generated shaders" },
+	{ "a",              required_argument,  "-a -> export animations, argument [bool], default:true" },
 	{ "i",              no_argument,        "-i -> invert-transparency" },
 	{ "d",              no_argument,        "-d -> export pass details to be able to regenerate shaders and states" },
 	{ "p",              no_argument,        "-p -> output progress" },
@@ -79,16 +84,11 @@ static const OptionDescriptor options[] = {
     { "v",              no_argument,        "-v -> print version" },
     { "s",              no_argument,        "-s -> experimental mode"},
 	{ "h",              no_argument,        "-h -> help" },
-	{ "r",              no_argument,        "-r -> verbose logging" },
-	{ "e",				no_argument,		"-e -> embed resources (bin, shaders, available textures) in glTF file" },
-    { "n",              no_argument,        "-n -> don't combine animations with the same target" },
-    { "k",              no_argument,        "-k -> export materials and lights using KHR_materials_common extension" }
+	{ "r",              no_argument,        "-r -> verbose logging" }
 };
 
-static const int OPTIONS_COUNT = sizeof(options) / sizeof(OptionDescriptor);
-
 static void buildOptions() {
-    helpMessage += "usage: collada2gltf -f [file] [options]\n";
+    helpMessage += "usage: collada2gltlf -f [file] [options]\n";
     helpMessage += "options:\n";
     
     opt_options = (option*)malloc(sizeof(option) * OPTIONS_COUNT);
@@ -112,7 +112,7 @@ static std::string replacePathExtensionWith(const std::string& inputFile, const 
 {
     COLLADABU::URI inputFileURI(inputFile.c_str());
     
-    std::string pathDir = getPathDir(inputFileURI);
+    std::string pathDir = inputFileURI.getPathDir();
     std::string fileBase = inputFileURI.getPathFileBase();
     
     return pathDir + fileBase + "." + extension;
@@ -128,6 +128,8 @@ bool fileExists(const char * filename) {
 
 static bool processArgs(int argc, char * const * argv, GLTF::GLTFAsset *asset) {
 	int ch;
+    std::string file;
+    std::string output;
     bool hasOutputPath = false;
     bool hasInputPath = false;
     bool shouldShowHelp = false;
@@ -141,14 +143,14 @@ static bool processArgs(int argc, char * const * argv, GLTF::GLTFAsset *asset) {
     if (argc == 2) {
         if (fileExists(argv[1])) {
             asset->setInputFilePath(argv[1]);
-            asset->setOutputFilePath(replacePathExtensionWith(asset->getInputFilePath(), "gltf"));
+            asset->setOutputFilePath(replacePathExtensionWith(asset->getInputFilePath(), "json"));
             return true;
         }
     }
     
     shared_ptr<GLTF::GLTFConfig> converterConfig = asset->converterConfig();
     
-    while ((ch = getopt_long(argc, argv, "z:f:o:b:a:g:idpl:c:m:vhsrek", opt_options, 0)) != -1) {
+    while ((ch = getopt_long(argc, argv, "z:f:o:b:a:idpl:c:m:vhsr", opt_options, 0)) != -1) {
         switch (ch) {
             case 'z':
                 converterConfig->initWithPath(optarg);
@@ -165,7 +167,7 @@ static bool processArgs(int argc, char * const * argv, GLTF::GLTFAsset *asset) {
                 hasOutputPath = true;
 				break;
             case 'o':
-                asset->setOutputFilePath(replacePathExtensionWith(optarg, "gltf"));
+                asset->setOutputFilePath(replacePathExtensionWith(optarg, "json"));
                 hasOutputPath = true;
 				break;
             case 'i':
@@ -195,7 +197,7 @@ static bool processArgs(int argc, char * const * argv, GLTF::GLTFAsset *asset) {
                     if (strcmp(optarg, "true") == 0) {
                         useDefaultLight = true;
                     }
-                    else if (strcmp(optarg, "false") == 0) {
+                    if (strcmp(optarg, "false") == 0) {
                         useDefaultLight = false;
                     } else {
                         useDefaultLight = atoi(optarg) != 0;
@@ -221,25 +223,7 @@ static bool processArgs(int argc, char * const * argv, GLTF::GLTFAsset *asset) {
             case 'r':
                 converterConfig->config()->setBool("verboseLogging", true);
                 break;
-               
-			case 'e':
-				converterConfig->config()->setBool("embedResources", true);
-				break;
-            case 'g': {
-                int glslVersion = atoi(optarg);
-                if (glslVersion != 0) {
-                    converterConfig->config()->setInt32("glslVersion", glslVersion);
-                } else {
-                    printf("[warning] invalid GLSL version:%s\n", optarg);
-                }
-                break;
-            }
-            case 'n':
-                converterConfig->config()->setBool("noCombineAnimations", true);
-                break;
-            case 'k':
-                converterConfig->config()->setBool("useKhrMaterialsCommon", true);
-                break;
+                
 			default:
                 shouldShowHelp = true;
 				break;
@@ -252,7 +236,7 @@ static bool processArgs(int argc, char * const * argv, GLTF::GLTFAsset *asset) {
     }
     
     if (!hasOutputPath & hasInputPath) {
-        asset->setOutputFilePath(replacePathExtensionWith(asset->getInputFilePath(), "gltf"));
+        asset->setOutputFilePath(replacePathExtensionWith(asset->getInputFilePath(), "json"));
     }
     
     return true;
@@ -272,7 +256,7 @@ int main (int argc, char * const argv[]) {
             printf("path:%s does not exists or is not accessible, please check file path and permissions\n",inputFilePathCStr);
             return -1;
         }
-#ifndef WIN32
+#ifndef WIN32 || WIN64
         struct stat attr;
         if (stat(inputFilePathCStr, &attr) != -1) {
             asset->convertionMetaData()->setString("date", ctime(&attr.st_ctime));

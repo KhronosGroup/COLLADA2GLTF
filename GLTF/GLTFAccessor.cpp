@@ -26,6 +26,7 @@
 
 #include "GLTF.h"
 
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -37,18 +38,14 @@ namespace GLTF
         this->_ID = GLTFUtils::generateIDForType("accessor");
     }
     
-    GLTFAccessor::GLTFAccessor(shared_ptr<GLTFProfile> profile, const std::string& componentType, const std::string& type):
-    JSONObject(),
-    _bufferView(nullptr),
-    _minMaxDirty(true)
-    {        
-        this->setString(kType, type);
-        unsigned int glType = profile->getGLTypeForComponentTypeAndType(componentType, type);
-
-        this->_componentType = componentType;
+    GLTFAccessor::GLTFAccessor(shared_ptr<GLTFProfile> profile, unsigned int glType):
+    JSONObject() {
+        this->_minMaxDirty = true;
+        this->setUnsignedInt32(kType, glType);
         this->_componentsPerElement = profile->getComponentsCountForGLType(glType);
         this->_elementByteLength = profile->sizeOfGLType(glType);
-        this->setUnsignedInt32(kComponentType, profile->getGLComponentTypeForGLType(glType));
+        this->_componentType = profile->getComponentTypeForGLType(glType);
+        
         this->setByteStride(0);
         this->setByteOffset(0);
         this->_generateID();
@@ -57,14 +54,13 @@ namespace GLTF
         
     GLTFAccessor::GLTFAccessor(GLTFAccessor* accessor):
     JSONObject(),
-    _bufferView(accessor->getBufferView()),
-    _minMaxDirty(true)
+    _bufferView(accessor->getBufferView())
    {
         assert(accessor);
-        this->setString(kType, accessor->type());
+        this->_minMaxDirty = true;
+        this->setUnsignedInt32(kType, accessor->type());
         this->_componentsPerElement = accessor->componentsPerElement();
         this->_elementByteLength = accessor->elementByteLength();
-        this->setUnsignedInt32(kComponentType, accessor->GLComponentType());
         this->_componentType = accessor->componentType();
         this->setByteStride(accessor->getByteStride());
         this->setByteOffset(accessor->getByteOffset());
@@ -89,12 +85,8 @@ namespace GLTF
         return this->_componentsPerElement;
     }
 
-    std::string GLTFAccessor::componentType() {
+    ComponentType GLTFAccessor::componentType() {
         return this->_componentType;
-    }
-    
-    unsigned int GLTFAccessor::GLComponentType() {
-        return this->getUnsignedInt32(kComponentType);
     }
 
     void GLTFAccessor::setByteStride(size_t byteStride) {
@@ -131,70 +123,48 @@ namespace GLTF
     
     shared_ptr<JSONArray> GLTFAccessor::min() {
         this->_computeMinMaxIfNeeded();        
-        return this->createArrayIfNeeded("min");
+        return this->_min;
     }
 
     shared_ptr<JSONArray> GLTFAccessor::max() {
         this->_computeMinMaxIfNeeded();
-        return this->createArrayIfNeeded("max");
+        return this->_max;
     }
     
     typedef struct {
         double *min, *max;
     } __MinMaxApplierInfo;
-
-    static float _getComponent(char* bufferData, const std::string& componentType, size_t component) {
-        if (componentType == "FLOAT") {
-            float* vector = (float*)bufferData;
-            return vector[component];
-        }
-        else if (componentType == "UNSIGNED_SHORT") {
-            uint16_t* vector = (uint16_t*)bufferData;
-            return (float)vector[component];
-        }
-        else if (componentType == "SHORT") {
-            int16_t* vector = (int16_t*)bufferData;
-            return (float)vector[component];
-        }
-        else if (componentType == "UNSIGNED_BYTE") {
-            uint8_t* vector = (uint8_t*)bufferData;
-            return (float)vector[component];
-        }
-        else if (componentType == "BYTE") {
-            int8_t* vector = (int8_t*)bufferData;
-            return (float)vector[component];
-        }
-        return 0;
-    }
     
     static void __ComputeMinMax(void *value,
-                                const std::string& componentType /* componentType */,
-                                const std::string& type,
-                                size_t componentsPerElement,
-                                size_t index,
-                                size_t vertexAttributeByteSize,
-                                void *context) {
+                               ComponentType type,
+                               size_t componentsPerElement,
+                               size_t index,
+                               size_t vertexAttributeByteSize,
+                               void *context) {
         __MinMaxApplierInfo *applierInfo = (__MinMaxApplierInfo*)context;
         char* bufferData = (char*)value;
-        
-        for (size_t j = 0; j < componentsPerElement; j++) {
-            float value = _getComponent(bufferData, componentType, j);
-            if (value < applierInfo->min[j]) {
-                applierInfo->min[j] = value;
+
+        switch (type) {
+            case GLTF::FLOAT: {
+                float* vector = (float*)bufferData;
+                for (size_t j = 0 ; j < componentsPerElement ; j++) {
+                    float value = vector[j];
+                    if (value < applierInfo->min[j]) {
+                        applierInfo->min[j] = value;
+                    }
+                    if (value > applierInfo->max[j]) {
+                        applierInfo->max[j] = value;
+                    }
+                }
             }
-            if (value > applierInfo->max[j]) {
-                applierInfo->max[j] = value;
-            }
+                break;
+            default:
+                break;
         }
     }
-
-    void GLTFAccessor::_computeMinMaxIfNeeded() {
-        shared_ptr <GLTF::GLTFBufferView> bufferView = this->getBufferView();
-        _computeMinMaxIfNeeded((unsigned char*)bufferView->getBufferDataByApplyingOffset());
-    }
     
-    void GLTFAccessor::_computeMinMaxIfNeeded(unsigned char* buffer)  {
-        if (this->_minMaxDirty) {
+    void GLTFAccessor::_computeMinMaxIfNeeded()  {
+        if (this->_minMaxDirty == true) {
             double min[32];
             double max[32];
 
@@ -210,7 +180,7 @@ namespace GLTF
                 max[i] = -DBL_MAX;
             }
             
-            applyOnAccessor(__ComputeMinMax, &minMaxApplierInfo, buffer);
+            applyOnAccessor(__ComputeMinMax, &minMaxApplierInfo);
             
             for (size_t i = 0 ; i < this->_componentsPerElement ; i++) {
                 minObject->appendValue(shared_ptr <GLTF::JSONNumber> (new GLTF::JSONNumber(min[i])));
@@ -221,27 +191,20 @@ namespace GLTF
     }
     
     void GLTFAccessor::exposeMinMax() {
-        shared_ptr <GLTF::GLTFBufferView> bufferView = this->getBufferView();
-        this->_computeMinMaxIfNeeded((unsigned char*)bufferView->getBufferDataByApplyingOffset());
-    }
-
-    void GLTFAccessor::exposeMinMax(unsigned char* buffer) {
-        this->_computeMinMaxIfNeeded(buffer);
+        this->_computeMinMaxIfNeeded();
     }
 
     void GLTFAccessor::applyOnAccessor(GLTFAccessorApplierFunc applierFunc, void* context) {
-        shared_ptr <GLTF::GLTFBufferView> bufferView = this->getBufferView();
-        applyOnAccessor(applierFunc, context, (unsigned char*)bufferView->getBufferDataByApplyingOffset());
-    }
-
-    void GLTFAccessor::applyOnAccessor(GLTFAccessorApplierFunc applierFunc, void* context, unsigned char* bufferData) {
         size_t byteStride = this->getByteStride();
         size_t componentsPerElement = this->_componentsPerElement;
         size_t vertexAttributeByteSize = this->_elementByteLength;
+        shared_ptr <GLTF::GLTFBufferView> bufferView = this->getBufferView();
+        ComponentType type = this->_componentType;
+        unsigned char* bufferData = (unsigned char*)bufferView->getBufferDataByApplyingOffset();
 
         size_t count = this->getCount();
         for (size_t i = 0 ; i < count ; i++) {
-            (*applierFunc)(bufferData + (i * byteStride), this->_componentType, this->type(), componentsPerElement, i, vertexAttributeByteSize, context);
+            (*applierFunc)(bufferData + (i * byteStride), type, componentsPerElement, i, vertexAttributeByteSize, context);
         }
     }
     
@@ -254,12 +217,8 @@ namespace GLTF
                 (meshAttribute->elementByteLength() == this->elementByteLength()));
     }
     
-    std::string GLTFAccessor::type() {
-        return this->getString(kType);
-    }
-
-    std::string GLTFAccessor::valueType() {
-        return "accessor";
+    unsigned int GLTFAccessor::type() {
+        return this->getUnsignedInt32(kType);
     }
 
 }

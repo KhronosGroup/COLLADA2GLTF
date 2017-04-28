@@ -27,10 +27,6 @@
 #ifndef __JSON_OBJECT_H__
 #define __JSON_OBJECT_H__
 
-#ifdef WIN32
-#pragma warning(disable: 4251)
-#endif
-
 namespace GLTF 
 {
     std::shared_ptr <JSONObject> JSONObjectWithContentsOfFile(std::string fileName);
@@ -39,7 +35,7 @@ namespace GLTF
     
     typedef std::map<std::string , std::shared_ptr <JSONValue> > KeyToJSONValue;
     
-    class COLLADA2GLTF_EXPORT JSONObject : public JSONValue {
+    class JSONObject : public JSONValue {
         friend class JSONArray;
 
     protected:
@@ -85,13 +81,11 @@ namespace GLTF
         size_t getKeysCount();
         
         virtual JSONType getJSONType();
-        virtual std::string valueType();
-
+        
         bool isEmpty();
         
         void apply(JSONValueApplierFunc func, void* context);
-        void apply(JSONValueApplier* applier, void* context);
-
+        
         virtual bool isEqualTo(JSONValue* value);
         
     protected:

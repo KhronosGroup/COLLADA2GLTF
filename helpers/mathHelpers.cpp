@@ -25,6 +25,7 @@
 #include "../GLTFOpenCOLLADA.h"
 #include "mathHelpers.h"
 
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -141,17 +142,20 @@ namespace GLTF
             }
         }
         
-        COLLADABU::Math::Matrix3 amat3(row[0][0], row[1][0], row[2][0],
+        COLLADABU::Math::Matrix3 amat3( row[0][0], row[1][0], row[2][0],
                                        row[0][1], row[1][1], row[2][1],
                                        row[0][2], row[1][2], row[2][2]);
+        COLLADABU::Math::Real angle;
+        COLLADABU::Math::Vector3 axis;
+        //COLLADABU::Math::Quaternion aquat = QuaternionFromMatrix(amat3);
         COLLADABU::Math::Quaternion aquat;
         aquat.fromRotationMatrix(amat3);
         aquat.normalise();
-
-        tran[U_ROTATEX] = aquat.x;
-        tran[U_ROTATEY] = aquat.y;
-        tran[U_ROTATEZ] = aquat.z;
-        tran[U_ROTATEW] = aquat.w;
+        aquat.toAngleAxis(angle, axis);
+        tran[U_ROTATEX] = axis.x;
+        tran[U_ROTATEY] = axis.y;
+        tran[U_ROTATEZ] = axis.z;
+        tran[U_ROTATEW] = angle;
         
         return true;
     }
@@ -163,34 +167,9 @@ namespace GLTF
         tr.setElement(2,3, 0);
         tr.setElement(3,3, 1);
         double tran[20];
-        memset(tran, 0, sizeof(tran));
         
-        // unmatrix can fail if the uniform scale is 0
-        // This just makes sure we don't print the warning if
-        //  we are trying to extract only scale because it's
-        //  probably this valid case we are running into.
-        if (!unmatrix(tr, tran) && (translation || rotation)) {
+        if (!unmatrix(tr, tran)) {
             printf("WARNING: matrix can't be decomposed \n");
-
-            // Even if we do fail decomposing the matrix, make sure
-            // we don't return completely invalid values. We can at least get
-            // translations up to when the uniform scale 0 was added
-            // to the transformations. We can also return a rotation 
-            // equivalent to zero degree rotation about the x axis, since we have
-            // no way of getting what the actual rotation was before the 
-            // zero scaling was added.
-            tran[U_TRANSX] = matrix.getElement(0, 3);
-            tran[U_TRANSY] = matrix.getElement(1, 3);
-            tran[U_TRANSZ] = matrix.getElement(2, 3);
-
-            tran[U_ROTATEX] = 1.0;
-            tran[U_ROTATEY] = 0.0;
-            tran[U_ROTATEZ] = 0.0;
-            tran[U_ROTATEW] = 0.0;
-
-            tran[U_SCALEX] = 0.0;
-            tran[U_SCALEY] = 0.0;
-            tran[U_SCALEZ] = 0.0;
         }
         
         if (translation) {

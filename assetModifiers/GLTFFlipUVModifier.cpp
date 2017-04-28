@@ -24,6 +24,7 @@
 #include "GLTF.h"
 #include "GLTFFlipUVModifier.h"
 
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -44,18 +45,24 @@ namespace GLTF
     };
     
     static void __InvertV(void *value,
-                          const std::string &componentType,
-                          const std::string &type,
+                          GLTF::ComponentType type,
                           size_t componentsPerElement,
                           size_t index,
                           size_t vertexAttributeByteSize,
                           void *context) {
         char* bufferData = (char*)value;
         
-        if ((componentType == "FLOAT") && (componentsPerElement > 1)) {
-            float* vector = (float*)bufferData;
-            vector[1] = (float) (1.0 - vector[1]);
-        }         
+        if (componentsPerElement > 1) {
+            switch (type) {
+                case GLTF::FLOAT: {
+                    float* vector = (float*)bufferData;
+                    vector[1] = (float) (1.0 - vector[1]);
+                }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
     
     void GLTFFlipUVModifier::modify(shared_ptr<JSONObject> glTFAsset) {

@@ -32,19 +32,30 @@ namespace GLTF
     std::shared_ptr <JSONValue> serializeVec3(double x,double y, double z);
     std::shared_ptr <JSONValue> serializeVec4(double x,double y, double z, double w);
 
-    class GLTFWriter
-    {
-    public:
-        virtual ~GLTFWriter() {};
+	class GLTFWriter {
+    private:
+        
+    public:        
+        
+        GLTFWriter();
+        virtual ~GLTFWriter();
 
-        virtual bool initWithPath(const std::string &path) = 0;
-        virtual void writeArray(JSONArray* array, void *context) = 0;
-        virtual void writeObject(JSONObject* object, void *context) = 0;
-        virtual void writeNumber(JSONNumber* number, void *context) = 0;
-        virtual void writeString(JSONString* str, void *context) = 0;
-        virtual void write(JSONValue* value, void *context) = 0;
+        bool initWithPath(const std::string &path);
+        
+        //base
+        void writeArray(JSONArray* array, void *context);
+        void writeObject(JSONObject* object, void *context);
+        void writeNumber(JSONNumber* number, void *context);
+        void writeString(JSONString* str, void *context);        
+        void write(JSONValue* value, void *context);
+
+    private:
+        FILE* _fd;
+        rapidjson::PrettyWriter <rapidjson::FileStream> *_writer;
+        rapidjson::FileStream *_fileStream;
     };
 
 }
+
 
 #endif

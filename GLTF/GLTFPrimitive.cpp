@@ -26,6 +26,7 @@
 
 #include "GLTF.h"
 
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -47,7 +48,7 @@ namespace GLTF
     {
         this->_allVertexAttributes = primitive._allVertexAttributes;
         GLTFPrimitive *pr = const_cast<GLTFPrimitive*>(&primitive);
-        this->setMode(pr->getMode());
+        this->setPrimitive(pr->getPrimitive());
         this->setMaterialID(pr->getMaterialID());
         this->_materialObjectID = primitive._materialObjectID;
         this->_uniqueIndices = primitive._uniqueIndices;
@@ -71,7 +72,7 @@ namespace GLTF
     
     unsigned int GLTFPrimitive::getIndexOfSetAtIndex(unsigned int index)
     {
-        return (unsigned int)this->_allVertexAttributes[index]->getIndexOfSet();
+		return (unsigned int)this->_allVertexAttributes[index]->getIndexOfSet();
     }
 
     size_t GLTFPrimitive::getVertexAttributesCount()
@@ -87,18 +88,14 @@ namespace GLTF
     void GLTFPrimitive::appendVertexAttribute(shared_ptr <JSONVertexAttribute> VertexAttribute)
     {
         this->_allVertexAttributes.push_back(VertexAttribute);
-    }  
-
-    void GLTFPrimitive::removeVertexAttribute(unsigned int index) {
-        this->_allVertexAttributes.erase(this->_allVertexAttributes.begin() + index);
-    }
+    }    
         
-    unsigned int GLTFPrimitive::getMode() {
-        return this->getUnsignedInt32(kMode);
+    unsigned int GLTFPrimitive::getPrimitive() {
+        return this->getUnsignedInt32(kPrimitive);
     }
     
-    void GLTFPrimitive::setMode(unsigned int type) {
-        this->setUnsignedInt32(kMode, type);
+    void GLTFPrimitive::setPrimitive(unsigned int type) {
+        this->setUnsignedInt32(kPrimitive, type);
     }
     
     std::string GLTFPrimitive::getMaterialID() {
@@ -126,8 +123,4 @@ namespace GLTF
         this->_uniqueIndices = indices;
     }
     
-    std::string GLTFPrimitive::valueType() {
-        return "primitive";
-    }
-
 };

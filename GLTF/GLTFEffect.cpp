@@ -25,13 +25,9 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "GLTF.h"
-#include "GLTFAsset.h"
 #include "../shaders/commonProfileShaders.h"
-#include <algorithm>
 
-#define _GL_STR(X) #X
-#define _GL(X) (this->_profile->getGLenumForString(_GL_STR(X)))
-
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -39,19 +35,8 @@ using namespace std;
 
 namespace GLTF
 {
-    GLTFEffect::GLTFEffect(const std::string& ID, shared_ptr<GLTFProfile> profile) : JSONObject(),
-    _ID(ID), _techniqueGenerator(nullptr), _profile(profile) {
-    }
-    
-    GLTFEffect::GLTFEffect(const GLTFEffect &effect) : JSONObject() {
-        GLTFEffect* source = const_cast<GLTFEffect*>(&effect);
-        this->_ID = source->getID();
-        this->_techniqueGenerator = source->getTechniqueGenerator();
-        this->setName(source->getName());
-        this->setValues(source->getValues());
-        this->setLightingModel(source->getLightingModel());
-        this->_texcoordToSemantics = effect._texcoordToSemantics;
-        this->_profile = effect._profile;
+    GLTFEffect::GLTFEffect(const std::string& ID): JSONObject(),
+    _ID(ID) {
     }
 
     GLTFEffect::~GLTFEffect() {
@@ -59,10 +44,6 @@ namespace GLTF
                         
     const std::string& GLTFEffect::getID() {
         return this->_ID;
-    }
-    
-    void GLTFEffect::setID(const std::string& id) {
-        this->_ID = id;
     }
     
     void GLTFEffect::setTechniqueGenerator(shared_ptr <JSONObject> techniqueGenerator) {
@@ -88,17 +69,7 @@ namespace GLTF
     shared_ptr <JSONObject> GLTFEffect::getValues() {
         return this->_values;
     }
-
-    void GLTFEffect::setKhrMaterialsCommonValues(std::shared_ptr<JSONObject> values)
-    {
-        this->_khrMaterialsCommonValues = values;
-    }
-
-    std::shared_ptr<JSONObject> GLTFEffect::getKhrMaterialsCommonValues()
-    {
-        return this->_khrMaterialsCommonValues;
-    }
-
+    
     void GLTFEffect::setLightingModel(const std::string& lightingModel) {
         this->_lightingModel = lightingModel;
     }
@@ -122,88 +93,28 @@ namespace GLTF
     SemanticArrayPtr GLTFEffect::getSemanticsForTexcoordName(const std::string &texcoord) {
         return this->_texcoordToSemantics[texcoord];
     }
-
-    inline void GLTFEffect::AddMaterialsCommonValue(const shared_ptr<JSONObject>& materialsCommonValues,
-        const shared_ptr<JSONObject>& values, const std::string& name)
-    {
-        if (values->contains(name))
-        {
-            auto value = static_pointer_cast<JSONObject>(values->getValue(name))->getValue(kValue);
-            materialsCommonValues->setValue(name, value);
-        }
-    }
     
     void GLTFEffect::evaluate(void *context) {
         GLTFAsset* asset = (GLTFAsset*)context;
-        bool bUseKhrMaterialsCommon = CONFIG_BOOL(asset, "useKhrMaterialsCommon");
+        shared_ptr <GLTF::JSONObject> instanceTechnique(new GLTF::JSONObject());
         shared_ptr <JSONObject> techniqueGenerator = this->getTechniqueGenerator();
-
-        if (!bUseKhrMaterialsCommon)
-        {
-            std::string techniqueID = GLTF::getReferenceTechniqueID(techniqueGenerator, asset);
-
-            this->setString(kTechnique, techniqueID);
-            shared_ptr<JSONObject> outputs(new JSONObject());
-            shared_ptr <JSONObject> values = this->getValues();
-            std::vector <std::string> keys = values->getAllKeys();
-            for (size_t i = 0; i < keys.size(); i++) {
-                shared_ptr <JSONObject> parameter = static_pointer_cast <JSONObject> (values->getValue(keys[i]));
-                shared_ptr <JSONObject> parameterValue = static_pointer_cast <JSONObject> (parameter->getValue(kValue));
-                shared_ptr<JSONObject> output(new JSONObject());
-                if (parameterValue) {
-                    outputs->setValue(keys[i], parameterValue);
-                }
+                
+        std::string techniqueID = GLTF::getReferenceTechniqueID(techniqueGenerator, asset);
+        
+        this->setValue(kInstanceTechnique, instanceTechnique);
+        instanceTechnique->setString(kTechnique, techniqueID);
+        shared_ptr<JSONObject> outputs(new JSONObject());
+        shared_ptr <JSONObject> values = this->getValues();
+        std::vector <std::string> keys = values->getAllKeys();
+        for (size_t i = 0 ; i < keys.size() ; i++) {
+            shared_ptr <JSONObject> parameter = static_pointer_cast <JSONObject> (values->getValue(keys[i]));
+            shared_ptr <JSONObject> parameterValue = static_pointer_cast <JSONObject> (parameter->getValue(kValue));
+            shared_ptr<JSONObject> output(new JSONObject());
+            if (parameterValue) {
+                outputs->setValue(keys[i], parameterValue);
             }
-            this->setValue(kValues, outputs);
         }
-        else
-        {
-            shared_ptr<JSONObject> values = techniqueGenerator->getObject(kValues);
-            bool transparent = !isOpaque(values, asset);
-
-            //
-            // Export KHR_materials_common extension
-            //
-            shared_ptr <GLTF::JSONObject> extensions = this->createObjectIfNeeded("extensions");
-            shared_ptr <GLTF::JSONObject> khrMaterialsCommon(new GLTF::JSONObject());
-
-            khrMaterialsCommon->setBool("transparent", transparent);
-
-            shared_ptr<JSONObject> techniqueExtras = techniqueGenerator->getObject("techniqueExtras");
-            if (techniqueExtras)
-            {
-                khrMaterialsCommon->setBool("doubleSided", techniqueExtras->getBool(kDoubleSided));
-                khrMaterialsCommon->setUnsignedInt32("jointCount", techniqueExtras->getUnsignedInt32("jointsCount"));
-            }
-
-            std::string lightingModel = techniqueGenerator->getString("lightingModel");
-            std::transform(lightingModel.begin(), lightingModel.end(), lightingModel.begin(), ::toupper);
-            khrMaterialsCommon->setString(kTechnique, lightingModel);
-            shared_ptr<JSONObject> materialsCommonValues(new JSONObject());
-
-            AddMaterialsCommonValue(materialsCommonValues, _khrMaterialsCommonValues, "emission");
-            AddMaterialsCommonValue(materialsCommonValues, _khrMaterialsCommonValues, "transparency");
-
-            if (lightingModel != "CONSTANT")
-            {
-                AddMaterialsCommonValue(materialsCommonValues, _khrMaterialsCommonValues, "ambient");
-                AddMaterialsCommonValue(materialsCommonValues, _khrMaterialsCommonValues, "diffuse");
-
-                if (lightingModel != "LAMBERT")
-                {
-                    AddMaterialsCommonValue(materialsCommonValues, _khrMaterialsCommonValues, "specular");
-                    AddMaterialsCommonValue(materialsCommonValues, _khrMaterialsCommonValues, "shininess");
-                }
-            }
-
-            khrMaterialsCommon->setValue(kValues, materialsCommonValues);
-
-            extensions->setValue("KHR_materials_common", khrMaterialsCommon);
-        }
-    }
-    
-    std::string GLTFEffect::valueType() {
-        return "effect";
+        instanceTechnique->setValue(kValues, outputs);
     }
 
 }

@@ -22,6 +22,7 @@
 #endif
 //--- X3DGC
 
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -87,73 +88,6 @@ namespace GLTF
         return bufferView;
     }
     
-
-    static void __ScaleOpenCOLLADAMeshVertexData(const COLLADAFW::MeshVertexData &vertexData, double distanceScale)
-    {
-        if (distanceScale == 1.0)
-            return;
-
-        size_t length;
-        size_t byteOffset = 0;
-        size_t inputLength = 0;
-
-        size_t setCount = vertexData.getNumInputInfos();
-        bool unpatchedOpenCOLLADA = (setCount == 0); // reliable heuristic to know if the input have not been set
-
-        if (unpatchedOpenCOLLADA)
-            setCount = 1;
-
-        for (size_t indexOfSet = 0; indexOfSet < setCount; indexOfSet++) {
-            if (!unpatchedOpenCOLLADA) {
-                inputLength = vertexData.getLength(indexOfSet);
-            }
-            else {
-                // for unpatched version of OpenCOLLADA we need this work-around.
-                inputLength = vertexData.getLength(0);
-            }
-
-            length = inputLength ? inputLength : vertexData.getValuesCount();
-            unsigned char *sourceData = 0;
-            size_t sourceSize = 0;
-
-            switch (vertexData.getType()) {
-            case COLLADAFW::MeshVertexData::DATA_TYPE_FLOAT: {
-                const COLLADAFW::FloatArray* array = vertexData.getFloatValues();
-
-                sourceData = (unsigned char*)array->getData() + byteOffset;
-                sourceSize = length * sizeof(float);
-
-                float *floatSourceData = (float*)sourceData;
-                for (size_t indexFloat = 0; indexFloat < length; ++indexFloat)
-                {
-                    floatSourceData[indexFloat] *= (float)distanceScale;
-                }
-
-                byteOffset += sourceSize; //Doh! - OpenCOLLADA store all sets contiguously in the same array
-            }
-                break;
-            case COLLADAFW::MeshVertexData::DATA_TYPE_DOUBLE: {
-                const COLLADAFW::DoubleArray* array = vertexData.getDoubleValues();
-
-                sourceData = (unsigned char*)array->getData() + byteOffset;
-                sourceSize = length * sizeof(double);
-
-                double *doubleSourceData = (double*)sourceData;
-                for (size_t indexFloat = 0; indexFloat < length; ++indexFloat)
-                {
-                    doubleSourceData[indexFloat] *= distanceScale;
-                }
-
-                byteOffset += sourceSize; //Doh! - OpenCOLLADA store all sets contiguously in the same array
-            }
-                break;
-            default:
-            case COLLADAFW::MeshVertexData::DATA_TYPE_UNKNOWN:
-                //FIXME report error
-                break;
-            }
-        }
-    }
     
     static unsigned int __ConvertOpenCOLLADAMeshVertexDataToGLTFAccessors(const COLLADAFW::MeshVertexData &vertexData,
                                                                           GLTFMesh* mesh,
@@ -197,30 +131,30 @@ namespace GLTF
             unsigned char *sourceData = 0;
             size_t sourceSize = 0;
             
-            std::string componentType = "";
+            GLTF::ComponentType componentType = GLTF::NOT_AN_ELEMENT_TYPE;
             switch (vertexData.getType()) {
                 case COLLADAFW::MeshVertexData::DATA_TYPE_FLOAT: {
-                    componentType = "FLOAT";
+                    componentType = GLTF::FLOAT;
                     stride = sizeof(float) * componentsPerElement;
                     const COLLADAFW::FloatArray* array = vertexData.getFloatValues();
                     
                     sourceData = (unsigned char*)array->getData() + byteOffset;
                     sourceSize = length * sizeof(float);
 
-                    byteOffset += sourceSize; //Doh! - OpenCOLLADA store all sets contiguously in the same array
+                     byteOffset += sourceSize; //Doh! - OpenCOLLADA store all sets contiguously in the same array
                 }
                     break;
                 case COLLADAFW::MeshVertexData::DATA_TYPE_DOUBLE: {
-                /*
-                    componentType = GLTF::DOUBLE;
-                    stride = sizeof(double) * componentsPerElement;
-                    const COLLADAFW::DoubleArray* array = vertexData.getDoubleValues();
-
-                    sourceData = (unsigned char*)array->getData() + byteOffset;
-                    sourceSize = length * sizeof(double);
-
-                    byteOffset += sourceSize; //Doh! - OpenCOLLADA store all sets contiguously in the same array
-                */
+                    //FIXME: handle this
+                    /*
+                     sourceType = DOUBLE;
+                     
+                     const DoubleArray& array = vertexData.getDoubleValues()[indexOfSet];
+                     const size_t count = array.getCount();
+                     sourceData = (void*)array.getData();
+                     sourceSize = length * sizeof(double);
+                     */
+                    // Warning if can't make "safe" conversion
                 }
                     
                     break;
@@ -261,7 +195,7 @@ namespace GLTF
             
             // FIXME: the source could be shared, store / retrieve it here
             shared_ptr <GLTFBufferView> cvtBufferView = createBufferViewWithAllocatedBuffer(id, sourceData, 0, sourceSize, meshAttributeOwnsBuffer);
-            shared_ptr <GLTFAccessor> cvtMeshAttribute(new GLTFAccessor(profile, componentType, GLTFUtils::getTypeForVectorSize((int)componentsPerElement)));
+            shared_ptr <GLTFAccessor> cvtMeshAttribute(new GLTFAccessor(profile, profile->getGLTypeForComponentType(componentType, componentsPerElement)));
             
             cvtMeshAttribute->setBufferView(cvtBufferView);
             cvtMeshAttribute->setByteStride(stride);
@@ -318,7 +252,7 @@ namespace GLTF
         }
         
         shared_ptr <GLTF::GLTFBufferView> uvBuffer = createBufferViewWithAllocatedBuffer(indices, 0, count * sizeof(unsigned int), ownData);
-        shared_ptr <GLTFAccessor> accessor(new GLTFAccessor(profile, "UNSIGNED_SHORT", "SCALAR"));
+        shared_ptr <GLTFAccessor> accessor(new GLTFAccessor(profile, profile->getGLenumForString("UNSIGNED_SHORT")));
         
         accessor->setBufferView(uvBuffer);
         accessor->setCount(count);
@@ -374,7 +308,7 @@ namespace GLTF
         }
         
         cvtPrimitive->setMaterialObjectID((unsigned int)openCOLLADAMeshPrimitive->getMaterialId());
-        cvtPrimitive->setMode(profile->getGLenumForString(type));
+        cvtPrimitive->setPrimitive(profile->getGLenumForString(type));
         
         //count of indices , it must be the same for all kind of indices
         size_t count = openCOLLADAMeshPrimitive->getPositionIndices().getCount();
@@ -402,7 +336,7 @@ namespace GLTF
         
         shared_ptr <GLTFBufferView> positionBuffer = createBufferViewWithAllocatedBuffer(indices, 0, count * sizeof(unsigned int), shouldTriangulate ? true : false);
         
-        shared_ptr <GLTF::GLTFAccessor> positionIndices(new GLTF::GLTFAccessor(profile, "UNSIGNED_SHORT", "SCALAR"));
+        shared_ptr <GLTF::GLTFAccessor> positionIndices(new GLTF::GLTFAccessor(profile, profile->getGLenumForString("UNSIGNED_SHORT")));
         
         positionIndices->setBufferView(positionBuffer);
         positionIndices->setCount(count);
@@ -418,7 +352,7 @@ namespace GLTF
             }
             
             shared_ptr <GLTF::GLTFBufferView> normalBuffer = createBufferViewWithAllocatedBuffer(indices, 0, count * sizeof(unsigned int), shouldTriangulate ? true : false);
-            shared_ptr <GLTF::GLTFAccessor> normalIndices(new GLTF::GLTFAccessor(profile, "UNSIGNED_SHORT", "SCALAR"));
+            shared_ptr <GLTF::GLTFAccessor> normalIndices(new GLTF::GLTFAccessor(profile, profile->getGLenumForString("UNSIGNED_SHORT")));
             
             normalIndices->setBufferView(normalBuffer);
             normalIndices->setCount(count);
@@ -460,44 +394,10 @@ namespace GLTF
             }
         }
         
-        //TODO:refactor
-        if (openCOLLADAMeshPrimitive->hasBinormalIndices()) {
-            unsigned int triangulatedIndicesCount = 0;
-            indices = openCOLLADAMeshPrimitive->getBinormalIndices().getData();
-            if (shouldTriangulate) {
-                indices = createTrianglesFromPolylist(verticesCountArray, indices, vcount, &triangulatedIndicesCount);
-                count = triangulatedIndicesCount;
-            }
-            shared_ptr <GLTF::GLTFBufferView> binormalBuffer = createBufferViewWithAllocatedBuffer(indices, 0, count * sizeof(unsigned int), shouldTriangulate ? true : false);
-            shared_ptr <GLTF::GLTFAccessor> binormalIndices(new GLTF::GLTFAccessor(profile, "UNSIGNED_SHORT", "SCALAR"));
-            
-            binormalIndices->setBufferView(binormalBuffer);
-            binormalIndices->setCount(count);
-            
-            __AppendIndices(cvtPrimitive, primitiveIndicesVector, binormalIndices, TEXBINORMAL, 0);
-        }
-        
-        //TODO:refactor
-        if (openCOLLADAMeshPrimitive->hasTangentIndices()) {
-            unsigned int triangulatedIndicesCount = 0;
-            indices = openCOLLADAMeshPrimitive->getTangentIndices().getData();
-            if (shouldTriangulate) {
-                indices = createTrianglesFromPolylist(verticesCountArray, indices, vcount, &triangulatedIndicesCount);
-                count = triangulatedIndicesCount;
-            }
-            shared_ptr <GLTF::GLTFBufferView> tangentBuffer = createBufferViewWithAllocatedBuffer(indices, 0, count * sizeof(unsigned int), shouldTriangulate ? true : false);
-            shared_ptr <GLTF::GLTFAccessor> tangentIndices(new GLTF::GLTFAccessor(profile, "UNSIGNED_SHORT", "SCALAR"));
-            
-            tangentIndices->setBufferView(tangentBuffer);
-            tangentIndices->setCount(count);
-            
-            __AppendIndices(cvtPrimitive, primitiveIndicesVector, tangentIndices, TEXTANGENT, 0);
-        }
-        
         if (verticesCountArray) {
             free(verticesCountArray);
         }
-
+        
         return cvtPrimitive;
     }
     
@@ -512,22 +412,20 @@ namespace GLTF
         
         std::vector< shared_ptr<IndicesVector> > allPrimitiveIndicesVectors;
                 
-        __ScaleOpenCOLLADAMeshVertexData(openCOLLADAMesh->getPositions(), asset->getDistanceScale());
-
         // get all primitives
         for (size_t i = 0 ; i < primitiveCount ; i++) {
+            
             const COLLADAFW::MeshPrimitive::PrimitiveType primitiveType = primitives[i]->getPrimitiveType();
             if ((primitiveType != COLLADAFW::MeshPrimitive::TRIANGLES) &&
                 //(primitiveType != COLLADAFW::MeshPrimitive::TRIANGLE_STRIPS) &&
                 (primitiveType != COLLADAFW::MeshPrimitive::POLYLIST) &&
-                (primitiveType != COLLADAFW::MeshPrimitive::POLYGONS) &&
-                //(primitiveType != COLLADAFW::MeshPrimitive::LINE_STRIPS) &&
-                (primitiveType != COLLADAFW::MeshPrimitive::LINES)) {
-
+                (primitiveType != COLLADAFW::MeshPrimitive::POLYGONS)) {
+                
+                
                 static bool printedOnce = false;
                 if (!printedOnce) {
                     if (asset->converterConfig()->boolForKeyPath("verboseLogging")) {
-                        asset->log("WARNING: some primitives failed to convert\nCurrently supported are TRIANGLES, POLYLIST, POLYGONS and LINES\nMore: https://github.com/KhronosGroup/glTF/issues/129\nand https://github.com/KhronosGroup/glTF/issues/135\n");
+                        asset->log("WARNING: some primitives failed to convert\nCurrently supported are TRIANGLES, POLYLIST and POLYGONS\nMore: https://github.com/KhronosGroup/glTF/issues/129\nand https://github.com/KhronosGroup/glTF/issues/135\n");
                         printedOnce = true;
                     }
                 }
@@ -566,14 +464,7 @@ namespace GLTF
                     case GLTF::COLOR:
                         __ConvertOpenCOLLADAMeshVertexDataToGLTFAccessors(openCOLLADAMesh->getColors(), cvtMesh.get(), GLTF::COLOR, 4, asset->profile());
                         break;
-
-                    case GLTF::TEXBINORMAL:
-                        __ConvertOpenCOLLADAMeshVertexDataToGLTFAccessors(openCOLLADAMesh->getBinormals(), cvtMesh.get(), GLTF::TEXBINORMAL, 3, asset->profile());
-                        break;
-                    case GLTF::TEXTANGENT:
-                        __ConvertOpenCOLLADAMeshVertexDataToGLTFAccessors(openCOLLADAMesh->getTangents(), cvtMesh.get(), GLTF::TEXTANGENT, 3, asset->profile());
-                        break;
-
+                        
                     default:
                         break;
                 }

@@ -7,7 +7,6 @@
 //#include "GeneratedSaxParserUtils.h"
 
 #include <vector> //FIXME: this should be included by OpenCOLLADA.
-#include "../GLTFOpenCOLLADA.h"
 #include "GLTFExtraDataHandler.h"
 #include "GLTF.h"
 
@@ -20,7 +19,6 @@ namespace GLTF
 {
 
 	static const char* DOUBLE_SIDED = "double_sided";
-    static const char* HAS_ALPHA = "has_alpha";
 /*
 	static const char* MAX_EXTRA_ATTRIBUTE_CAST_SHADOWS = "cast_shadows";
 	static const char* MAX_EXTRA_ATTRIBUTE_COLOR_MAP_AMOUNT = "color_map_amount";
@@ -37,7 +35,7 @@ namespace GLTF
 */
 
 	//------------------------------
-	ExtraDataHandler::ExtraDataHandler() : mExtraTagType(EXTRA_TAG_TYPE_UNKNOWN)
+	ExtraDataHandler::ExtraDataHandler()
 	{
         _allExtras = shared_ptr<JSONObject> (new JSONObject());
 	}
@@ -45,64 +43,17 @@ namespace GLTF
 	//------------------------------
 	ExtraDataHandler::~ExtraDataHandler()
 	{
-	}
-    
-    void ExtraDataHandler::determineBumpTextureSamplerAndTexCoord( const GeneratedSaxParser::xmlChar** attributes )
-	{
-        COLLADAFW::TextureAttributes *textureAttributes = nullptr;
 
-        shared_ptr <JSONObject> bump = nullptr;
-		if(mCurrentObject) {
-			if( COLLADAFW::COLLADA_TYPE::EFFECT == mCurrentObject->getClassId()) {
-                shared_ptr <JSONObject> extras = this->getExtras(mCurrentElementUniqueId);
-                assert(extras);
-                shared_ptr <JSONObject> textures = extras->createObjectIfNeeded("textures");
-                bump = textures->createObjectIfNeeded("bump");
-                
-                COLLADAFW::Effect* effect = (COLLADAFW::Effect*)mCurrentObject;
-                textureAttributes = effect->createExtraTextureAttributes();
-			}
-		}
-        
-        if ((bump == nullptr) || (textureAttributes == nullptr))
-            return;
-        
-		size_t index = 0;
-        
-		const GeneratedSaxParser::xmlChar* attributeKey = attributes[index++];
-		const GeneratedSaxParser::xmlChar* attributeValue = 0;
-		while( attributeKey != 0 ) {
-			attributeValue = attributes[index++];
-			if( attributeValue != 0 ) {
-                bump->setString(attributeKey, attributeValue);
-			}
-            
-			if (strcmp(attributeKey, "texture") == 0) {
-                textureAttributes->textureSampler = attributeValue;
-            } else if (strcmp(attributeKey, "texcoord")) {
-                textureAttributes->texCoord = attributeValue;
-			}
-			attributeKey = attributes[index++];
-		}
 	}
 
 	//------------------------------
 	bool ExtraDataHandler::elementBegin( const COLLADASaxFWL::ParserChar* elementName, const GeneratedSaxParser::xmlChar** attributes )
 	{
-        if (mExtraTagType == EXTRA_TAG_TYPE_BUMP) {
-            determineBumpTextureSamplerAndTexCoord(attributes);
-        }
         mExtraTagType = EXTRA_TAG_TYPE_UNKNOWN;
-        
+
         if (strcmp(elementName, DOUBLE_SIDED) == 0) {
             //Typically, may happen in EFFECT (MAX) or GEOMETRY (MAYA)
             mExtraTagType = EXTRA_TAG_TYPE_DOUBLE_SIDED;
-            return true;
-        }
-
-        if (strcmp(elementName, HAS_ALPHA) == 0) {
-            //Should be in image
-            mExtraTagType = EXTRA_TAG_TYPE_HAS_ALPHA;
             return true;
         }
         
@@ -110,12 +61,6 @@ namespace GLTF
             mExtraTagType = EXTRA_TAG_TYPE_LOCK_AMBIENT_DIFFUSE;
             return true;
         }
-        
-        
-        if (strcmp(elementName, "bump") == 0) {
-            mExtraTagType = EXTRA_TAG_TYPE_BUMP;
-        }
-
         
         /*
 		switch ( mExtraTagType )
@@ -177,16 +122,7 @@ namespace GLTF
             shared_ptr <JSONObject> extras = getExtras(mCurrentElementUniqueId);
             bool val = GeneratedSaxParser::Utils::toBool(&buffer, failed);
             if ( !failed ) {
-                extras->setBool(kDoubleSided, val);
-            }
-        }
-
-        if (mExtraTagType == EXTRA_TAG_TYPE_HAS_ALPHA) {
-            const  COLLADASaxFWL::ParserChar* buffer = mTextBuffer.c_str();
-            shared_ptr <JSONObject> extras = getExtras(mCurrentElementUniqueId);
-            bool val = GeneratedSaxParser::Utils::toBool(&buffer, failed);
-            if (!failed) {
-                extras->setBool("has_alpha", val);
+                extras->setBool("double_sided", val);
             }
         }
         
@@ -352,5 +288,43 @@ namespace GLTF
 		}
 	}
 
+	//------------------------------
+	void ExtraDataHandler::determineBumpTextureSamplerAndTexCoord( const GeneratedSaxParser::xmlChar** attributes )
+	{
+		mExtraParameters.bumpParameters.textureAttributes = 0;
+
+		if( mCurrentObject )
+		{
+			if( COLLADAFW::COLLADA_TYPE::EFFECT == mCurrentObject->getClassId() )
+			{
+				COLLADAFW::Effect* effect = (COLLADAFW::Effect*)mCurrentObject;
+				mExtraParameters.bumpParameters.textureAttributes = effect->createExtraTextureAttributes();
+			}
+		}
+
+		if( mExtraParameters.bumpParameters.textureAttributes == 0 )
+			return;
+
+		size_t index = 0;
+
+		const GeneratedSaxParser::xmlChar* attributeKey = attributes[index++];
+		const GeneratedSaxParser::xmlChar* attributeValue = 0;
+		while( attributeKey != 0 )
+		{
+			attributeValue = attributes[index++];
+			if( strcmp(attributeKey, "texture") == 0 && attributeValue != 0 )
+			{
+				if( mExtraParameters.bumpParameters.textureAttributes )
+					mExtraParameters.bumpParameters.textureAttributes->textureSampler = attributeValue;
+			}
+			else if( strcmp(attributeKey, "texcoord") == 0 && attributeValue != 0 )
+			{
+				if( mExtraParameters.bumpParameters.textureAttributes )
+					mExtraParameters.bumpParameters.textureAttributes->texCoord = attributeValue;
+			}
+
+			attributeKey = attributes[index++];
+		}
+	}
 #endif
 }

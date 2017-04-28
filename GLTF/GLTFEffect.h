@@ -33,16 +33,13 @@ namespace GLTF
     typedef std::shared_ptr<SemanticArray> SemanticArrayPtr;
     typedef std::map<std::string /* texcoord */, SemanticArrayPtr > TexCoordToSemanticsArrayPtr;
     
-    class COLLADA2GLTF_EXPORT GLTFEffect : public JSONObject {
+    class GLTFEffect : public JSONObject {
         
     public:
-        GLTFEffect(const std::string &ID, std::shared_ptr<GLTFProfile> profile);
+        GLTFEffect(const std::string &ID);
         virtual ~GLTFEffect();
         
-        GLTFEffect(const GLTFEffect &effect);
-
-        const std::string& getID();
-        void setID(const std::string& id);
+        const std::string& getID();        
 
         void setTechniqueGenerator(std::shared_ptr <JSONObject> techniqueGenerator);
         std::shared_ptr <JSONObject> getTechniqueGenerator();
@@ -55,27 +52,18 @@ namespace GLTF
 
         void setValues(std::shared_ptr <JSONObject>);
         std::shared_ptr <JSONObject> getValues();
-
-        void setKhrMaterialsCommonValues(std::shared_ptr <JSONObject>);
-        std::shared_ptr <JSONObject> getKhrMaterialsCommonValues();
         
         void addSemanticForTexcoordName(const std::string &texcoord, const std::string &semantic);
         SemanticArrayPtr getSemanticsForTexcoordName(const std::string &texcoord);
         
         void evaluate(void *context);
-        virtual std::string valueType();
-
+        
     private:
-        inline void AddMaterialsCommonValue(const std::shared_ptr<JSONObject>& materialsCommonValues,
-            const std::shared_ptr<JSONObject>& values, const std::string& name);
-
         std::string _ID;
-        std::shared_ptr<GLTFProfile> _profile;
         std::string _lightingModel;
         std::shared_ptr <JSONObject> _techniqueGenerator;
         std::shared_ptr <JSONObject> _values;
-        std::shared_ptr <JSONObject> _khrMaterialsCommonValues;
-        TexCoordToSemanticsArrayPtr _texcoordToSemantics;
+        TexCoordToSemanticsArrayPtr _texcoordToSemantics ;
     };
 }
 

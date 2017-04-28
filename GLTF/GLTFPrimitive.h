@@ -47,15 +47,15 @@ namespace GLTF
         size_t _indexOfSet;
     };
         
-    class COLLADA2GLTF_EXPORT GLTFPrimitive : public JSONObject
+    class GLTFPrimitive : public JSONObject
     {
     public:
         GLTFPrimitive();
         GLTFPrimitive(const GLTFPrimitive& primitive);
         virtual ~GLTFPrimitive();
                 
-        unsigned int getMode();
-        void setMode(unsigned int type);
+        unsigned int getPrimitive();
+        void setPrimitive(unsigned int type);
 
         std::string getMaterialID();
         void setMaterialID(std::string materialID);
@@ -71,13 +71,11 @@ namespace GLTF
         
         VertexAttributeVector getVertexAttributes();
         void appendVertexAttribute(std::shared_ptr <JSONVertexAttribute> VertexAttribute);
-        void removeVertexAttribute(unsigned int index);
         
         std::shared_ptr <GLTF::GLTFAccessor>  getIndices();
         void setIndices(std::shared_ptr <GLTF::GLTFAccessor> indices);
         
         std::shared_ptr<GLTFPrimitive> clone();
-        virtual std::string valueType();
 
     private:
         unsigned int _materialObjectID;

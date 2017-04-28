@@ -29,15 +29,14 @@
 
 #define EXPORT_MATERIALS_AS_EFFECTS 1
 
-const std::string glTFVersion = "1.0.1";
+const float glTFVersion = 0.6f;
 
 const std::string kCount = "count";
 const std::string kByteOffset = "byteOffset";
 const std::string kByteStride = "byteStride";
 const std::string kByteLength = "byteLength";
-const std::string kURI = "uri";
+const std::string kPath = "path";
 const std::string kType = "type";
-const std::string kComponentType = "componentType";
 const std::string kBufferView = "bufferView";
 const std::string kBufferViews = "bufferViews";
 const std::string kMin = "min";
@@ -45,19 +44,19 @@ const std::string kMax = "max";
 const std::string kIndices = "indices";
 const std::string kMaterial = "material";
 const std::string kMaterials = "materials";
-const std::string kMode = "mode";
 const std::string kPrimitive = "primitive";
 const std::string kName = "name";
 const std::string kExtensions = "extensions";
-const std::string kExtensionsUsed = "extensionsUsed";
 const std::string kPrimitives = "primitives";
 const std::string kAttributes = "attributes";
+const std::string kJoints = "joints";
 const std::string kBindShapeMatrix = "bindShapeMatrix";
 const std::string kInverseBindMatrices = "inverseBindMatrices";
 const std::string kSamplers = "samplers";
 const std::string kChannels = "channels";
 const std::string kParameters = "parameters";
 const std::string kBuffer = "buffer";
+const std::string kInstanceTechnique = "instanceTechnique";
 const std::string kTechnique = "technique";
 const std::string kValues = "values";
 const std::string kValue = "value";
@@ -78,23 +77,12 @@ const std::string kChildren = "children";
 const std::string kSources = "sources";
 const std::string kSource = "source";
 const std::string kSkin = "skin";
-const std::string kSkins = "skins";
+const std::string kInstanceSkin = "instanceSkin";
 const std::string kImages = "images";
 const std::string kImage = "image";
 const std::string kCamera = "camera";
 const std::string kLights = "lights";
 const std::string kLight = "light";
-const std::string kSemantic = "semantic";
-const std::string kJointName = "jointName";
-const std::string kJointNames = "jointNames";
-const std::string kDoubleSided = "doubleSided";
-const std::string kAspectRatio = "aspectRatio";
-
-const std::string MODELVIEW = "MODELVIEW";
-const std::string MODELVIEWINVERSETRANSPOSE = "MODELVIEWINVERSETRANSPOSE";
-const std::string MODELVIEWINVERSE = "MODELVIEWINVERSE";
-const std::string PROJECTION = "PROJECTION";
-const std::string JOINTMATRIX = "JOINTMATRIX";
 
 namespace GLTF
 {
@@ -130,9 +118,7 @@ namespace GLTF
         TEXCOORD = 3,
         COLOR = 4,
         WEIGHT = 5,
-        JOINT = 6,
-        TEXTANGENT = 7,
-        TEXBINORMAL = 8
+        JOINT = 6
     } Semantic;    
 
     typedef std::string JSONType;
@@ -141,6 +127,19 @@ namespace GLTF
     const std::string kJSONObject = "object";
     const std::string kJSONArray = "array";
     const std::string kJSONString = "string";    
+    
+    typedef enum {
+        NOT_AN_ELEMENT_TYPE = 0,
+        BYTE = 1,
+        UNSIGNED_BYTE = 2,
+        SHORT = 3,
+        UNSIGNED_SHORT = 4,
+        FIXED = 5,
+        FLOAT = 6,
+        INT = 7,
+        UNSIGNED_INT = 8
+    } ComponentType;
+    
 };
 
 #endif

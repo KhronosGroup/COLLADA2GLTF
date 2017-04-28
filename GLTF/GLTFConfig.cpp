@@ -23,6 +23,7 @@
 
 #include "GLTF.h"
 
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -60,9 +61,6 @@ namespace GLTF
         optionsRoot->setBool("outputConvertionResults", false);
         optionsRoot->setBool("outputConvertionMetaData", false);
         optionsRoot->setBool("verboseLogging", false);
-		optionsRoot->setBool("embedResources", false);
-        optionsRoot->setBool("noCombineAnimations", false);
-        optionsRoot->setBool("useKhrMaterialsCommon", false);
         
         //create the path "extensions.Open3DGC.quantization" and set default for Open3DGC
         shared_ptr<JSONObject> extensions(new JSONObject());

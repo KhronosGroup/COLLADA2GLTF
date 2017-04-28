@@ -23,6 +23,7 @@
 
 #include "GLTF.h"
 
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -45,11 +46,11 @@ namespace GLTF
 
     //--- Skin
     
-    GLTFSkin::GLTFSkin() : GLTFController(), _jointsCount(0) {
+    GLTFSkin::GLTFSkin() : GLTFController() {
         this->_id = GLTFUtils::generateIDForType(kSkin.c_str());
     }
 
-    GLTFSkin::GLTFSkin(std::string id) : GLTFController(), _jointsCount(0) {
+    GLTFSkin::GLTFSkin(std::string id) : GLTFController() {
         this->_id = id;
     }
 
@@ -69,12 +70,12 @@ namespace GLTF
         this->setValue(kBindShapeMatrix, bindShapeMatrix);
     }
     
-    shared_ptr<JSONArray> GLTFSkin::getJointNames() {
-        return this->getArray(kJointNames);
+    shared_ptr<JSONArray> GLTFSkin::getJointsIds() {
+        return this->getArray(kJoints);
     }
     
-    void GLTFSkin::setJointNames(shared_ptr<JSONArray> jointNames) {
-        this->setValue(kJointNames, jointNames);
+    void GLTFSkin::setJointsIds(shared_ptr<JSONArray> jointIds) {
+        this->setValue(kJoints, jointIds);
     }
     
     const std::string& GLTFSkin::getId() {
@@ -111,18 +112,6 @@ namespace GLTF
     
     shared_ptr <GLTFBufferView> GLTFSkin::getInverseBindMatrices() {
         return this->_inverseBindMatrices;
-    }
-    
-    void GLTFSkin::setJointsCount(size_t count) {
-        this->_jointsCount = count;
-    }
-    
-    size_t GLTFSkin::getJointsCount() {
-        return this->_jointsCount;
-    }
-    
-    std::string GLTFSkin::valueType() {
-        return getType();
     }
     
 };

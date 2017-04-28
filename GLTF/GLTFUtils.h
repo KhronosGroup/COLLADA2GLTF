@@ -28,7 +28,6 @@
 #define __JSON_UTILS_H__
 
 #include <float.h>
-#include <string.h>
 
 namespace GLTF 
 {    
@@ -59,11 +58,12 @@ namespace GLTF
         
         static std::string generateIDForType(const char* typeCStr, const char* suffix = 0)
         {   
+            static unsigned int generatedIDCount = 1;
             char separator = '_';
             
-            std::string type = typeCStr;
+            std::string type(typeCStr);
             type +=  separator; // FIXME: should probably not generate a "-" for a JSON output
-            type += GLTFUtils::toString(s_generatedIDCount++);
+            type += GLTFUtils::toString(generatedIDCount++);
             if (suffix) {
                 type +=  separator;
                 type += suffix;
@@ -71,12 +71,27 @@ namespace GLTF
             
             return type;
         }
-
-        static void resetIDCount()
+                
+        static std::string getStringForGLType(int componentType)
         {
-            s_generatedIDCount = 1;
+            switch (componentType) {
+                case GLTF::UNSIGNED_BYTE:
+                    return "UNSIGNED_BYTE";
+                case GLTF::SHORT:
+                    return "SHORT";
+                case GLTF::UNSIGNED_SHORT:
+                    return "UNSIGNED_SHORT";
+                case GLTF::UNSIGNED_INT:
+                    return "UNSIGNED_INT";
+                case GLTF::FIXED:
+                    return "UNSIGNED_INT";
+                case GLTF::FLOAT: 
+                    return "FLOAT";
+                default:
+                    return "UNKNOWN";
+            }
         }
-                        
+        
         static std::string getStringForSemantic(GLTF::Semantic semantic) 
         {
             switch (semantic) {
@@ -92,28 +107,10 @@ namespace GLTF
                     return "JOINT";
                 case GLTF::WEIGHT:
                     return "WEIGHT";
-                case GLTF::TEXBINORMAL:
-                    return "TEXBINORMAL";
-                case GLTF::TEXTANGENT:
-                    return "TEXTANGENT";
                     
                 default:
                     return "UNKNOWN";
             }
-        }
-        
-        static std::string getTypeForVectorSize(unsigned int size) {
-            switch (size) {
-                case 1:
-                    return "SCALAR";
-                case 2:
-                    return "VEC2";
-                case 3:
-                    return "VEC3";
-                case 4:
-                    return "VEC4";
-            }
-            return 0;
         }
         
         /** Converts @a value to a string.
@@ -147,10 +144,6 @@ namespace GLTF
             return isPathSeparator(name[0]);
 #endif
         }
-
-
-        private:
-            static unsigned int s_generatedIDCount;
     };
     
 }

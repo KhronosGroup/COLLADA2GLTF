@@ -24,7 +24,6 @@
 #ifndef __GLTF_WEBGL_1_0_PROFILE__
 #define __GLTF_WEBGL_1_0_PROFILE__
 
-
 namespace GLTF
 {
     class GLTFWebGL_1_0_Profile : public GLTFProfile
@@ -33,17 +32,14 @@ namespace GLTF
         GLTFWebGL_1_0_Profile();
         virtual ~GLTFWebGL_1_0_Profile();
 
-        std::shared_ptr<GLTF::JSONObject> id();
-        unsigned int getGLTypeForComponentTypeAndType(const std::string& componentType, const std::string& type);
+        std::string id();
+        unsigned int getGLTypeForComponentType(ComponentType componentType, size_t);
         std::string getGLSLTypeForGLType(unsigned int glType);
         size_t getComponentsCountForGLType(unsigned int glType);
         size_t sizeOfGLType(unsigned int glType);
-        unsigned int getGLComponentTypeForGLType(unsigned int glType);
-        std::string getTypeForGLType(unsigned int glType);
-        virtual std::shared_ptr<JSONValue> defaultValueForState(const std::string& state);
-        virtual bool isDefaultValueForState(const std::string& state, std::shared_ptr<JSONValue> value);
+        ComponentType getComponentTypeForGLType(unsigned int glType);
+
     private:
-        std::shared_ptr <JSONObject> _defaultValues;
     };
 }
 

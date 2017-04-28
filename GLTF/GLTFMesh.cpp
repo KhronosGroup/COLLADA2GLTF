@@ -28,6 +28,7 @@
 #include "GLTF.h"
 #include "../helpers/geometryHelpers.h"
 
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -81,9 +82,10 @@ namespace GLTF
         for (unsigned int i = 0 ; i < allSemantics.size() ; i++) {
             GLTF::Semantic semantic = allSemantics[i];
             size_t attributesCount = this->getMeshAttributesCountForSemantic(semantic);
-            for (unsigned int j = 0 ; j < attributesCount ; j++) {
+            for (size_t j = 0 ; j < attributesCount ; j++) {
                 shared_ptr <GLTF::GLTFAccessor> selectedMeshAttribute = this->getMeshAttribute(semantic, j);
-                std::string semanticIndexSetKey = keyWithSemanticAndSet(semantic, j);
+                unsigned int indexSet = j;
+                std::string semanticIndexSetKey = keyWithSemanticAndSet(semantic, indexSet);
                 unsigned int size = (unsigned int)meshAttributes->size();
                 semanticAndSetToIndex[semanticIndexSetKey] = size;
                 
@@ -193,7 +195,9 @@ namespace GLTF
 				GLTF::Semantic semantic = primitive->getSemanticAtIndex((unsigned int)j);
                 std::string semanticAndSet = GLTFUtils::getStringForSemantic(semantic);
                 unsigned int indexOfSet = 0;
-                if ((semantic == GLTF::TEXCOORD) || (semantic == GLTF::COLOR)) {
+                if ((semantic != GLTF::POSITION) && (semantic != GLTF::NORMAL) &&
+                    //FIXME: should not be required for JOINT and WEIGHT
+                    (semantic != GLTF::JOINT) && (semantic != GLTF::WEIGHT)) {
 					indexOfSet = primitive->getIndexOfSetAtIndex((unsigned int)j);
                     semanticAndSet += "_" + GLTFUtils::toString(indexOfSet);
                 }
@@ -203,9 +207,4 @@ namespace GLTF
             primitivesArray->appendValue(primitive);
         }
     }
-    
-    std::string GLTFMesh::valueType() {
-        return "mesh";
-    }
-
 }

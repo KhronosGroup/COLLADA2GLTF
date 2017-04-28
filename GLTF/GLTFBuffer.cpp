@@ -26,10 +26,9 @@
 
 #include "GLTF.h"
 #include "GLTFAsset.h"
-#include "JSONObject.h"
-#include "JSONValue.h"
-#include "JSONNumber.h"
 
+using namespace rapidjson;
+using namespace rapidjson;
 #if __cplusplus <= 199711L
 using namespace std::tr1;
 #endif
@@ -45,24 +44,24 @@ namespace GLTF
     }    
 
     //FIXME:This one just should be removed, but some code depends on it.
-    GLTFBuffer::GLTFBuffer(std::string ID, size_t byteLength) : JSONObject() {
-        _ID = ID;
-        _data = 0;
-        _ownData = false;
+    GLTFBuffer::GLTFBuffer(std::string ID, size_t byteLength): JSONObject(),
+    _ID(ID),
+    _data(0),
+    _ownData(false) {
 		this->setUnsignedInt32(kByteLength, (unsigned int)byteLength);
     }
     
-    GLTFBuffer::GLTFBuffer(void *data, size_t byteLength, bool ownData) : JSONObject() {
-        _data = (unsigned char*)data;
-        _ownData = ownData;
+    GLTFBuffer::GLTFBuffer(void *data, size_t byteLength, bool ownData): JSONObject(),
+    _data((unsigned char*)data),
+    _ownData(ownData) {
 		this->setUnsignedInt32(kByteLength, (unsigned int)byteLength);
         this->_ID = GLTFUtils::generateIDForType("buffer");
     }
     
-    GLTFBuffer::GLTFBuffer(std::string ID, void *data, size_t byteLength, bool ownData) : JSONObject() {
-        _ID = ID;
-        _data = (unsigned char*)data;
-        _ownData = ownData;
+    GLTFBuffer::GLTFBuffer(std::string ID,void *data, size_t byteLength, bool ownData): JSONObject(),
+    _ID(ID),
+    _data((unsigned char*)data),
+    _ownData(ownData) {
 		this->setUnsignedInt32(kByteLength, (unsigned int)byteLength);
     }
 
@@ -70,7 +69,7 @@ namespace GLTF
         //FIXME:this would be better somewhere else..
         GLTFAsset* asset = (GLTFAsset*)context;
         
-        this->setString(kURI, COLLADABU::URI::uriEncode(asset->resourceOuputPathForPath(this->getString(kURI))));
+        this->setString(kPath, asset->resourceOuputPathForPath(this->getString(kPath)));
     }
     
     size_t GLTFBuffer::getByteLength() {
@@ -85,11 +84,9 @@ namespace GLTF
         return this->_data;
     }
     
-    std::string GLTFBuffer::valueType() {
-        return "buffer";
-    }
-
-    //--- GLTFBufferView
+    //--- GLTFBufferView    
+    
+    
     
     GLTFBufferView::~GLTFBufferView() {
     }
@@ -100,7 +97,8 @@ namespace GLTF
     }
     
     GLTFBufferView::GLTFBufferView(shared_ptr <GLTF::GLTFBuffer> buffer, size_t byteOffset, size_t byteLength) : JSONObject() {
-        this->_ID = GLTFUtils::generateIDForType(kBufferView.c_str());   
+        this->_ID = GLTFUtils::generateIDForType(kBufferView.c_str());
+        
         this->_setBuffer(buffer);
         this->setByteLength(byteLength);
         this->setByteOffset(byteOffset);
@@ -161,8 +159,4 @@ namespace GLTF
         return bufferView;
     }
     
-    std::string GLTFBufferView::valueType() {
-        return "bufferView";
-    }
-
 }

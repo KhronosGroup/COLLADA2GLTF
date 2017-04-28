@@ -58,10 +58,6 @@ namespace GLTF
         return kJSONString;
     }
     
-    std::string JSONString::valueType() {
-        return "string";
-    }
-    
     bool JSONString::isEqualTo(JSONValue* value) {
         assert(value != nullptr);
 

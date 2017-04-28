@@ -26,7 +26,7 @@
 
 namespace GLTF 
 {
-    class COLLADA2GLTF_EXPORT GLTFController : public JSONObject {
+    class GLTFController : public JSONObject {
     public:
         GLTFController();
         virtual ~GLTFController();
@@ -37,7 +37,7 @@ namespace GLTF
         std::shared_ptr<JSONObject> _extras;
     };
 
-    class COLLADA2GLTF_EXPORT GLTFSkin : public GLTFController
+    class GLTFSkin : public GLTFController
     {
     public:
         GLTFSkin();
@@ -47,8 +47,8 @@ namespace GLTF
         std::shared_ptr<JSONArray> getBindShapeMatrix();
         void setBindShapeMatrix(std::shared_ptr<JSONArray>  bindShapeMatrix);
         
-        std::shared_ptr<JSONArray> getJointNames();
-        void setJointNames(std::shared_ptr<JSONArray> jointNames);
+        std::shared_ptr<JSONArray> getJointsIds();
+        void setJointsIds(std::shared_ptr<JSONArray> jointIds);
         
         const std::string& getId();
         
@@ -67,11 +67,6 @@ namespace GLTF
         //controller
         std::string getType();
         
-        void setJointsCount(size_t count);
-        size_t getJointsCount();
-        
-        virtual std::string valueType();
-
     private:
         std::shared_ptr <GLTFBufferView> _inverseBindMatrices;
                 
@@ -80,8 +75,6 @@ namespace GLTF
         
         std::string _id;
         std::string _sourceUID;
-        
-        size_t _jointsCount;
     };
 }
 

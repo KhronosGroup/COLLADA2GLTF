@@ -26,12 +26,10 @@
 
 namespace GLTF
 {
-    class GLTFBuffer;
-    class GLTFBufferView;
-
     class GLTFOutputStream {
-	public:
+    private:
         GLTFOutputStream();
+    public:
         GLTFOutputStream(const std::string &folder, const std::string &file, const std::string &kind);
         
         size_t length();
@@ -41,21 +39,19 @@ namespace GLTF
 
         const std::string& filename();
         const std::string& id();
-		const std::string& outputPath();
+
+        const char* outputPathCStr();
         
         void close();
-		void remove();
         
         virtual ~GLTFOutputStream();
         
     private:
-        std::shared_ptr<std::ostream> _stream;
+        std::ofstream _stream;
         std::string _outputPath;
         std::string _filename;
         std::string _id;
         bool _opened;
-
-		bool _embedded;
     };
 }
 

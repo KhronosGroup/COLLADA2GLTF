@@ -24,13 +24,9 @@
 #ifndef __GLTF_CONFIG__
 #define __GLTF_CONFIG__
 
-#ifdef WIN32
-#pragma warning(disable: 4251)
-#endif
-
 namespace GLTF
 {
-    class COLLADA2GLTF_EXPORT GLTFConfig {
+    class GLTFConfig {
     public:        
         GLTFConfig();
         bool initWithPath(const std::string& path);

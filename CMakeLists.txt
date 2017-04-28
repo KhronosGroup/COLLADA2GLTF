@@ -34,14 +34,6 @@ if (NOT WIN32)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .so .a .dylib)
 endif()
 
-# Lets libxml2 work in a shared library
-add_definitions(-DLIBXML_STATIC_FOR_DLL)
-
-IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") 
- ADD_DEFINITIONS(-fPIC) 
-ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-
-include_directories(${COLLADA2GLTF_SOURCE_DIR})
 include_directories(${COLLADA2GLTF_SOURCE_DIR}/GLTF)
 include_directories(${COLLADA2GLTF_SOURCE_DIR}/JSON)
 include_directories(${COLLADA2GLTF_SOURCE_DIR}/shaders)
@@ -67,20 +59,17 @@ if (USE_OPEN3DGC)
     include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/o3dgc/src/o3dgc_decode_lib/inc)
 endif()
 
-find_package(PNG)
-if (PNG_FOUND)
+if (NOT WIN32)
+    find_package(PNG REQUIRED)
     include_directories(${PNG_INCLUDE_DIR})
+    find_package(ZLIB REQUIRED)
     include_directories(${ZLIB_INCLUDE_DIR})
-    add_definitions(-DUSE_LIBPNG)
-else()
-    message(WARNING "libpng or one of its dependencies couldn't be found. Transparency may not be correctly detected.")
 endif()
 
 link_directories(${COLLADA2GLTF_BINARY_DIR}/lib)
 
 if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
     add_definitions(-DWIN32)
     add_definitions(-EHsc)
 endif()
@@ -91,7 +80,8 @@ if (USE_OPEN3DGC)
     add_subdirectory(dependencies/o3dgc/src)
 endif()
 
-set(GLTF_SOURCES
+set(GLTF_SOURCES main.cpp
+
     COLLADA2GLTFWriter.h
     COLLADA2GLTFWriter.cpp
     GLTFOpenCOLLADA.h
@@ -105,12 +95,10 @@ set(GLTF_SOURCES
     GLTF/GLTFAccessor.cpp
     GLTF/GLTFBuffer.cpp
     GLTF/GLTFEffect.cpp
-    GLTF/GLTFExtras.cpp
     GLTF/GLTFMesh.cpp
     GLTF/GLTFPrimitive.cpp
     GLTF/GLTFUtils.cpp
     GLTF/GLTFWriter.cpp
-    GLTF/GLTFDefaultWriter.cpp
     GLTF/GLTFSkin.cpp
     GLTF/GLTF.h
     GLTF/GLTFTypesAndConstants.h
@@ -119,12 +107,10 @@ set(GLTF_SOURCES
     GLTF/GLTFAccessor.h
     GLTF/GLTFBuffer.h
     GLTF/GLTFEffect.h
-    GLTF/GLTFExtras.h
     GLTF/GLTFMesh.h
     GLTF/GLTFPrimitive.h
     GLTF/GLTFUtils.h
     GLTF/GLTFWriter.h
-    GLTF/GLTFDefaultWriter.h
     GLTF/GLTFSkin.h
     GLTF/GLTFExtraDataHandler.h
     GLTF/GLTFExtraDataHandler.cpp
@@ -136,8 +122,6 @@ set(GLTF_SOURCES
     GLTF/GLTFOutputStream.cpp
     GLTF/GLTFConfig.cpp
     GLTF/GLTFConfig.h
-    GLTF/GLTFCleanupEvaluator.h
-    GLTF/GLTFCleanupEvaluator.cpp
 
     profiles/webgl-1.0/webgl-idl.h
     profiles/webgl-1.0/GLTFWebGL_1_0_Profile.cpp
@@ -150,11 +134,11 @@ set(GLTF_SOURCES
     helpers/geometryHelpers.cpp
     helpers/mathHelpers.h
     helpers/mathHelpers.cpp
-    helpers/encodingHelpers.h
-    helpers/encodingHelpers.cpp
 
     convert/meshConverter.cpp
     convert/meshConverter.h
+    convert/animationConverter.cpp
+    convert/animationConverter.h
 
     JSON/JSONArray.cpp
     JSON/JSONNumber.cpp
@@ -180,20 +164,14 @@ LIST(APPEND GLTF_SOURCES
     extensions/o3dgc-compression/GLTF-Open3DGC.h)
 endif()
 
-option(CONVERT_SHARED "CONVERT_SHARED" OFF)
-if (CONVERT_SHARED)
-    add_library(collada2gltfConvert SHARED ${GLTF_SOURCES})
-    #Make sure the dll is in the same directory as the executable
-    if (WIN32)
-        set_target_properties(collada2gltfConvert PROPERTIES RUNTIME_OUTPUT_DIRECTORY "bin")
-    endif()
-else()
-    add_library(collada2gltfConvert STATIC ${GLTF_SOURCES})
-    add_definitions(-DSTATIC_COLLADA2GLTF)
+if (WIN32)
+LIST(APPEND GLTF_SOURCES ${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc/getopt_long.c ${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc/getopt.c ${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc/getopt.h)
 endif()
 
-if (PNG_FOUND)
-    LIST(APPEND TARGET_LIBS ${PNG_LIBRARY} ${ZLIB_LIBRARY})
+add_executable(collada2gltf ${GLTF_SOURCES})
+
+if (NOT WIN32)
+LIST(APPEND TARGET_LIBS ${PNG_LIBRARY} ${ZLIB_LIBRARY})
 endif()
 
 if (USE_OPEN3DGC)
@@ -204,19 +182,5 @@ IF("${CMAKE_SYSTEM}" MATCHES "Linux")
     LIST(APPEND TARGET_LIBS rt)
 endif("${CMAKE_SYSTEM}" MATCHES "Linux")
 
-if (WIN32)
-    LIST(APPEND TARGET_LIBS ws2_32.lib)
-endif ()
+target_link_libraries (collada2gltf ${TARGET_LIBS})
 
-target_link_libraries (collada2gltfConvert ${TARGET_LIBS})
-
-set(GLTF_EXE_SOURCES  main.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/GitSHA1.cpp
-    GitSHA1.h)
-
-if (WIN32)
-LIST(APPEND GLTF_EXE_SOURCES ${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc/getopt_long.c ${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc/getopt.c ${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc/getopt.h)
-endif()
-
-add_executable(collada2gltf ${GLTF_EXE_SOURCES})
-target_link_libraries (collada2gltf collada2gltfConvert)

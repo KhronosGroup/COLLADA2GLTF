@@ -31,7 +31,7 @@ namespace GLTF
 {
 #define JSONSTRING(x) (shared_ptr <GLTF::JSONString> (new GLTF::JSONString(x)))
     
-    class COLLADA2GLTF_EXPORT JSONString : public JSONValue {
+    class JSONString : public JSONValue {
     private:
 
     public:        
@@ -45,8 +45,6 @@ namespace GLTF
         const std::string& getString();
         
         virtual JSONType getJSONType();
-        virtual std::string valueType();
-
         virtual bool isEqualTo(JSONValue* value);
         
     private:
