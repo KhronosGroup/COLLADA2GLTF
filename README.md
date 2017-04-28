@@ -2,12 +2,18 @@
 <img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png">
 </p>
 
-[![Build Status](https://travis-ci.org/KhronosGroup/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/COLLADA2GLTF)
-[![Build Status](https://ci.appveyor.com/api/projects/status/3xtpxjohflwd5t1p/branch/master)](https://ci.appveyor.com/project/Khronoswebmaster/collada2gltf/history)
+[![Build Status](https://travis-ci.org/KhronosGroup/COLLADA2GLTF.svg?branch=0.6)](https://travis-ci.org/KhronosGroup/COLLADA2GLTF)
+[![Build Status](https://ci.appveyor.com/api/projects/status/3xtpxjohflwd5t1p/branch/0.6)](https://ci.appveyor.com/project/Khronoswebmaster/collada2gltf/history)
 
-# COLLADA to glTF converter
+# COLLADA to glTF converter 0.6
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
+
+## READ-ONLY BRANCH
+
+This is the archival read-only branch for COLLADA2GLTF-0.6.
+
+Changes should not be made to this branch except for extremely high priority bug-fixes.
 
 ## Compile from source
 
