@@ -153,11 +153,33 @@ void GLTF::MaterialPBR::MetallicRoughness::writeJSON(void* writer, GLTF::Options
 
 void GLTF::MaterialPBR::SpecularGlossiness::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+	if (diffuseFactor) {
+		jsonWriter->Key("diffuseFactor");
+		jsonWriter->StartArray();
+		for (int i = 0; i < 4; i++) {
+			jsonWriter->Double(diffuseFactor[i]);
+		}
+		jsonWriter->EndArray();
+	}
 	if (diffuseTexture) {
 		jsonWriter->Key("diffuseTexture");
 		jsonWriter->StartObject();
 		diffuseTexture->writeJSON(writer, options);
 		jsonWriter->EndObject();
+	}
+	if (specularFactor) {
+		jsonWriter->Key("specularFactor");
+		jsonWriter->StartArray();
+		for (int i = 0; i < 3; i++) {
+			jsonWriter->Double(specularFactor[i]);
+		}
+		jsonWriter->EndArray();
+	}
+	if (glossinessFactor) {
+		jsonWriter->Key("glossinessFactor");
+		jsonWriter->StartArray();
+		jsonWriter->Double(glossinessFactor[0]);
+		jsonWriter->EndArray();
 	}
 	if (specularGlossinessTexture) {
 		jsonWriter->Key("specularGlossinessTexture");
@@ -176,6 +198,20 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 		metallicRoughness->writeJSON(writer, options);
 		jsonWriter->EndObject();
 	}
+	if (emissiveFactor) {
+		jsonWriter->Key("emissiveFactor");
+		jsonWriter->StartArray();
+		for (int i = 0; i < 3; i++) {
+			jsonWriter->Double(emissiveFactor[i]);
+		}
+		jsonWriter->EndArray();
+	}
+	if (emissiveTexture) {
+		jsonWriter->Key("emissiveTexture");
+		jsonWriter->StartObject();
+		emissiveTexture->writeJSON(writer, options);
+		jsonWriter->EndObject();
+	}
 	if (normalTexture) {
 		jsonWriter->Key("normalTexture");
 		jsonWriter->StartObject();
@@ -187,14 +223,6 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->StartObject();
 		occlusionTexture->writeJSON(writer, options);
 		jsonWriter->EndObject();
-	}
-	if (emissiveFactor) {
-		jsonWriter->Key("emissiveFactor");
-		jsonWriter->StartArray();
-		for (int i = 0; i < 4; i++) {
-			jsonWriter->Double(emissiveFactor[i]);
-		}
-		jsonWriter->EndArray();
 	}
 	if (options->specularGlossiness) {
 		if (specularGlossiness && 
@@ -777,11 +805,9 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness)
 	GLTF::MaterialPBR* material = new GLTF::MaterialPBR();
 	if (values->diffuse) {
 		material->metallicRoughness->baseColorFactor = values->diffuse;
-	}
-	if (values->ambientTexture) {
-		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
-		texture->texture = values->ambientTexture;
-		material->occlusionTexture = texture;
+		if (specularGlossiness) {
+			material->specularGlossiness->diffuseFactor = values->diffuse;
+		}
 	}
 	if (values->diffuseTexture) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
@@ -791,11 +817,37 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness)
 			material->specularGlossiness->diffuseTexture = texture;
 		}
 	}
-	if (values->specularTexture && specularGlossiness) {
-		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
-		texture->texture = values->specularTexture;
-		material->specularGlossiness->specularGlossinessTexture = texture;
+
+	if (values->emission) {
+		material->emissiveFactor = values->emission;
 	}
+	if (values->emissionTexture) {
+		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
+		texture->texture = values->diffuseTexture;
+		material->emissiveTexture = texture;
+		material->emissiveFactor = new float[3]{ 1.0, 1.0, 1.0 };
+	}
+
+	if (values->ambientTexture) {
+		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
+		texture->texture = values->ambientTexture;
+		material->occlusionTexture = texture;
+	}
+
+	if (specularGlossiness) {
+		if (values->specular) {
+			material->specularGlossiness->specularFactor = values->specular;
+		}
+		if (values->specularTexture) {
+			GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
+			texture->texture = values->specularTexture;
+			material->specularGlossiness->specularGlossinessTexture = texture;
+		}
+		if (values->shininess) {
+			material->specularGlossiness->glossinessFactor = values->shininess;
+		}
+	}
+
 	if (values->bumpTexture) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
 		texture->texture = values->bumpTexture;

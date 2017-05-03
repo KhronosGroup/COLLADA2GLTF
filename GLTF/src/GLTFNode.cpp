@@ -67,6 +67,12 @@ void GLTF::Node::TransformMatrix::premultiply(GLTF::Node::TransformMatrix* trans
 	}
 }
 
+void GLTF::Node::TransformMatrix::scaleUniform(float scale) {
+	for (int i = 0; i < 11; i++) {
+		this->matrix[i] *= scale;
+	}
+}
+
 bool GLTF::Node::TransformMatrix::isIdentity() {
 	return matrix[0] == 1 && matrix[1] == 0 && matrix[2] == 0 && matrix[3] == 0 &&
 		matrix[4] == 0 && matrix[5] == 1 && matrix[6] == 0 && matrix[7] == 0 &&

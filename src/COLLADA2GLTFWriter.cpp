@@ -21,6 +21,7 @@ void COLLADA2GLTF::Writer::finish() {
 }
 
 bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
+	float assetScale = (float)asset->getUnit().getLinearUnitMeter();
 	if (asset->getUpAxisType() == COLLADAFW::FileInfo::X_UP) {
 		_rootNode = new GLTF::Node();
 		_rootNode->transform = new GLTF::Node::TransformMatrix(
@@ -39,6 +40,19 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 			0, 0, 0, 1
 		);
 		_rootNode->name = "Z_UP";
+	}
+	else if (asset->getUpAxisType() == COLLADAFW::FileInfo::Y_UP && assetScale != 1.0) {
+		_rootNode = new GLTF::Node();
+		_rootNode->transform = new GLTF::Node::TransformMatrix(
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1
+		);
+		_rootNode->name = "Y_UP";
+	}
+	if (_rootNode != NULL && assetScale != 1.0) {
+		((GLTF::Node::TransformMatrix*)_rootNode->transform)->scaleUniform(assetScale);
 	}
 	return true;
 }
@@ -827,14 +841,41 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 	GLTF::Camera* writeCamera = NULL;
 	if (colladaCamera->getCameraType() == COLLADAFW::Camera::ORTHOGRAPHIC) {
 		GLTF::CameraOrthographic* camera = new GLTF::CameraOrthographic();
-		camera->xmag = (float)colladaCamera->getXMag();
-		camera->ymag = (float)colladaCamera->getYMag();
+		float x, y;
+		switch (colladaCamera->getDescriptionType()) {
+		case COLLADAFW::Camera::UNDEFINED:
+			camera->xmag = 1.0;
+			camera->ymag = 1.0;
+			break;
+		case COLLADAFW::Camera::SINGLE_X:
+			camera->xmag = (float)colladaCamera->getXMag().getValue();
+			camera->ymag = 1.0;
+			break;
+		case COLLADAFW::Camera::SINGLE_Y:
+			camera->xmag = 1.0;
+			camera->ymag = (float)colladaCamera->getYMag().getValue();
+			break;
+		case COLLADAFW::Camera::X_AND_Y:
+			camera->xmag = (float)colladaCamera->getXMag().getValue();
+			camera->ymag = (float)colladaCamera->getYMag().getValue();
+			break;
+		case COLLADAFW::Camera::ASPECTRATIO_AND_X:
+			x = (float)colladaCamera->getXMag().getValue();
+			camera->xmag = x;
+			camera->ymag = x / (float)colladaCamera->getAspectRatio().getValue();
+			break;
+		case COLLADAFW::Camera::ASPECTRATIO_AND_Y:
+			y = (float)colladaCamera->getYMag().getValue();
+			camera->xmag = y * (float)colladaCamera->getAspectRatio().getValue();
+			camera->ymag = y;
+			break;
+		};
 		writeCamera = camera;
 	}
 	else if (colladaCamera->getCameraType() == COLLADAFW::Camera::PERSPECTIVE) {
 		GLTF::CameraPerspective* camera = new GLTF::CameraPerspective();
 		float x = (float)(colladaCamera->getXFov().getValue() * (180.0 / 3.14));
-		float y = (float)(colladaCamera->getYFov().getValue() * (180 / 3.14));
+		float y = (float)(colladaCamera->getYFov().getValue() * (180.0 / 3.14));
 		float aspectRatio = (float)colladaCamera->getAspectRatio().getValue();
 		switch (colladaCamera->getDescriptionType()) {
 		case COLLADAFW::Camera::UNDEFINED:
