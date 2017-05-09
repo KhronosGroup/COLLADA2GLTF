@@ -6,6 +6,8 @@
 
 using namespace std::experimental::filesystem;
 
+const double PI = 3.14159;
+
 COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _asset(asset), _options(options), _extrasHandler(extrasHandler) {}
 
 void COLLADA2GLTF::Writer::cancel(const std::string& errorMessage) {
@@ -874,8 +876,8 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 	}
 	else if (colladaCamera->getCameraType() == COLLADAFW::Camera::PERSPECTIVE) {
 		GLTF::CameraPerspective* camera = new GLTF::CameraPerspective();
-		float x = (float)(colladaCamera->getXFov().getValue() * (180.0 / 3.14));
-		float y = (float)(colladaCamera->getYFov().getValue() * (180.0 / 3.14));
+		float x = (float)(colladaCamera->getXFov().getValue() * (PI / 180.0));
+		float y = (float)(colladaCamera->getYFov().getValue() * (PI / 180.0 ));
 		float aspectRatio = (float)colladaCamera->getAspectRatio().getValue();
 		switch (colladaCamera->getDescriptionType()) {
 		case COLLADAFW::Camera::UNDEFINED:
@@ -895,7 +897,7 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 			break;
 		case COLLADAFW::Camera::ASPECTRATIO_AND_Y:
 			camera->yfov = y;
-			camera->aspectRatio = y;
+			camera->aspectRatio = aspectRatio;
 			break;
 		}
 		writeCamera = camera;
@@ -940,7 +942,7 @@ bool COLLADA2GLTF::Writer::writeLight(const COLLADAFW::Light* colladaLight) {
 
 /**
 * Reads and caches the data from a <COLLADAFW::Animation>.
-* 
+*
 * This data is used by <COLLADA2GLTFWriter::writeAnimationList> to write out <GLTF::Animation> objects.
 *
 * @param animation The <COLLADAFW::Animation> to process
@@ -989,9 +991,9 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 
 void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, int index, size_t offset, float time, float* translationOut) {
 	float startTime = 0;
-	float startTranslation = NULL;
+	float startTranslation = 0;
 	float endTime = 0;
-	float endTranslation = NULL;
+	float endTranslation = 0;
 	int inputSize = input.size();
 
 	if (index < 0) {
@@ -1024,9 +1026,9 @@ void interpolateTranslation(float* base, std::vector<float> input, std::vector<f
 * splits out animated targets, so each animation list does target a unique glTF node.
 * However, an animation list may be composed of more than one <COLLADAFW::Animation>. For example,
 * the COLLADA node transformation may be a single translation, however there may
-* by multiple animations, each targeting x, y, or z translation specifically. 
-* These should be flattened out. COLLADA does not enforce that each of these animations 
-* must operate on the same keyframes list. This function will combine the keyframes for the 
+* by multiple animations, each targeting x, y, or z translation specifically.
+* These should be flattened out. COLLADA does not enforce that each of these animations
+* must operate on the same keyframes list. This function will combine the keyframes for the
 * animation list and linearly interpolate any missing values.
 *
 * @param animation The <COLLADAFW::AnimationList> to process
@@ -1329,7 +1331,7 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 		}
 	}
 
-	// Right now most loaders require JOINT and WEIGHT to be `vec4`
+	// JOINTS_0 and WEIGHTS_0 must be `vec4`
 	maxJointsPerVertex = 4;
 
 	GLTF::Accessor::Type type;
@@ -1439,9 +1441,9 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 				}
 			}
 			GLTF::Accessor* weightAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weightArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
-			primitive->attributes["WEIGHT"] = weightAccessor;
+			primitive->attributes["WEIGHTS_0"] = weightAccessor;
 			GLTF::Accessor* jointAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)jointArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
-			primitive->attributes["JOINT"] = jointAccessor;
+			primitive->attributes["JOINTS_0"] = jointAccessor;
 		}
 
 		_skinInstances[skinControllerId] = skin;
