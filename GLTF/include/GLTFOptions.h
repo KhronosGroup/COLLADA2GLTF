@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <experimental/filesystem>
 
 using namespace std::experimental::filesystem;
@@ -13,9 +14,10 @@ namespace GLTF {
 		bool embeddedTextures = true;
 		bool embeddedShaders = true;
 		bool binary = false;
+		bool lockOcclusionMetallicRoughness = false;
 		bool materialsCommon = false;
 		bool glsl = false;
 		bool specularGlossiness = false;
-		path metallicRoughnessTexturePath = "";
+		std::vector<std::string> metallicRoughnessTexturePaths;
 	};
 }

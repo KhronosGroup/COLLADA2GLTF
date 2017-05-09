@@ -16,6 +16,14 @@ endif()
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
 
+# GLTF
+include_directories(GLTF/include)
+add_subdirectory(GLTF)
+
+# Disable for other modules
+set(TEST_ENABLED ${test})
+set(test OFF)
+
 # RapidJSON
 include_directories(GLTF/dependencies/rapidjson/include)
 
@@ -25,10 +33,6 @@ include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/includ
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/GeneratedSaxParser/include)
 add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
-
-# GLTF
-include_directories(GLTF/include)
-add_subdirectory(GLTF)
 
 # COLLADA2GLTF
 include_directories(include)
@@ -41,18 +45,18 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
    target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader stdc++fs)
 endif()
 
-# argparse
-include_directories(dependencies/argparse/argparse/)
-add_subdirectory(dependencies/argparse/modules/argparse)
+# ahoy
+include_directories(dependencies/ahoy/include)
+add_subdirectory(dependencies/ahoy)
 
 add_executable(${PROJECT_NAME}-bin src/main.cpp)
 if(MSVC)
-   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse)
+   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} argparse stdc++fs)
+   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy stdc++fs)
 endif()
 
-if(test)
+if(TEST_ENABLED)
   enable_testing()
 
   # gtest
