@@ -4,9 +4,9 @@
 [submodule "dependencies/rapidjson"]
 	path = GLTF/dependencies/rapidjson
 	url = https://github.com/miloyip/rapidjson
-[submodule "dependencies/googletest"]
+[submodule "GLTF/dependencies/googletest"]
 	path = GLTF/dependencies/googletest
 	url = https://github.com/google/googletest.git
-[submodule "dependencies/argparse/argparse"]
-	path = dependencies/argparse/argparse
-	url = https://github.com/cofyc/argparse.git
+[submodule "dependencies/ahoy"]
+	path = dependencies/ahoy
+	url = https://github.com/lasalvavida/ahoy.git

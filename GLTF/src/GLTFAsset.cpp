@@ -7,6 +7,8 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+std::map<GLTF::Image*, GLTF::Texture*> _pbrTextureCache;
+
 GLTF::Asset::Asset() {
 	metadata = new GLTF::Asset::Metadata();
 	globalSampler = new GLTF::Sampler();
@@ -168,6 +170,9 @@ std::set<GLTF::Texture*> GLTF::Asset::getAllTextures() {
 			}
 			if (materialPBR->metallicRoughness->metallicRoughnessTexture != NULL) {
 				textures.insert(materialPBR->metallicRoughness->metallicRoughnessTexture->texture);
+			}
+			if (materialPBR->emissiveTexture != NULL) {
+				textures.insert(materialPBR->emissiveTexture->texture);
 			}
 			if (materialPBR->normalTexture != NULL) {
 				textures.insert(materialPBR->normalTexture->texture);
@@ -464,7 +469,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->StartArray();
 		for (GLTF::Mesh* mesh : meshes) {
 			for (GLTF::Primitive* primitive : mesh->primitives) {
-				if (primitive->material) {
+				if (primitive->material && primitive->material->id < 0) {
 					GLTF::Material* material = primitive->material;
 					if (!options->materialsCommon) {
 						if (material->type == GLTF::Material::Type::MATERIAL_COMMON) {
@@ -485,24 +490,46 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 								}
 							}
 							else {
-								material = materialCommon->getMaterialPBR(options->specularGlossiness);
-								if (options->metallicRoughnessTexturePath != "") {
+								GLTF::MaterialPBR* materialPbr = materialCommon->getMaterialPBR(options->specularGlossiness);
+								if (options->metallicRoughnessTexturePaths.size() > 0) {
+									std::string metallicRoughnessTexturePath = options->metallicRoughnessTexturePaths[0];
+									if (options->metallicRoughnessTexturePaths.size() > 1) {
+										size_t index = materials.size();
+										if (index < options->metallicRoughnessTexturePaths.size()) {
+											metallicRoughnessTexturePath = options->metallicRoughnessTexturePaths[index];
+										}
+									}
+									if (options->metallicRoughnessTexturePaths.size() == 1) {
+										metallicRoughnessTexturePath = options->metallicRoughnessTexturePaths[0];
+									}
 									GLTF::MaterialPBR::Texture* metallicRoughnessTexture = new GLTF::MaterialPBR::Texture();
-									GLTF::Image* image = GLTF::Image::load(options->metallicRoughnessTexturePath);
-									GLTF::Texture* texture = new GLTF::Texture();
-									texture->sampler = globalSampler;
-									texture->source = image;
+									GLTF::Image* image = GLTF::Image::load(metallicRoughnessTexturePath);
+									std::map<GLTF::Image*, GLTF::Texture*>::iterator textureCacheIt = _pbrTextureCache.find(image);
+									GLTF::Texture* texture;
+									if (textureCacheIt == _pbrTextureCache.end()) {
+										texture = new GLTF::Texture();
+										texture->sampler = globalSampler;
+										texture->source = image;
+										_pbrTextureCache[image] = texture;
+									}
+									else {
+										texture = textureCacheIt->second;
+									}
 									metallicRoughnessTexture->texture = texture;
-									((GLTF::MaterialPBR*)material)->metallicRoughness->metallicRoughnessTexture = metallicRoughnessTexture;
+									materialPbr->metallicRoughness->metallicRoughnessTexture = metallicRoughnessTexture;
+									if (options->lockOcclusionMetallicRoughness && materialPbr->occlusionTexture == NULL) {
+										GLTF::MaterialPBR::Texture* occlusionTexture = new GLTF::MaterialPBR::Texture();
+										occlusionTexture->texture = texture;
+										materialPbr->occlusionTexture = occlusionTexture;
+									}
 								}
+								material = materialPbr;
 							}
 						}
 					}
 					primitive->material = material;
-					if (material->id < 0) {
-						material->id = materials.size();
-						materials.push_back(material);
-					}
+					material->id = materials.size();
+					materials.push_back(material);
 				}
 				if (primitive->indices) {
 					GLTF::Accessor* indices = primitive->indices;
