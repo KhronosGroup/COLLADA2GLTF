@@ -3,8 +3,10 @@
 </p>
 
 # COLLADA2GLTF
-[![Build Status](https://travis-ci.org/KhronosGroup/COLLADA2GLTF.svg?branch=2.0)](https://travis-ci.org/KhronosGroup/COLLADA2GLTF)
-[![Build Status](https://ci.appveyor.com/api/projects/status/3xtpxjohflwd5t1p/branch/2.0)](https://ci.appveyor.com/project/Khronoswebmaster/collada2gltf/history)
+[![Build Status](https://travis-ci.org/KhronosGroup/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/COLLADA2GLTF)
+[![Build Status](https://ci.appveyor.com/api/projects/status/3xtpxjohflwd5t1p/branch/master)](https://ci.appveyor.com/project/Khronoswebmaster/collada2gltf/history)
+
+# COLLADA to glTF converter
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF 2.0](https://github.com/KhronosGroup/glTF).
 
