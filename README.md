@@ -65,4 +65,4 @@ COLLADA2GLTF[.exe] [input] [output] [options]
 | -m, --materialsCommon | false | No | Output materials using the KHR_materials_common extension |
 | --metallicRoughnessTextures | | No | Paths to images to use as the PBR metallicRoughness textures |
 | --specularGlossiness | false | No | output PBR materials with the KHR_materials_pbrSpecularGlossiness extension |
-| --lockOcclusionMetallicRoughness | false | No | Set `occlusionTexture` to use `metallicRoughnessTexture` if no ambient texture is defined |
+| --lockOcclusionMetallicRoughness | false | No | Set `metallicRoughnessTexture` to be the same as the `occlusionTexture` in materials where an ambient texture is defined |
