@@ -491,7 +491,12 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 							}
 							else {
 								GLTF::MaterialPBR* materialPbr = materialCommon->getMaterialPBR(options->specularGlossiness);
-								if (options->metallicRoughnessTexturePaths.size() > 0) {
+								if (options->lockOcclusionMetallicRoughness && materialPbr->occlusionTexture != NULL) {
+									GLTF::MaterialPBR::Texture* metallicRoughnessTexture = new GLTF::MaterialPBR::Texture();
+									metallicRoughnessTexture->texture = materialPbr->occlusionTexture->texture;
+									materialPbr->metallicRoughness->metallicRoughnessTexture = metallicRoughnessTexture;
+								}
+								else if (options->metallicRoughnessTexturePaths.size() > 0) {
 									std::string metallicRoughnessTexturePath = options->metallicRoughnessTexturePaths[0];
 									if (options->metallicRoughnessTexturePaths.size() > 1) {
 										size_t index = materials.size();
@@ -517,11 +522,6 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 									}
 									metallicRoughnessTexture->texture = texture;
 									materialPbr->metallicRoughness->metallicRoughnessTexture = metallicRoughnessTexture;
-									if (options->lockOcclusionMetallicRoughness && materialPbr->occlusionTexture == NULL) {
-										GLTF::MaterialPBR::Texture* occlusionTexture = new GLTF::MaterialPBR::Texture();
-										occlusionTexture->texture = texture;
-										materialPbr->occlusionTexture = occlusionTexture;
-									}
 								}
 								material = materialPbr;
 							}

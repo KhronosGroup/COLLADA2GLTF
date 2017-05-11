@@ -76,7 +76,7 @@ int main(int argc, const char **argv) {
 
 	parser->define("lockOcclusionMetallicRoughness", &options->lockOcclusionMetallicRoughness)
 		->defaults(false)
-		->description("set occlusionTexture to be the metallicRoughnessTexture if no ambient texture is defined");
+		->description("set metallicRoughnessTexture to be the same as the occlusionTexture in materials where an ambient texture is defined");
 
 	if (parser->parse(argc, argv)) {
 		// Resolve and sanitize paths
