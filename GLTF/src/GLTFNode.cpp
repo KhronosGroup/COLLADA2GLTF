@@ -256,10 +256,6 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->EndArray();
 		}
 	}
-	if (jointName != "") {
-		jsonWriter->Key("jointName");
-		jsonWriter->String(jointName.c_str());
-	}
 	if (skin != NULL) {
 		jsonWriter->Key("skin");
 		jsonWriter->Int(skin->id);

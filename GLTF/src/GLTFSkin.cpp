@@ -19,7 +19,7 @@ void GLTF::Skin::writeJSON(void* writer, GLTF::Options* options) {
 	jsonWriter->StartArray();
 	for (GLTF::Node* node : joints) {
 		if (node != NULL) {
-			jsonWriter->String(node->jointName.c_str());
+			jsonWriter->Int(node->id);
 		}
 	}
 	jsonWriter->EndArray();

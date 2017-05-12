@@ -1,6 +1,7 @@
 #include "GLTFAsset.h"
 
 #include <algorithm>
+#include <functional>
 #include <map>
 #include <set>
 
@@ -44,6 +45,35 @@ GLTF::Scene* GLTF::Asset::getDefaultScene() {
 	return scene;
 }
 
+std::set<GLTF::Accessor*> GLTF::Asset::getAllAccessors() {
+	std::set<GLTF::Accessor*> accessors;
+	for (GLTF::Skin* skin : getAllSkins()) {
+		GLTF::Accessor* inverseBindMatrices = skin->inverseBindMatrices;
+		if (inverseBindMatrices != NULL) {
+			accessors.insert(inverseBindMatrices);
+		}
+	}
+
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+		for (const auto attribute : primitive->attributes) {
+			accessors.insert(attribute.second);
+		}
+		GLTF::Accessor* indicesAccessor = primitive->indices;
+		if (indicesAccessor != NULL) {
+			accessors.insert(indicesAccessor);
+		}
+	}
+
+	for (GLTF::Animation* animation : animations) {
+		for (GLTF::Animation::Channel* channel : animation->channels) {
+			GLTF::Animation::Sampler* sampler = channel->sampler;
+			accessors.insert(sampler->input);
+			accessors.insert(sampler->output);
+		}
+	}
+	return accessors;
+}
+
 std::set<GLTF::Node*> GLTF::Asset::getAllNodes() {
 	std::vector<GLTF::Node*> nodeStack;
 	std::set<GLTF::Node*> nodes;
@@ -65,6 +95,9 @@ std::set<GLTF::Node*> GLTF::Asset::getAllNodes() {
 			GLTF::Node* skeleton = skin->skeleton;
 			if (skeleton != NULL) {
 				nodeStack.push_back(skeleton);
+			}
+			for (GLTF::Node* jointNode : skin->joints) {
+				nodeStack.push_back(jointNode);
 			}
 		}
 	}
@@ -232,10 +265,17 @@ void GLTF::Asset::removeUnusedSemantics() {
 	}
 }
 
-
-
 void GLTF::Asset::removeUnusedNodes() {
 	std::vector<GLTF::Node*> nodeStack;
+	std::set<GLTF::Node*> skinNodes;
+	for (GLTF::Skin* skin : getAllSkins()) {
+		if (skin->skeleton != NULL) {
+			skinNodes.insert(skin->skeleton);
+		}
+		for (GLTF::Node* jointNode : skin->joints) {
+			skinNodes.insert(jointNode);
+		}
+	}
 
 	for (GLTF::Node* node : getDefaultScene()->nodes) {
 		nodeStack.push_back(node);
@@ -245,12 +285,14 @@ void GLTF::Asset::removeUnusedNodes() {
 		nodeStack.pop_back();
 		for (size_t i = 0; i < node->children.size(); i++) {
 			GLTF::Node* child = node->children[i];
-			if (child->children.size() == 0 && child->mesh == NULL && child->camera == NULL && child->light == NULL && child->skin == NULL && child->jointName == "") {
-				// this node is extraneous, remove it
-				node->children.erase(node->children.begin() + i);
-				i--;
-				// add the parent back to the node stack for re-evaluation
-				nodeStack.push_back(node);
+			if (child->children.size() == 0 && child->mesh == NULL && child->camera == NULL && child->light == NULL && child->skin == NULL) {
+				if (std::find(skinNodes.begin(), skinNodes.end(), child) == skinNodes.end()) {
+					// this node is extraneous, remove it
+					node->children.erase(node->children.begin() + i);
+					i--;
+					// add the parent back to the node stack for re-evaluation
+					nodeStack.push_back(node);
+				}
 			}
 			else {
 				nodeStack.push_back(child);
@@ -259,7 +301,7 @@ void GLTF::Asset::removeUnusedNodes() {
 	}
 }
 
-GLTF::BufferView* packAccessorsForTarget(std::vector<GLTF::Accessor*> accessors, GLTF::Constants::WebGL target) {
+GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> accessors, GLTF::Constants::WebGL target, size_t byteStride) {
 	std::map<GLTF::Accessor*, size_t> byteOffsets;
 	size_t byteLength = 0;
 	for (GLTF::Accessor* accessor : accessors) {
@@ -289,75 +331,67 @@ GLTF::BufferView* packAccessorsForTarget(std::vector<GLTF::Accessor*> accessors,
 }
 
 GLTF::Buffer* GLTF::Asset::packAccessors() {
-	std::vector<GLTF::Accessor*> attributeAccessors;
-	std::vector<GLTF::Accessor*> indicesAccessors;
-	std::vector<GLTF::Accessor*> otherAccessors;
+	std::map<GLTF::Constants::WebGL, std::map<int, std::vector<GLTF::Accessor*>>> accessorGroups;
+	accessorGroups[GLTF::Constants::WebGL::ARRAY_BUFFER] = std::map<int, std::vector<GLTF::Accessor*>>();
+	accessorGroups[GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER] = std::map<int, std::vector<GLTF::Accessor*>>();
+	accessorGroups[(GLTF::Constants::WebGL)-1] = std::map<int, std::vector<GLTF::Accessor*>>();
 
-	for (GLTF::Skin* skin : getAllSkins()) {
-		GLTF::Accessor* inverseBindMatrices = skin->inverseBindMatrices;
-		if (inverseBindMatrices != NULL) {
-			std::vector<GLTF::Accessor*>::iterator it = std::find(attributeAccessors.begin(), attributeAccessors.end(), inverseBindMatrices);
-			if (it == attributeAccessors.end()) {
-				otherAccessors.push_back(inverseBindMatrices);
-			}
+	size_t byteLength = 0;
+	for (GLTF::Accessor* accessor : getAllAccessors()) {
+		GLTF::Constants::WebGL target = accessor->bufferView->target;
+		auto targetGroup = accessorGroups[target];
+		int byteStride = accessor->getByteStride();
+		auto findByteStrideGroup = targetGroup.find(byteStride);
+		std::vector<GLTF::Accessor*> byteStrideGroup;
+		if (findByteStrideGroup == targetGroup.end()) {
+			byteStrideGroup = std::vector<GLTF::Accessor*>();
 		}
+		else {
+			byteStrideGroup = findByteStrideGroup->second;
+		}
+		byteStrideGroup.push_back(accessor);
+		targetGroup[byteStride] = byteStrideGroup;
+		accessorGroups[target] = targetGroup;
+		byteLength += accessor->bufferView->byteLength;
 	}
 
-	for (GLTF::Primitive* primitive : getAllPrimitives()) {
-		for (const auto attribute : primitive->attributes) {
-			GLTF::Accessor* attributeAccessor = attribute.second;
-			std::vector<GLTF::Accessor*>::iterator it = std::find(attributeAccessors.begin(), attributeAccessors.end(), attributeAccessor);
-			if (it == attributeAccessors.end()) {
-				attributeAccessors.push_back(attributeAccessor);
+	std::vector<int> byteStrides;
+	std::map<int, std::vector<GLTF::BufferView*>> bufferViews;
+	for (auto targetGroup : accessorGroups) {
+		for (auto byteStrideGroup : targetGroup.second) {
+			GLTF::Constants::WebGL target = targetGroup.first;
+			int byteStride = byteStrideGroup.first;
+			GLTF::BufferView* bufferView = packAccessorsForTargetByteStride(byteStrideGroup.second, target, byteStride);
+			if (target == GLTF::Constants::WebGL::ARRAY_BUFFER) {
+				bufferView->byteStride = byteStride;
 			}
-		}
-		GLTF::Accessor* indicesAccessor = primitive->indices;
-		if (indicesAccessor != NULL) {
-			std::vector<GLTF::Accessor*>::iterator it = std::find(indicesAccessors.begin(), indicesAccessors.end(), indicesAccessor);
-			if (it == indicesAccessors.end()) {
-				indicesAccessors.push_back(indicesAccessor);
+			auto findBufferViews = bufferViews.find(byteStride);
+			std::vector<GLTF::BufferView*> bufferViewGroup;
+			if (findBufferViews == bufferViews.end()) {
+				byteStrides.push_back(byteStride);
+				bufferViewGroup = std::vector<GLTF::BufferView*>();
 			}
-		}
-	}
-
-	for (GLTF::Animation* animation : animations) {
-		for (GLTF::Animation::Channel* channel : animation->channels) {
-			GLTF::Animation::Sampler* sampler = channel->sampler;
-			GLTF::Accessor* input = sampler->input;
-			std::vector<GLTF::Accessor*>::iterator it = std::find(otherAccessors.begin(), otherAccessors.end(), input);
-			if (it == otherAccessors.end()) {
-				otherAccessors.push_back(input);
+			else {
+				bufferViewGroup = findBufferViews->second;
 			}
-			GLTF::Accessor* output = sampler->output;
-			it = std::find(otherAccessors.begin(), otherAccessors.end(), output);
-			if (it == otherAccessors.end()) {
-				otherAccessors.push_back(output);
-			}
+			bufferViewGroup.push_back(bufferView);
+			bufferViews[byteStride] = bufferViewGroup;
 		}
 	}
+	std::sort(byteStrides.begin(), byteStrides.end(), std::greater<int>());
 
-	GLTF::BufferView* attributeBufferView = packAccessorsForTarget(attributeAccessors, GLTF::Constants::WebGL::ARRAY_BUFFER);
-	GLTF::BufferView* indicesBufferView = packAccessorsForTarget(indicesAccessors, GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
-	GLTF::BufferView* animationBufferView = packAccessorsForTarget(otherAccessors, (GLTF::Constants::WebGL) - 1);
-
-	size_t byteLength = attributeBufferView->byteLength + indicesBufferView->byteLength;
-	int padding = byteLength % 4;
-	if (padding != 0) {
-		padding = 4 - padding;
-	}
-	byteLength += padding + animationBufferView->byteLength;
-
+	// Pack these into a buffer sorted from largest byteStride to smallest
 	unsigned char* bufferData = new unsigned char[byteLength];
-	std::memcpy(bufferData, attributeBufferView->buffer->data, attributeBufferView->byteLength);
-	std::memcpy(bufferData + attributeBufferView->byteLength, indicesBufferView->buffer->data, indicesBufferView->byteLength);
-	std::memcpy(bufferData + attributeBufferView->byteLength + indicesBufferView->byteLength + padding, animationBufferView->buffer->data, animationBufferView->byteLength);
-	
 	GLTF::Buffer* buffer = new GLTF::Buffer(bufferData, byteLength);
-	attributeBufferView->buffer = buffer;
-	indicesBufferView->buffer = buffer;
-	indicesBufferView->byteOffset = attributeBufferView->byteLength;
-	animationBufferView->buffer = buffer;
-	animationBufferView->byteOffset = attributeBufferView->byteLength + indicesBufferView->byteLength + padding;
+	size_t byteOffset = 0;
+	for (int byteStride : byteStrides) {
+		for (GLTF::BufferView* bufferView : bufferViews[byteStride]) {
+			std::memcpy(bufferData + byteOffset, bufferView->buffer->data, bufferView->byteLength);
+			bufferView->byteOffset = byteOffset;
+			bufferView->buffer = buffer;
+			byteOffset += bufferView->byteLength;
+		}
+	}
 
 	return buffer;
 }

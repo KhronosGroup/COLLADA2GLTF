@@ -30,6 +30,7 @@ namespace GLTF {
 
 		Asset();
 		GLTF::Scene* getDefaultScene();
+		std::set<GLTF::Accessor*> getAllAccessors();
 		std::set<GLTF::Node*> getAllNodes();
 		std::set<GLTF::Mesh*> getAllMeshes();
 		std::set<GLTF::Primitive*> getAllPrimitives();

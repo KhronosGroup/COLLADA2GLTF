@@ -220,7 +220,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					skin->joints.push_back(NULL);
 				}
 				skin->joints[i] = node;
-				node->jointName = id;
 				break;
 			}
 		}
