@@ -9,6 +9,7 @@ namespace GLTF {
 	public:
 		GLTF::Buffer* buffer = NULL;
 		int byteOffset = 0;
+		int byteStride = 0;
 		int byteLength = 0;
 		GLTF::Constants::WebGL target = (GLTF::Constants::WebGL)-1;
 

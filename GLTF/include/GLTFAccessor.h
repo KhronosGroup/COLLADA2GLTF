@@ -22,7 +22,6 @@ namespace GLTF {
 
 		GLTF::BufferView* bufferView = NULL;
 		int byteOffset = 0;
-		int byteStride = 0;
 		GLTF::Constants::WebGL componentType;
 		int count = 0;
 		double* max = NULL;
@@ -48,7 +47,6 @@ namespace GLTF {
 		Accessor(GLTF::Accessor::Type type,
 			GLTF::Constants::WebGL componentType,
 			int byteOffset,
-			int byteStride,
 			int count,
 			GLTF::BufferView* bufferView
 		);

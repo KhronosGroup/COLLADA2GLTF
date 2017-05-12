@@ -10,11 +10,10 @@ namespace GLTF {
 
 	class Skin : public GLTF::Object {
 	public:
-		float* bindShapeMatrix = NULL;
 		Accessor* inverseBindMatrices = NULL;
+		Node* skeleton = NULL;
 		std::vector<Node*> joints;
 
-		Skin();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

@@ -10,7 +10,7 @@
 
 GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	GLTF::Constants::WebGL componentType
-) : type(type), componentType(componentType), byteOffset(0), byteStride(0) {}
+) : type(type), componentType(componentType), byteOffset(0) {}
 
 GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	GLTF::Constants::WebGL componentType,
@@ -55,12 +55,10 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	GLTF::Constants::WebGL componentType,
 	int byteOffset,
-	int byteStride,
 	int count,
 	GLTF::BufferView* bufferView
 ) : Accessor(type, componentType) {
 	this->byteOffset = byteOffset;
-	this->byteStride = byteStride;
 	this->count = count;
 	this->bufferView = bufferView;
 }
@@ -93,10 +91,10 @@ bool GLTF::Accessor::computeMinMax() {
 }
 
 int GLTF::Accessor::getByteStride() {
-	if (this->byteStride == 0) {
+	if (this->bufferView == NULL || this->bufferView->byteStride == 0) {
 		return this->getNumberOfComponents() * this->getComponentByteLength();
 	}
-	return this->byteStride;
+	return this->bufferView->byteStride;
 }
 
 bool GLTF::Accessor::getComponentAtIndex(int index, double* component) {
@@ -254,8 +252,6 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 	}
 	jsonWriter->Key("byteOffset");
 	jsonWriter->Int(this->byteOffset);
-	jsonWriter->Key("byteStride");
-	jsonWriter->Int(this->byteStride);
 	jsonWriter->Key("componentType");
 	jsonWriter->Int((int)this->componentType);
 	jsonWriter->Key("count");
@@ -264,7 +260,12 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->Key("max");
 		jsonWriter->StartArray();
 		for (int i = 0; i < this->getNumberOfComponents(); i++) {
-			jsonWriter->Double(this->max[i]);
+			if (componentType == GLTF::Constants::WebGL::FLOAT) {
+				jsonWriter->Double(this->max[i]);
+			}
+			else {
+				jsonWriter->Int(this->max[i]);
+			}
 		}
 		jsonWriter->EndArray();
 	}
@@ -272,7 +273,12 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->Key("min");
 		jsonWriter->StartArray();
 		for (int i = 0; i < this->getNumberOfComponents(); i++) {
-			jsonWriter->Double(this->min[i]);
+			if (componentType == GLTF::Constants::WebGL::FLOAT) {
+				jsonWriter->Double(this->min[i]);
+			}
+			else {
+				jsonWriter->Int(this->min[i]);
+			}
 		}
 		jsonWriter->EndArray();
 	}

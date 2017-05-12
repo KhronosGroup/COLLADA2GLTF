@@ -29,6 +29,10 @@ void GLTF::BufferView::writeJSON(void* writer, GLTF::Options* options) {
 	jsonWriter->Int(this->byteOffset);
 	jsonWriter->Key("byteLength");
 	jsonWriter->Int(this->byteLength);
+	if (byteStride != 0) {
+		jsonWriter->Key("byteStride");
+		jsonWriter->Int(this->byteStride);
+	}
 	if ((int)target > 0) {
 		jsonWriter->Key("target");
 		jsonWriter->Int((int)this->target);

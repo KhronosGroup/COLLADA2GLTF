@@ -266,14 +266,8 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				std::string skeletonId = skeletonURI.getFragment();
 				std::map<std::string, GLTF::Node*>::iterator iter = _nodes.find(skeletonId);
 				if (iter != _nodes.end()) {
-					if (skeletonNode == NULL) {
-						skeletonNode = node;
-					}
-					else {
-						skeletonNode = new GLTF::Node();
-						node->children.push_back(skeletonNode);
-					}
-					skeletonNode->skeleton = iter->second;
+					skin->skeleton = iter->second;
+					break;
 				}
 			}
 		}
@@ -1309,12 +1303,18 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 	// Write inverseBindMatrices and bindShapeMatrix
 	const COLLADAFW::Matrix4Array& matrixArray = skinControllerData->getInverseBindMatrices();
 	size_t matrixArrayCount = matrixArray.getCount();
-	float* inverseBindMatrices = new float[matrixArrayCount * 16];
+	GLTF::Node::TransformMatrix* bindShapeMatrix = new GLTF::Node::TransformMatrix();
+	packColladaMatrix(skinControllerData->getBindShapeMatrix(), bindShapeMatrix);
+	GLTF::Node::TransformMatrix* inverseBindMatrix = new GLTF::Node::TransformMatrix();
+	float* inverseBindMatrices = new float[16 * matrixArrayCount];
 	for (size_t i = 0; i < matrixArrayCount; i++) {
-		packColladaMatrix(matrixArray[i], inverseBindMatrices, i * 16);
+		packColladaMatrix(matrixArray[i], inverseBindMatrix);
+		inverseBindMatrix->premultiply(bindShapeMatrix);
+		for (size_t j = 0; j < 16; j++) {
+			inverseBindMatrices[i * 16 + j] = inverseBindMatrix->matrix[j];
+		}
 	}
 	skin->inverseBindMatrices = new GLTF::Accessor(GLTF::Accessor::Type::MAT4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)inverseBindMatrices, matrixArrayCount, (GLTF::Constants::WebGL)-1);
-	packColladaMatrix(skinControllerData->getBindShapeMatrix(), skin->bindShapeMatrix, 0);
 
 	// Cache joint and weight data
 	// COLLADA can have different numbers of joints for a single vertex

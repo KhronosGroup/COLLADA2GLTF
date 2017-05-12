@@ -171,7 +171,6 @@ int main(int argc, const char **argv) {
 			}
 			buffer->data = bufferData;
 			buffer->byteLength += imageBufferLength;
-			asset->extensions.insert("KHR_binary_glTF");
 		}
 
 		rapidjson::StringBuffer s;
@@ -248,7 +247,7 @@ int main(int argc, const char **argv) {
 				if (padding != 0) {
 					padding = 4 - padding;
 				}
-				writeHeader[1] = 20 + jsonString.length() + padding + buffer->byteLength; // length
+				writeHeader[1] = 20 + jsonString.length() + padding + 8 + buffer->byteLength; // length
 				fwrite(writeHeader, sizeof(uint32_t), 2, file);
 				writeHeader[0] = jsonString.length() + padding; // chunkLength
 				writeHeader[1] = 0x4E4F534A; // chunkType JSON
