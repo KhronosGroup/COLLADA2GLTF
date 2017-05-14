@@ -30,7 +30,7 @@ namespace GLTF {
 
   class CameraPerspective : public GLTF::Camera {
   public:
-	  float aspectRatio;
+	  float aspectRatio = 0;
 	  float yfov;
 
 	  CameraPerspective() {

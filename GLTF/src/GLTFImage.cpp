@@ -111,11 +111,6 @@ void GLTF::Image::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->Int(bufferView->id);
 			jsonWriter->Key("mimeType");
 			jsonWriter->String(mimeType.c_str());
-			std::pair<int, int> dimensions = getDimensions();
-			jsonWriter->Key("width");
-			jsonWriter->Int(dimensions.first);
-			jsonWriter->Key("height");
-			jsonWriter->Int(dimensions.second);
 		}
 	}
 	else {

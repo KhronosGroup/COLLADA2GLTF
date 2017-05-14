@@ -47,6 +47,9 @@ namespace GLTF {
 			float scale[3];
 
 			TransformTRS();
+			bool isIdentityTranslation();
+			bool isIdentityRotation();
+			bool isIdentityScale();
 			TransformMatrix* getTransformMatrix();
 		};
 

@@ -319,7 +319,7 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 		size_t byteOffset = byteOffsets[accessor];
 		GLTF::Accessor* packedAccessor = new GLTF::Accessor(accessor->type, accessor->componentType, byteOffset, accessor->count, bufferView);
 		int numberOfComponents = accessor->getNumberOfComponents();
-		double* component = new double[numberOfComponents];
+		float* component = new float[numberOfComponents];
 		for (int i = 0; i < accessor->count; i++) {
 			accessor->getComponentAtIndex(i, component);
 			packedAccessor->writeComponentAtIndex(i, component);

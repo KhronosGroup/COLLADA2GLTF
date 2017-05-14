@@ -24,8 +24,8 @@ namespace GLTF {
 		int byteOffset = 0;
 		GLTF::Constants::WebGL componentType;
 		int count = 0;
-		double* max = NULL;
-		double* min = NULL;
+		float* max = NULL;
+		float* min = NULL;
 		Type type = Type::UNKNOWN;
 
 		Accessor(GLTF::Accessor::Type type, GLTF::Constants::WebGL componentType);
@@ -56,8 +56,8 @@ namespace GLTF {
 
 		bool computeMinMax();
 		int getByteStride();
-		bool getComponentAtIndex(int index, double* component);
-		bool writeComponentAtIndex(int index, double* component);
+		bool getComponentAtIndex(int index, float *component);
+		bool writeComponentAtIndex(int index, float* component);
 		int getComponentByteLength();
 		int getNumberOfComponents();
 		bool equals(GLTF::Accessor* accessor);

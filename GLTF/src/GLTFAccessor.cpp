@@ -68,12 +68,12 @@ bool GLTF::Accessor::computeMinMax() {
 	int count = this->count;
 	if (count > 0) {
 		if (max == NULL) {
-			max = new double[numberOfComponents];
+			max = new float[numberOfComponents];
 		}
 		if (min == NULL) {
-			min = new double[numberOfComponents];
+			min = new float[numberOfComponents];
 		}
-		double* component = new double[numberOfComponents];
+		float* component = new float[numberOfComponents];
 		this->getComponentAtIndex(0, component);
 		for (int i = 0; i < numberOfComponents; i++) {
 			min[i] = component[i];
@@ -97,7 +97,7 @@ int GLTF::Accessor::getByteStride() {
 	return this->bufferView->byteStride;
 }
 
-bool GLTF::Accessor::getComponentAtIndex(int index, double* component) {
+bool GLTF::Accessor::getComponentAtIndex(int index, float* component) {
 	int byteOffset = this->byteOffset + this->bufferView->byteOffset;
 	int numberOfComponents = this->getNumberOfComponents();
 	byteOffset += this->getByteStride() * index;
@@ -106,22 +106,22 @@ bool GLTF::Accessor::getComponentAtIndex(int index, double* component) {
 	for (int i = 0; i < numberOfComponents; i++) {
 		switch (this->componentType) {
 		case GLTF::Constants::WebGL::BYTE:
-			component[i] = (double)((char*)buf)[i];
+			component[i] = (float)((char*)buf)[i];
 			break;
 		case GLTF::Constants::WebGL::UNSIGNED_BYTE:
-			component[i] = (double)buf[i];
+			component[i] = (float)buf[i];
 			break;
 		case GLTF::Constants::WebGL::SHORT:
-			component[i] = (double)((short*)buf)[i];
+			component[i] = (float)((short*)buf)[i];
 			break;
 		case GLTF::Constants::WebGL::UNSIGNED_SHORT:
-			component[i] = (double)((unsigned short*)buf)[i];
+			component[i] = (float)((unsigned short*)buf)[i];
 			break;
 		case GLTF::Constants::WebGL::FLOAT:
-			component[i] = (double)((float*)buf)[i];
+			component[i] = ((float*)buf)[i];
 			break;
 		case GLTF::Constants::WebGL::UNSIGNED_INT:
-			component[i] = (double)((unsigned int*)buf)[i];
+			component[i] = (float)((unsigned int*)buf)[i];
 			break;
 		default:
 			return false;
@@ -130,7 +130,7 @@ bool GLTF::Accessor::getComponentAtIndex(int index, double* component) {
 	return true;
 }
 
-bool GLTF::Accessor::writeComponentAtIndex(int index, double* component) {
+bool GLTF::Accessor::writeComponentAtIndex(int index, float* component) {
 	int byteOffset = this->byteOffset + this->bufferView->byteOffset;
 	int numberOfComponents = this->getNumberOfComponents();
 	byteOffset += this->getByteStride() * index;
@@ -230,8 +230,8 @@ bool GLTF::Accessor::equals(GLTF::Accessor* accessor) {
 		return false;
 	}
 	int numberOfComponents = getNumberOfComponents();
-	double* componentOne = new double[numberOfComponents];
-	double* componentTwo = new double[numberOfComponents];
+	float* componentOne = new float[numberOfComponents];
+	float* componentTwo = new float[numberOfComponents];
 	for (int i = 0; i < count; i++) {
 		this->getComponentAtIndex(i, componentOne);
 		accessor->getComponentAtIndex(i, componentTwo);
@@ -264,7 +264,7 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 				jsonWriter->Double(this->max[i]);
 			}
 			else {
-				jsonWriter->Int(this->max[i]);
+				jsonWriter->Int((int)this->max[i]);
 			}
 		}
 		jsonWriter->EndArray();
@@ -277,7 +277,7 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 				jsonWriter->Double(this->min[i]);
 			}
 			else {
-				jsonWriter->Int(this->min[i]);
+				jsonWriter->Int((int)this->min[i]);
 			}
 		}
 		jsonWriter->EndArray();
