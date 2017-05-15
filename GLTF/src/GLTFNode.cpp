@@ -280,7 +280,7 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 					jsonWriter->Double(transformTRS->scale[i]);
 				}
 				jsonWriter->EndArray();
-			}
+			} 
 		}
 	}
 	if (skin != NULL) {
