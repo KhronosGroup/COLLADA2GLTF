@@ -37,8 +37,8 @@ endif()
 # Lets libxml2 work in a shared library
 add_definitions(-DLIBXML_STATIC_FOR_DLL)
 
-IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") 
- ADD_DEFINITIONS(-fPIC) 
+IF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+ ADD_DEFINITIONS(-fPIC)
 ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
 
 include_directories(${COLLADA2GLTF_SOURCE_DIR})
@@ -49,10 +49,10 @@ include_directories(${COLLADA2GLTF_SOURCE_DIR}/helpers)
 include_directories(${COLLADA2GLTF_SOURCE_DIR}/convert)
 include_directories(${COLLADA2GLTF_SOURCE_DIR}/assetModifiers)
 include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/json/include/rapidjson)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/COLLADAFramework/include)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/COLLADABaseUtils/include)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/COLLADASaxFrameworkLoader/include)
-include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/GeneratedSaxParser/include)
+include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
+include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
+include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/OpenCOLLADA/COLLADASaxFrameworkLoader/include)
+include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/OpenCOLLADA/OpenCOLLADA/GeneratedSaxParser/include)
 if (WIN32)
     include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/misc)
 endif()
@@ -85,7 +85,7 @@ if (WIN32)
     add_definitions(-EHsc)
 endif()
 
-add_subdirectory(dependencies/OpenCOLLADA)
+add_subdirectory(dependencies/OpenCOLLADA/OpenCOLLADA/)
 
 if (USE_OPEN3DGC)
     add_subdirectory(dependencies/o3dgc/src)
@@ -166,7 +166,7 @@ set(GLTF_SOURCES
     JSON/JSONObject.h
     JSON/JSONString.h
     JSON/JSONValue.h
-    
+
     assetModifiers/GLTFAssetModifier.h
     assetModifiers/GLTFFlipUVModifier.h
     assetModifiers/GLTFFlipUVModifier.cpp
