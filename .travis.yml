@@ -22,20 +22,11 @@ addons:
     - cmake-data
 script: mkdir build && cd build && cmake .. && make
 after_success:
-- if [ "$TRAVIS_BRANCH" == "master" ]; then
-    git config --global user.email "builds@travis-ci.com";
-    git config --global user.name "Travis CI";
-    git tag -f -a latest -m "Live build of latest master from CI";
-    git push --quiet https://${GH_TOKEN}@github.com/KhronosGroup/COLLADA2GLTF -f --tags > /dev/null 2>&1;
-  fi;
 - if [ ! -z "$TRAVIS_TAG" ]; then
     export RELEASE=`echo "$TRAVIS_TAG"| awk -F"-" '{print $1}'`;
     export RELEASE_FILE=COLLADA2GLTF-$RELEASE-linux.zip;
     find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm /u+x | zip -@ -j $RELEASE_FILE;
   fi;
-env:
-  global:
-  - secure: Ijvu7cYWehWEiNRJOrvsPUm21d+Hxk5G2pXiXPplBrpULgQIDKmaTlyfo/MkAAuL4yCXfbxVc4/u5LrnNrijWESpFMjTWD19WJRBwhkSpeYFujvKgCNBPi/DFzh7tN4fEjm+xwbTN4QXXBwHu/mr/zsTw3vjwVVhp7dHHSpRfi5WrmTNQM1kwduXfcrReV8t29W0uqJ2f2IVybrcUXyyxhevOiAZtJKNjBFudyMP62EGWygmSAiA7NU2j7TSMnOjwUANa84FnWmVSL8XVcDuilWNX2NgmQwnlP0xMhUp1V8gH1KyPZ0zOiwvs/shKqZn1h8CWkDZdbXOqmmRNmNYyv4ylO+bVU72DFKBXlpWZ/sFnhKvMXhV8aSXnUvgK7Lg7BUW9gWAEDvqD4wI8l3ilz8vl2lSbRiB1BcTvuoenIwu8Pw1cIC03FfJO/kG3xuEPgwmPTDwKd90Lp62IK8/qz5E3yoVXW/kanNkrRFXt8uHx/nCW4rIP2AYeJxLS7bk1th+GPyJB2BO5DYHGrU+yPKs+MCb7IdWeA3RcKirW2xpELpQc80nojOHTvB0jxsWGVUHthFk2K9imrjouoDW5aTuO1KqNiUGAQLe9UucXh/1ABYk4rXUWBTCDelSHvUlSMW9Fsk6S6aULU+75zmSJpj8FNjXYom/eKfj0cITq3M=
 deploy:
   provider: releases
   api-key:
