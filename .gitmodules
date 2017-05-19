@@ -1,0 +1,3 @@
+[submodule "dependencies/OpenCOLLADA/OpenCOLLADA"]
+	path = dependencies/OpenCOLLADA/OpenCOLLADA
+	url = https://github.com/KhronosGroup/OpenCOLLADA.git
