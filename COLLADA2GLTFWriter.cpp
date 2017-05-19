@@ -500,12 +500,12 @@ namespace GLTF
 
         // save mesh
         const InstanceGeometryPointerArray& instanceGeometries = node->getInstanceGeometries();
-
         count = (unsigned int)instanceGeometries.getCount();
         if (count > 0) {
             for (unsigned int i = 0; i < count; i++) {
                 InstanceGeometry* instanceGeometry = instanceGeometries[i];
                 COLLADAFW::UniqueId uniqueId = instanceGeometry->getInstanciatedObjectId();
+                std::string meshUID = uniqueId.toAscii();
                 MaterialBindingArray& materialBindings = instanceGeometry->getMaterialBindings();
                 if (materialBindings.getCount() > 0) {
                     MaterialBinding materialBinding = materialBindings[0];
@@ -516,7 +516,7 @@ namespace GLTF
                     for (auto nodeBinding : nodeBindings) {
                         shared_ptr<MaterialBindingsForMeshUID> meshBindings = nodeBinding.second;
                         for (auto meshBinding : *(meshBindings.get())) {
-                            string meshId = meshBinding.first;
+                            std::string meshId = meshBinding.first;
                             if ("meshes-" + uniqueId.toAscii() == meshId) {
                                 shared_ptr<MaterialBindingsPrimitiveMap> materialBindings = meshBinding.second;
                                 bool materialUsed = false;
@@ -541,26 +541,26 @@ namespace GLTF
                         // This is an instance of a material
                         shared_ptr<GLTFMesh> mesh = static_pointer_cast<GLTFMesh>(this->_asset->getValueForUniqueId(uniqueId.toAscii()));
 
-                        COLLADAFW::UniqueId meshUID = COLLADAFW::UniqueId(uniqueId.toAscii());
                         // Create a unique instance of the mesh so that it can bind to different materials
-                        while (asset->containsValueForUniqueId(meshUID.toAscii())) {
-                            meshUID = COLLADAFW::UniqueId(meshUID.getClassId(), meshUID.getObjectId() + 1, meshUID.getFileId());
+                        while (asset->containsValueForUniqueId(meshUID)) {
+                            uniqueId = COLLADAFW::UniqueId(uniqueId.getClassId(), uniqueId.getObjectId() + 1, uniqueId.getFileId());
+							meshUID = mesh->getID() + "-" + std::to_string(uniqueId.getObjectId() + 1);
                         }
 
-                        std::string meshID = mesh->getID() + "-" + std::to_string(meshUID.getObjectId() + 1);
-
                         shared_ptr<GLTFMesh> meshInstance = mesh->clone();
-                        meshInstance->setID(meshID);
-                        meshInstance->setName(meshID);
+                        meshInstance->setID(meshUID);
+                        meshInstance->setName(meshUID);
 
-                        asset->root()->createObjectIfNeeded(kMeshes)->setValue(meshID, meshInstance);
-                        asset->setValueForUniqueId(meshUID.toAscii(), meshInstance);
+                        asset->root()->createObjectIfNeeded(kMeshes)->setValue(meshUID, meshInstance);
+                        asset->setValueForUniqueId(meshUID, meshInstance);
                     }
                 }
-                _storeMaterialBindingArray("meshes-",
-                    node->getUniqueId().toAscii(),
-                    instanceGeometry->getInstanciatedObjectId().toAscii(),
-                    materialBindings);
+				if (meshUID != "") {
+					_storeMaterialBindingArray("meshes-",
+						node->getUniqueId().toAscii(),
+						meshUID,
+						materialBindings);
+				}
             }
         }
 

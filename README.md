@@ -2,6 +2,9 @@
 <img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png">
 </p>
 
+[![Build Status](https://travis-ci.org/KhronosGroup/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/COLLADA2GLTF)
+[![Build Status](https://ci.appveyor.com/api/projects/status/3xtpxjohflwd5t1p/branch/master)](https://ci.appveyor.com/project/Khronoswebmaster/collada2gltf/history)
+
 # COLLADA to glTF converter
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
@@ -42,42 +45,38 @@ sudo make install
 ```
 
 ###3. Compile
-####(Linux)
  ```
 cd COLLADA2GLTF
-mkdir linux_build ; cd linux_build 
-cmake .. ; make
+mkdir build
+cd build
+cmake ..
 ```
-####(Windows)
+#### Linux
 ```
-cd COLLADA2GLTF
-mkdir win_build && cd win_build
-cmake .. 
+make
 ```
-then open COLLADA2GLTF.sln with visual studio 2015, select Release or Debug, and build
 
-####(OSX)
-```
-cd COLLADA2GLTF
-mkdir osx_build; cd osx_build
-cmake -G Xcode ..
-```
-then open COLLADA2GLTF.xcodeproj and build
+#### Windows
+Open COLLADA2GLTF.sln with Visual Studio and build
+
+#### OSX
+Open COLLADA2GLTF.xcodeproj and build
 or if you installed xcode command line tools you can also build in the terminal: xcodebuild -target collada2gltf -configuration Release (or Debug)
 
 ###4. Run
-####(Linux)
+#### Linux
 ```
 ./bin/collada2gltf
 ```
-####(Windows)
+#### Windows
 ```
-.\bin\Release\collada2gltf.exe
+./bin/Release/collada2gltf.exe
 ```
-####(OSX)
+#### OSX
 ```
 ./bin/Release/collada2gltf
 ```
+
 ## Usage
 
 ```
