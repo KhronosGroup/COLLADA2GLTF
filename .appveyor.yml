@@ -60,7 +60,7 @@ deploy:
   description: Live build of latest master from CI
   provider: GitHub
   auth_token:
-    secure: Nh+ZPhrI2P9EmI/+YlHiY7Roj/4dYHM0XMXr8rFX6O8q9mujEMbBNdbLw0QZ5Nq7
+    secure: dNmT53aWZs5g0xiT713qZYpumGQTi7qzXPXKWO9Ub/X1IQfeb/uo81Zk+4kFf8U4
   on:
     appveyor_repo_tag: true
   force_update: true
