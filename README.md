@@ -11,24 +11,24 @@ A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.c
 
 ## Compile from source 
 
-###1. Clone repository
+### 1. Clone repository
  
  ```
 git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
 ```
 
-###2. Install dependencies 
+### 2. Install dependencies 
 
-####(Debian)
+#### Debian
  ```
 apt-get install cmake libxml2-dev libpcre3-dev libpng-dev zlib1g-dev
 ```
-####(Windows)
+#### Windows
 Install [Visual Studio](http://code.visualstudio.com)
 
 Install [CMake](http://cmake.org/cmake/resources/software.html)
 
-####(OSX)
+#### OSX
 Install Xcode
 
 Install dependencies with [brew](http://mxcl.github.com/homebrew/)
@@ -44,7 +44,7 @@ make check
 sudo make install
 ```
 
-###3. Compile
+### 3. Compile
  ```
 cd COLLADA2GLTF
 mkdir build
@@ -63,7 +63,7 @@ Open COLLADA2GLTF.sln with Visual Studio and build
 Open COLLADA2GLTF.xcodeproj and build
 or if you installed xcode command line tools you can also build in the terminal: xcodebuild -target collada2gltf -configuration Release (or Debug)
 
-###4. Run
+### 4. Run
 #### Linux
 ```
 ./bin/collada2gltf
