@@ -237,6 +237,7 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->EndObject();
 		}
 	}
+	GLTF::Object::writeJSON(writer, options);
 }
 
 void GLTF::MaterialCommon::Light::writeJSON(void* writer, GLTF::Options* options) {
