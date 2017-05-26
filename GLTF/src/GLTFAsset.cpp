@@ -352,9 +352,11 @@ void GLTF::Asset::removeUnusedSemantics() {
 }
 
 bool isUnusedNode(GLTF::Node* node, std::set<GLTF::Node*> skinNodes, bool isPbr) {
-	if (node->children.size() == 0 && node->mesh == NULL && node->camera == NULL && node->skin == NULL && (node->light == NULL || isPbr)) {
-		if (std::find(skinNodes.begin(), skinNodes.end(), node) == skinNodes.end()) {
-			return true;
+	if (node->children.size() == 0 && node->mesh == NULL && node->camera == NULL && node->skin == NULL) {
+		if (isPbr || node->light == NULL || node->light->type == GLTF::MaterialCommon::Light::AMBIENT) {
+			if (std::find(skinNodes.begin(), skinNodes.end(), node) == skinNodes.end()) {
+				return true;
+			}
 		}
 	}
 	return false;
@@ -374,30 +376,36 @@ void GLTF::Asset::removeUnusedNodes(GLTF::Options* options) {
 	}
 
 	GLTF::Scene* defaultScene = getDefaultScene();
-	for (size_t i = 0; i < defaultScene->nodes.size(); i++) {
-		GLTF::Node* node = defaultScene->nodes[i];
-		if (isUnusedNode(node, skinNodes, isPbr)) {
-			defaultScene->nodes.erase(defaultScene->nodes.begin() + i);
-			i--;
-		}
-		else {
-			nodeStack.push_back(node);
-		}
-	}
-	while (nodeStack.size() > 0) {
-		GLTF::Node* node = nodeStack.back();
-		nodeStack.pop_back();
-		for (size_t i = 0; i < node->children.size(); i++) {
-			GLTF::Node* child = node->children[i];
-			if (isUnusedNode(child, skinNodes, isPbr)) {
-				// this node is extraneous, remove it
-				node->children.erase(node->children.begin() + i);
+	bool needsPass = true;
+	while (needsPass) {
+		needsPass = false;
+		for (size_t i = 0; i < defaultScene->nodes.size(); i++) {
+			GLTF::Node* node = defaultScene->nodes[i];
+			if (isUnusedNode(node, skinNodes, isPbr)) {
+				defaultScene->nodes.erase(defaultScene->nodes.begin() + i);
 				i--;
-				// add the parent back to the node stack for re-evaluation
-				nodeStack.push_back(node);
 			}
 			else {
-				nodeStack.push_back(child);
+				nodeStack.push_back(node);
+			}
+		}
+		while (nodeStack.size() > 0) {
+			GLTF::Node* node = nodeStack.back();
+			nodeStack.pop_back();
+			for (size_t i = 0; i < node->children.size(); i++) {
+				GLTF::Node* child = node->children[i];
+				if (isUnusedNode(child, skinNodes, isPbr)) {
+					// this node is extraneous, remove it
+					node->children.erase(node->children.begin() + i);
+					i--;
+					if (node->children.size() == 0) {
+						// another pass may be required to clean up the parent
+						needsPass = true;
+					}
+				}
+				else {
+					nodeStack.push_back(child);
+				}
 			}
 		}
 	}
@@ -496,6 +504,15 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 	}
 
 	return buffer;
+}
+
+void GLTF::Asset::requireExtension(std::string extension) {
+	useExtension(extension);
+	extensionsRequired.insert(extension);
+}
+
+void GLTF::Asset::useExtension(std::string extension) {
+	extensionsUsed.insert(extension);
 }
 
 void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
@@ -783,12 +800,12 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 						techniques.push_back(technique);
 					}
 					if (!usesTechniqueWebGL) {
-						this->extensions.insert("KHR_technique_webgl");
+						this->requireExtension("KHR_technique_webgl");
 						usesTechniqueWebGL = true;
 					}
 				}
 				else if (material->type == GLTF::Material::Type::MATERIAL_COMMON && !usesMaterialsCommon) {
-					this->extensions.insert("KHR_materials_common");
+					this->requireExtension("KHR_materials_common");
 					usesMaterialsCommon = true;
 				}
 				GLTF::Texture* ambientTexture = material->values->ambientTexture;
@@ -836,7 +853,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 				}
 				if (options->specularGlossiness) {
 					if (!usesSpecularGlossiness) {
-						this->extensions.insert("KHR_materials_pbrSpecularGlossiness");
+						this->useExtension("KHR_materials_pbrSpecularGlossiness");
 						usesSpecularGlossiness = true;
 					}
 					GLTF::MaterialPBR::Texture* diffuseTexture = materialPBR->specularGlossiness->diffuseTexture;
@@ -1025,16 +1042,18 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	buffers.clear();
 
 	// Write extensionsUsed and extensionsRequired
-	if (this->extensions.size() > 0) {
+	if (this->extensionsRequired.size() > 0) {
 		jsonWriter->Key("extensionsRequired");
 		jsonWriter->StartArray();
-		for (const std::string extension : this->extensions) {
+		for (const std::string extension : this->extensionsRequired) {
 			jsonWriter->String(extension.c_str());
 		}
 		jsonWriter->EndArray();
+	}
+	if (this->extensionsUsed.size() > 0) {
 		jsonWriter->Key("extensionsUsed");
 		jsonWriter->StartArray();
-		for (const std::string extension : this->extensions) {
+		for (const std::string extension : this->extensionsUsed) {
 			jsonWriter->String(extension.c_str());
 		}
 		jsonWriter->EndArray();

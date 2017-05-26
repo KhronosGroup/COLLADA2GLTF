@@ -223,17 +223,13 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->EndObject();
 	}
 	if (options->specularGlossiness) {
-		if (specularGlossiness && 
-			(specularGlossiness->diffuseTexture != NULL ||
-				specularGlossiness->specularGlossinessTexture != NULL)) {
-			jsonWriter->Key("extensions");
-			jsonWriter->StartObject();
-			jsonWriter->Key("KHR_materials_pbrSpecularGlossiness");
-			jsonWriter->StartObject();
-			specularGlossiness->writeJSON(writer, options);
-			jsonWriter->EndObject();
-			jsonWriter->EndObject();
-		}
+		jsonWriter->Key("extensions");
+		jsonWriter->StartObject();
+		jsonWriter->Key("KHR_materials_pbrSpecularGlossiness");
+		jsonWriter->StartObject();
+		specularGlossiness->writeJSON(writer, options);
+		jsonWriter->EndObject();
+		jsonWriter->EndObject();
 	}
 	GLTF::Object::writeJSON(writer, options);
 }
@@ -844,7 +840,12 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness)
 			material->specularGlossiness->specularGlossinessTexture = texture;
 		}
 		if (values->shininess) {
-			material->specularGlossiness->glossinessFactor = values->shininess;
+			if (values->shininess[0] < 1.0) {
+				material->specularGlossiness->glossinessFactor = values->shininess;
+			}
+			else {
+				material->specularGlossiness->glossinessFactor = new float[1] {1.0};
+			}
 		}
 	}
 
