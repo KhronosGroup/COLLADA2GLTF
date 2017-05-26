@@ -22,7 +22,8 @@ namespace GLTF {
 		GLTF::Sampler* globalSampler = NULL;
 
 		Metadata* metadata = NULL;
-		std::set<std::string> extensions;
+		std::set<std::string> extensionsUsed;
+		std::set<std::string> extensionsRequired;
 
 		std::vector<GLTF::Scene*> scenes;
 		std::vector<GLTF::Animation*> animations;
@@ -44,6 +45,8 @@ namespace GLTF {
 		void removeUnusedSemantics();
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
+		void requireExtension(std::string extension);
+		void useExtension(std::string extension);
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

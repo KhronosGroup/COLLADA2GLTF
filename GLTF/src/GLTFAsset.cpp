@@ -412,6 +412,15 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 	return buffer;
 }
 
+void GLTF::Asset::requireExtension(std::string extension) {
+	useExtension(extension);
+	extensionsRequired.insert(extension);
+}
+
+void GLTF::Asset::useExtension(std::string extension) {
+	extensionsUsed.insert(extension);
+}
+
 void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
@@ -697,12 +706,12 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 						techniques.push_back(technique);
 					}
 					if (!usesTechniqueWebGL) {
-						this->extensions.insert("KHR_technique_webgl");
+						this->requireExtension("KHR_technique_webgl");
 						usesTechniqueWebGL = true;
 					}
 				}
 				else if (material->type == GLTF::Material::Type::MATERIAL_COMMON && !usesMaterialsCommon) {
-					this->extensions.insert("KHR_materials_common");
+					this->requireExtension("KHR_materials_common");
 					usesMaterialsCommon = true;
 				}
 				GLTF::Texture* ambientTexture = material->values->ambientTexture;
@@ -750,7 +759,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 				}
 				if (options->specularGlossiness) {
 					if (!usesSpecularGlossiness) {
-						this->extensions.insert("KHR_materials_pbrSpecularGlossiness");
+						this->useExtension("KHR_materials_pbrSpecularGlossiness");
 						usesSpecularGlossiness = true;
 					}
 					GLTF::MaterialPBR::Texture* diffuseTexture = materialPBR->specularGlossiness->diffuseTexture;
@@ -939,16 +948,18 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	buffers.clear();
 
 	// Write extensionsUsed and extensionsRequired
-	if (this->extensions.size() > 0) {
+	if (this->extensionsRequired.size() > 0) {
 		jsonWriter->Key("extensionsRequired");
 		jsonWriter->StartArray();
-		for (const std::string extension : this->extensions) {
+		for (const std::string extension : this->extensionsRequired) {
 			jsonWriter->String(extension.c_str());
 		}
 		jsonWriter->EndArray();
+	}
+	if (this->extensionsUsed.size() > 0) {
 		jsonWriter->Key("extensionsUsed");
 		jsonWriter->StartArray();
-		for (const std::string extension : this->extensions) {
+		for (const std::string extension : this->extensionsUsed) {
 			jsonWriter->String(extension.c_str());
 		}
 		jsonWriter->EndArray();
