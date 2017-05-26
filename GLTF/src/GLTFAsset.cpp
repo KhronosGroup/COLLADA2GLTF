@@ -288,30 +288,36 @@ void GLTF::Asset::removeUnusedNodes(GLTF::Options* options) {
 	}
 
 	GLTF::Scene* defaultScene = getDefaultScene();
-	for (size_t i = 0; i < defaultScene->nodes.size(); i++) {
-		GLTF::Node* node = defaultScene->nodes[i];
-		if (isUnusedNode(node, skinNodes, isPbr)) {
-			defaultScene->nodes.erase(defaultScene->nodes.begin() + i);
-			i--;
-		}
-		else {
-			nodeStack.push_back(node);
-		}
-	}
-	while (nodeStack.size() > 0) {
-		GLTF::Node* node = nodeStack.back();
-		nodeStack.pop_back();
-		for (size_t i = 0; i < node->children.size(); i++) {
-			GLTF::Node* child = node->children[i];
-			if (isUnusedNode(child, skinNodes, isPbr)) {
-				// this node is extraneous, remove it
-				node->children.erase(node->children.begin() + i);
+	bool needsPass = true;
+	while (needsPass) {
+		needsPass = false;
+		for (size_t i = 0; i < defaultScene->nodes.size(); i++) {
+			GLTF::Node* node = defaultScene->nodes[i];
+			if (isUnusedNode(node, skinNodes, isPbr)) {
+				defaultScene->nodes.erase(defaultScene->nodes.begin() + i);
 				i--;
-				// add the parent back to the node stack for re-evaluation
-				nodeStack.push_back(node);
 			}
 			else {
-				nodeStack.push_back(child);
+				nodeStack.push_back(node);
+			}
+		}
+		while (nodeStack.size() > 0) {
+			GLTF::Node* node = nodeStack.back();
+			nodeStack.pop_back();
+			for (size_t i = 0; i < node->children.size(); i++) {
+				GLTF::Node* child = node->children[i];
+				if (isUnusedNode(child, skinNodes, isPbr)) {
+					// this node is extraneous, remove it
+					node->children.erase(node->children.begin() + i);
+					i--;
+					if (node->children.size() == 0) {
+						// another pass may be required to clean up the parent
+						needsPass = true;
+					}
+				}
+				else {
+					nodeStack.push_back(child);
+				}
 			}
 		}
 	}
