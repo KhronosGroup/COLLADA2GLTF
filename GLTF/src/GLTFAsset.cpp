@@ -266,9 +266,11 @@ void GLTF::Asset::removeUnusedSemantics() {
 }
 
 bool isUnusedNode(GLTF::Node* node, std::set<GLTF::Node*> skinNodes, bool isPbr) {
-	if (node->children.size() == 0 && node->mesh == NULL && node->camera == NULL && node->skin == NULL && (node->light == NULL || isPbr)) {
-		if (std::find(skinNodes.begin(), skinNodes.end(), node) == skinNodes.end()) {
-			return true;
+	if (node->children.size() == 0 && node->mesh == NULL && node->camera == NULL && node->skin == NULL) {
+		if (isPbr || node->light == NULL || node->light->type == GLTF::MaterialCommon::Light::AMBIENT) {
+			if (std::find(skinNodes.begin(), skinNodes.end(), node) == skinNodes.end()) {
+				return true;
+			}
 		}
 	}
 	return false;
