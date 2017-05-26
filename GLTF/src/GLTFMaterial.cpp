@@ -177,9 +177,7 @@ void GLTF::MaterialPBR::SpecularGlossiness::writeJSON(void* writer, GLTF::Option
 	}
 	if (glossinessFactor) {
 		jsonWriter->Key("glossinessFactor");
-		jsonWriter->StartArray();
 		jsonWriter->Double(glossinessFactor[0]);
-		jsonWriter->EndArray();
 	}
 	if (specularGlossinessTexture) {
 		jsonWriter->Key("specularGlossinessTexture");
@@ -804,6 +802,7 @@ GLTF::MaterialPBR::MaterialPBR() {
 
 GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness) {
 	GLTF::MaterialPBR* material = new GLTF::MaterialPBR();
+	material->metallicRoughness->metallicFactor = 0;
 	if (values->diffuse) {
 		material->metallicRoughness->baseColorFactor = values->diffuse;
 		if (specularGlossiness) {
