@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <limits>
 #include <cstring>
+#include <set>
 #include <stdlib.h>
 
 #include "GLTFAccessor.h"

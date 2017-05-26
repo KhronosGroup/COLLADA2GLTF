@@ -156,7 +156,7 @@ int main(int argc, const char **argv) {
 		// Create image bufferViews for binary glTF
 		if (options->binary && options->embeddedTextures) {
 			size_t imageBufferLength = 0;
-			std::set<GLTF::Image*> images = asset->getAllImages();
+			std::vector<GLTF::Image*> images = asset->getAllImages();
 			for (GLTF::Image* image : images) {
 				imageBufferLength += image->byteLength;
 			}
