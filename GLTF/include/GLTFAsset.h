@@ -42,7 +42,7 @@ namespace GLTF {
 		std::set<GLTF::Texture*> getAllTextures();
 		std::set<GLTF::Image*> getAllImages();
 		void removeUnusedSemantics();
-		void removeUnusedNodes();
+		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};

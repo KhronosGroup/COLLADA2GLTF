@@ -265,9 +265,19 @@ void GLTF::Asset::removeUnusedSemantics() {
 	}
 }
 
-void GLTF::Asset::removeUnusedNodes() {
+bool isUnusedNode(GLTF::Node* node, std::set<GLTF::Node*> skinNodes, bool isPbr) {
+	if (node->children.size() == 0 && node->mesh == NULL && node->camera == NULL && node->skin == NULL && (node->light == NULL || isPbr)) {
+		if (std::find(skinNodes.begin(), skinNodes.end(), node) == skinNodes.end()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void GLTF::Asset::removeUnusedNodes(GLTF::Options* options) {
 	std::vector<GLTF::Node*> nodeStack;
 	std::set<GLTF::Node*> skinNodes;
+	bool isPbr = !options->glsl && !options->materialsCommon;
 	for (GLTF::Skin* skin : getAllSkins()) {
 		if (skin->skeleton != NULL) {
 			skinNodes.insert(skin->skeleton);
@@ -277,22 +287,28 @@ void GLTF::Asset::removeUnusedNodes() {
 		}
 	}
 
-	for (GLTF::Node* node : getDefaultScene()->nodes) {
-		nodeStack.push_back(node);
+	GLTF::Scene* defaultScene = getDefaultScene();
+	for (size_t i = 0; i < defaultScene->nodes.size(); i++) {
+		GLTF::Node* node = defaultScene->nodes[i];
+		if (isUnusedNode(node, skinNodes, isPbr)) {
+			defaultScene->nodes.erase(defaultScene->nodes.begin() + i);
+			i--;
+		}
+		else {
+			nodeStack.push_back(node);
+		}
 	}
 	while (nodeStack.size() > 0) {
 		GLTF::Node* node = nodeStack.back();
 		nodeStack.pop_back();
 		for (size_t i = 0; i < node->children.size(); i++) {
 			GLTF::Node* child = node->children[i];
-			if (child->children.size() == 0 && child->mesh == NULL && child->camera == NULL && child->light == NULL && child->skin == NULL) {
-				if (std::find(skinNodes.begin(), skinNodes.end(), child) == skinNodes.end()) {
-					// this node is extraneous, remove it
-					node->children.erase(node->children.begin() + i);
-					i--;
-					// add the parent back to the node stack for re-evaluation
-					nodeStack.push_back(node);
-				}
+			if (isUnusedNode(child, skinNodes, isPbr)) {
+				// this node is extraneous, remove it
+				node->children.erase(node->children.begin() + i);
+				i--;
+				// add the parent back to the node stack for re-evaluation
+				nodeStack.push_back(node);
 			}
 			else {
 				nodeStack.push_back(child);

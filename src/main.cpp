@@ -149,7 +149,7 @@ int main(int argc, const char **argv) {
 			return -1;
 		}
 
-		asset->removeUnusedNodes();
+		asset->removeUnusedNodes(options);
 		asset->removeUnusedSemantics();
 		GLTF::Buffer* buffer = asset->packAccessors();
 
