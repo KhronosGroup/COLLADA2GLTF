@@ -840,7 +840,12 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness)
 			material->specularGlossiness->specularGlossinessTexture = texture;
 		}
 		if (values->shininess) {
-			material->specularGlossiness->glossinessFactor = values->shininess;
+			if (values->shininess[0] < 1.0) {
+				material->specularGlossiness->glossinessFactor = values->shininess;
+			}
+			else {
+				material->specularGlossiness->glossinessFactor = new float[1] {1.0};
+			}
 		}
 	}
 
