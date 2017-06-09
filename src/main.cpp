@@ -18,6 +18,9 @@
 using namespace ahoy;
 using namespace std::experimental::filesystem;
 
+const int HEADER_LENGTH = 12;
+const int CHUNK_HEADER_LENGTH = 8;
+
 int main(int argc, const char **argv) {
 	GLTF::Asset* asset = new GLTF::Asset();
 	COLLADA2GLTF::Options* options = new COLLADA2GLTF::Options();
@@ -240,26 +243,35 @@ int main(int argc, const char **argv) {
 		else {
 			FILE* file = fopen(outputPath.generic_string().c_str(), "wb");
 			if (file != NULL) {
-				uint32_t* writeHeader = new uint32_t[2];
 				fwrite("glTF", sizeof(char), 4, file); // magic
+
+				uint32_t* writeHeader = new uint32_t[2];
 				writeHeader[0] = 2; // version
-				int padding = (20 + jsonString.length()) % 4;
-				if (padding != 0) {
-					padding = 4 - padding;
-				}
-				writeHeader[1] = 20 + jsonString.length() + padding + 8 + buffer->byteLength; // length
-				fwrite(writeHeader, sizeof(uint32_t), 2, file);
-				writeHeader[0] = jsonString.length() + padding; // chunkLength
+
+				int jsonPadding = (4 - (jsonString.length() & 3)) & 3;
+				int binPadding = (4 - (buffer->byteLength & 3)) & 3;
+
+				writeHeader[1] = HEADER_LENGTH +
+					(CHUNK_HEADER_LENGTH + jsonString.length() + jsonPadding) +
+					(CHUNK_HEADER_LENGTH + buffer->byteLength + binPadding); // length
+				fwrite(writeHeader, sizeof(uint32_t), 2, file); // GLB header
+
+				writeHeader[0] = jsonString.length() + jsonPadding; // chunkLength
 				writeHeader[1] = 0x4E4F534A; // chunkType JSON
 				fwrite(writeHeader, sizeof(uint32_t), 2, file);
 				fwrite(jsonString.c_str(), sizeof(char), jsonString.length(), file);
-				for (int i = 0; i < padding; i++) {
+				for (int i = 0; i < jsonPadding; i++) {
 					fwrite(" ", sizeof(char), 1, file);
 				}
-				writeHeader[0] = buffer->byteLength; // chunkLength
+
+				writeHeader[0] = buffer->byteLength + binPadding; // chunkLength
 				writeHeader[1] = 0x004E4942; // chunkType BIN
 				fwrite(writeHeader, sizeof(uint32_t), 2, file);
 				fwrite(buffer->data, sizeof(unsigned char), buffer->byteLength, file);
+				for (int i = 0; i < binPadding; i++) {
+					fwrite("\0", sizeof(char), 1, file);
+				}
+
 				fclose(file);
 			}
 			else {
