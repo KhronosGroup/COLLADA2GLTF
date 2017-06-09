@@ -34,7 +34,7 @@ namespace GLTF
         std::string mTextBuffer;
 		ExtraTagType mExtraTagType;
 		COLLADAFW::UniqueId mCurrentElementUniqueId;
-		COLLADAFW::Object* mCurrentObject;
+		COLLADAFW::Object* mCurrentObject = NULL;
 
 	public:
 		ExtraDataHandler();

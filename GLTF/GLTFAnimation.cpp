@@ -235,7 +235,7 @@ namespace GLTF
             bool changed = true;
             while(changed) {
                 changed = false;
-                if (left < _keyFrames.size() && _keyFrames[left + 1] < frame) {
+                if (left < _keyFrames.size() -1 && _keyFrames[left + 1] < frame) {
                     left++;
                     changed = true;
                 }

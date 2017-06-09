@@ -2,32 +2,79 @@
 <img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png">
 </p>
 
+[![Build Status](https://travis-ci.org/KhronosGroup/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/COLLADA2GLTF)
+[![Build Status](https://ci.appveyor.com/api/projects/status/3xtpxjohflwd5t1p/branch/master)](https://ci.appveyor.com/project/Khronoswebmaster/collada2gltf/history)
+
 # COLLADA to glTF converter
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
 
-## Compile from source
+## Compile from source 
 
-1. Clone repository
+### 1. Clone repository
  
  ```
 git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
 ```
 
-2. Install dependencies (packages names for Debian)
+### 2. Install dependencies 
+
+#### Debian
  ```
 apt-get install cmake libxml2-dev libpcre3-dev libpng-dev zlib1g-dev
 ```
+#### Windows
+Install [Visual Studio](http://code.visualstudio.com)
 
-3. Compile
- ```
-cd COLLADA2GLTF
-cmake . && make
+Install [CMake](http://cmake.org/cmake/resources/software.html)
+
+#### OSX
+Install Xcode
+
+Install dependencies with [brew](http://mxcl.github.com/homebrew/)
+
+```   
+brew install cmake pkgconfig pcre libpng
 ```
 
-4. Run
+if the PNG package is not found, the workaround is to Download the the *.tar.gz install from libpng and then:
+```
+./configure
+make check
+sudo make install
+```
+
+### 3. Compile
  ```
+cd COLLADA2GLTF
+mkdir build
+cd build
+cmake ..
+```
+#### Linux
+```
+make
+```
+
+#### Windows
+Open COLLADA2GLTF.sln with Visual Studio and build
+
+#### OSX
+Open COLLADA2GLTF.xcodeproj and build
+or if you installed xcode command line tools you can also build in the terminal: xcodebuild -target collada2gltf -configuration Release (or Debug)
+
+### 4. Run
+#### Linux
+```
 ./bin/collada2gltf
+```
+#### Windows
+```
+./bin/Release/collada2gltf.exe
+```
+#### OSX
+```
+./bin/Release/collada2gltf
 ```
 
 ## Usage
@@ -54,3 +101,4 @@ options:
 -n -> don't combine animations with the same target
 -k -> export materials and lights using KHR_materials_common extension
 ```
+

@@ -956,15 +956,15 @@ namespace GLTF
 
             for (unsigned int j = 0 ; j < primitivesCount ; j++) {
                 shared_ptr<GLTFPrimitive> primitive = static_pointer_cast<GLTFPrimitive>(primitives[j]);
+                std::string materialId = primitive->getMaterialID();
                 //WORK-AROUND: we don't want meshes without material, which can happen if a mesh is not associated with a node.
                 //In this case, the material binding - isn't resolved.
-                if (primitive->contains(kMaterial) ==  false) {
+                if (materialId == "") {
                     meshes->removeValue(mesh->getID());
                     break;
                 }
                 //WORK-AROUND: TEXCOORD from the Collada model can be removed if it isn't bound to a technique
                 else {
-                    std::string materialId = primitive->getMaterialID();
                     shared_ptr <GLTF::GLTFEffect> material = static_pointer_cast<GLTF::GLTFEffect>(materials->getObject(materialId));
                     shared_ptr <JSONObject> technique = material->getTechniqueGenerator();
                     shared_ptr <JSONObject> texcoordBindings = technique->getObject("texcoordBindings");
@@ -1121,6 +1121,11 @@ namespace GLTF
         for (size_t skinIndex = 0 ; skinIndex < skinsUIDs.size() ; skinIndex++) {
             shared_ptr <GLTFSkin> skin = static_pointer_cast<GLTFSkin>(skins->getObject(skinsUIDs[skinIndex]));
             shared_ptr<JSONArray> joints = skin->getJointNames();
+            if (joints == NULL) {
+                // This skin was never instanced, remove it
+                skins->removeValue(skin->getId());
+                continue;
+            }
             shared_ptr<JSONArray> jointsWithOriginalSids(new JSONArray());
             
             //resolve the sid and use the original ones
