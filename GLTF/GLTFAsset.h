@@ -57,13 +57,13 @@ namespace GLTF
 
     typedef std::map<std::string, std::shared_ptr<GLTFOutputStream> > NameToOutputStream;
 
-	// Conceptually it would be nice to reuse a lambda,
-	// but then we would have to pass it in everywhere
-	struct UniqueIDHasher {
-        size_t operator()(const COLLADAFW::UniqueId& uniqueID) {
+    // Conceptually it would be nice to reuse a lambda,
+    // but then we would have to pass it in everywhere
+    struct UniqueIDHasher {
+        size_t operator()(const COLLADAFW::UniqueId& uniqueID) const {
             return (size_t)uniqueID;
         };
-	};
+    };
 
     //types for late binding of material
     class MaterialBindingsPrimitiveMap : public std::map<unsigned int, std::shared_ptr <COLLADAFW::MaterialBinding>> {};
