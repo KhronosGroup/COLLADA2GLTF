@@ -18,6 +18,9 @@
 using namespace ahoy;
 using namespace std::experimental::filesystem;
 
+const int HEADER_LENGTH = 12;
+const int CHUNK_HEADER_LENGTH = 8;
+
 int main(int argc, const char **argv) {
 	GLTF::Asset* asset = new GLTF::Asset();
 	COLLADA2GLTF::Options* options = new COLLADA2GLTF::Options();
@@ -244,9 +247,6 @@ int main(int argc, const char **argv) {
 
 				uint32_t* writeHeader = new uint32_t[2];
 				writeHeader[0] = 2; // version
-
-				const int HEADER_LENGTH = 12;
-				const int CHUNK_HEADER_LENGTH = 8;
 
 				int jsonPadding = (4 - (jsonString.length() & 3)) & 3;
 				int binPadding = (4 - (buffer->byteLength & 3)) & 3;
