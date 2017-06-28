@@ -80,7 +80,7 @@ or if you installed xcode command line tools you can also build in the terminal:
 ## Usage
 
 ```
-collada2gltlf -f [file] [options]
+collada2gltf -f [file] [options]
 options:
 -z -> path of configuration file [string]
 -f -> path of input file, argument [string]
