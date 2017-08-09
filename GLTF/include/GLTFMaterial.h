@@ -66,8 +66,11 @@ namespace GLTF {
 
 		class SpecularGlossiness : public GLTF::Object {
 		public:
+			float* diffuseFactor = NULL;
 			Texture* diffuseTexture = NULL;
+			float* specularFactor = NULL;
 			Texture* specularGlossinessTexture = NULL;
+			float* glossinessFactor = NULL;
 
 			void writeJSON(void* writer, GLTF::Options* options);
 		};
@@ -76,6 +79,7 @@ namespace GLTF {
 		Texture* normalTexture = NULL;
 		Texture* occlusionTexture = NULL;
 		float* emissiveFactor = NULL;
+		Texture* emissiveTexture = NULL;
 		SpecularGlossiness* specularGlossiness = NULL;
 
 		MaterialPBR();
@@ -121,6 +125,7 @@ namespace GLTF {
 		MaterialCommon();
 		const char* getTechniqueName();
 		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights);
+		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColorAttribute);
 		std::string getTechniqueKey();
 		GLTF::MaterialPBR* getMaterialPBR(bool specularGlossiness);
 		virtual void writeJSON(void* writer, GLTF::Options* options);

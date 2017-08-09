@@ -41,8 +41,10 @@ void GLTF::CameraPerspective::writeJSON(void* writer, GLTF::Options* options) {
 
 	jsonWriter->Key("perspective");
 	jsonWriter->StartObject();
-	jsonWriter->Key("aspectRatio");
-	jsonWriter->Double(aspectRatio);
+	if (aspectRatio > 0) {
+		jsonWriter->Key("aspectRatio");
+		jsonWriter->Double(aspectRatio);
+	}
 	jsonWriter->Key("yfov");
 	jsonWriter->Double(yfov);
 	jsonWriter->Key("zfar");

@@ -1,10 +1,13 @@
 #include <iostream>
+#include <map>
 
 #include "Base64.h"
 #include "GLTFImage.h"
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+std::map<std::string, GLTF::Image*> _imageCache;
 
 GLTF::Image::Image(std::string uri) : uri(uri) {}
 
@@ -22,8 +25,11 @@ GLTF::Image::Image(std::string uri, unsigned char* data, size_t byteLength, std:
 
 GLTF::Image* GLTF::Image::load(path imagePath) {
 	std::string fileString = imagePath.string();
+	std::map<std::string, GLTF::Image*>::iterator imageCacheIt = _imageCache.find(fileString);
+	if (imageCacheIt != _imageCache.end()) {
+		return imageCacheIt->second;
+	}
 	std::string fileExtension = imagePath.extension().string();
-
 	GLTF::Image* image = NULL;
 	FILE* file = fopen(fileString.c_str(), "rb");
 	if (file == NULL) {
@@ -40,6 +46,7 @@ GLTF::Image* GLTF::Image::load(path imagePath) {
 		fclose(file);
 		image = new GLTF::Image(imagePath.filename().string(), buffer, bytesRead, fileExtension);
 	}
+	_imageCache[fileString] = image;
 	return image;
 }
 
@@ -104,11 +111,6 @@ void GLTF::Image::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->Int(bufferView->id);
 			jsonWriter->Key("mimeType");
 			jsonWriter->String(mimeType.c_str());
-			std::pair<int, int> dimensions = getDimensions();
-			jsonWriter->Key("width");
-			jsonWriter->Int(dimensions.first);
-			jsonWriter->Key("height");
-			jsonWriter->Int(dimensions.second);
 		}
 	}
 	else {

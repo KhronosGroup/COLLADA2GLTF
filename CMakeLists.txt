@@ -17,6 +17,14 @@ endif()
 option(test "Build all tests." OFF)
 option(USE_DRACO "Use Draco Compression Extension." ON)
 
+# GLTF
+include_directories(GLTF/include)
+add_subdirectory(GLTF)
+
+# Disable for other modules
+set(TEST_ENABLED ${test})
+set(test OFF)
+
 # RapidJSON
 include_directories(GLTF/dependencies/rapidjson/include)
 
@@ -26,10 +34,6 @@ include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/includ
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/GeneratedSaxParser/include)
 add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
-
-# GLTF
-include_directories(GLTF/include)
-add_subdirectory(GLTF)
 
 # COLLADA2GLTF
 include_directories(include)
@@ -55,15 +59,15 @@ if (USE_DRACO)
   add_subdirectory(dependencies/draco)
 endif()
 
-# argparse
-include_directories(dependencies/argparse/argparse/)
-add_subdirectory(dependencies/argparse/modules/argparse)
+# ahoy
+include_directories(dependencies/ahoy/include)
+add_subdirectory(dependencies/ahoy)
 
 set(TARGET_LIBS ${PROJECT_NAME} )
 if (MSVC)
-  list(APPEND TARGET_LIBS argparse)
+  list(APPEND TARGET_LIBS ahoy)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  list(APPEND TARGET_LIBS argparse stdc++fs)
+  list(APPEND TARGET_LIBS ahoy stdc++fs)
 endif()
 
 if (USE_DRACO)
@@ -73,7 +77,7 @@ endif()
 add_executable(${PROJECT_NAME}-bin src/main.cpp)
 target_link_libraries(${PROJECT_NAME}-bin ${TARGET_LIBS})
 
-if(test)
+if(TEST_ENABLED)
   enable_testing()
 
   # gtest

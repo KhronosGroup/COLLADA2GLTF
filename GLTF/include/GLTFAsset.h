@@ -22,7 +22,8 @@ namespace GLTF {
 		GLTF::Sampler* globalSampler = NULL;
 
 		Metadata* metadata = NULL;
-		std::set<std::string> extensions;
+		std::set<std::string> extensionsUsed;
+		std::set<std::string> extensionsRequired;
 
 		std::vector<GLTF::Scene*> scenes;
 		std::vector<GLTF::Animation*> animations;
@@ -30,19 +31,22 @@ namespace GLTF {
 
 		Asset();
 		GLTF::Scene* getDefaultScene();
-		std::set<GLTF::Node*> getAllNodes();
-		std::set<GLTF::Mesh*> getAllMeshes();
-		std::set<GLTF::Primitive*> getAllPrimitives();
-		std::set<GLTF::Skin*> getAllSkins();
-		std::set<GLTF::Material*> getAllMaterials();
-		std::set<GLTF::Technique*> getAllTechniques();
-		std::set<GLTF::Program*> getAllPrograms();
-		std::set<GLTF::Shader*> getAllShaders();
-		std::set<GLTF::Texture*> getAllTextures();
-		std::set<GLTF::Image*> getAllImages();
+		std::vector<GLTF::Accessor*> getAllAccessors();
+		std::vector<GLTF::Node*> getAllNodes();
+		std::vector<GLTF::Mesh*> getAllMeshes();
+		std::vector<GLTF::Primitive*> getAllPrimitives();
+		std::vector<GLTF::Skin*> getAllSkins();
+		std::vector<GLTF::Material*> getAllMaterials();
+		std::vector<GLTF::Technique*> getAllTechniques();
+		std::vector<GLTF::Program*> getAllPrograms();
+		std::vector<GLTF::Shader*> getAllShaders();
+		std::vector<GLTF::Texture*> getAllTextures();
+		std::vector<GLTF::Image*> getAllImages();
 		void removeUnusedSemantics();
-		void removeUnusedNodes();
+		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
+		void requireExtension(std::string extension);
+		void useExtension(std::string extension);
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

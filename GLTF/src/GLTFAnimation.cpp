@@ -63,7 +63,7 @@ void GLTF::Animation::Channel::writeJSON(void* writer, GLTF::Options* options) {
 void GLTF::Animation::Channel::Target::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	
-	jsonWriter->Key("id");
+	jsonWriter->Key("node");
 	jsonWriter->Int(node->id);
 	jsonWriter->Key("path");
 	switch (path) {

@@ -16,6 +16,8 @@
 
 using namespace std::experimental::filesystem;
 
+const double PI = 3.14159;
+
 COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _asset(asset), _options(options), _extrasHandler(extrasHandler) {}
 
 void COLLADA2GLTF::Writer::cancel(const std::string& errorMessage) {
@@ -31,6 +33,7 @@ void COLLADA2GLTF::Writer::finish() {
 }
 
 bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
+	float assetScale = (float)asset->getUnit().getLinearUnitMeter();
 	if (asset->getUpAxisType() == COLLADAFW::FileInfo::X_UP) {
 		_rootNode = new GLTF::Node();
 		_rootNode->transform = new GLTF::Node::TransformMatrix(
@@ -49,6 +52,19 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 			0, 0, 0, 1
 		);
 		_rootNode->name = "Z_UP";
+	}
+	else if (asset->getUpAxisType() == COLLADAFW::FileInfo::Y_UP && assetScale != 1.0) {
+		_rootNode = new GLTF::Node();
+		_rootNode->transform = new GLTF::Node::TransformMatrix(
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1
+		);
+		_rootNode->name = "Y_UP";
+	}
+	if (_rootNode != NULL && assetScale != 1.0) {
+		((GLTF::Node::TransformMatrix*)_rootNode->transform)->scaleUniform(assetScale);
 	}
 	return true;
 }
@@ -146,20 +162,17 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 
 	std::vector<const COLLADAFW::Transformation*> nodeTransforms;
 	bool isAnimated = false;
-	int bufferNodes = 0;
 	for (size_t i = 0; i < transformations.getCount(); i++) {
 		const COLLADAFW::Transformation* transformation = transformations[i];
 		const COLLADAFW::UniqueId& animationListId = transformation->getAnimationList();
 		if (animationListId.isValid()) {
+			// If the current top level node is animated, we need to make a buffer node so the transform is not changed
+			if (isAnimated) {
+				GLTF::Node* bufferNode = new GLTF::Node();
+				node->children.push_back(bufferNode);
+				node = bufferNode;
+			}
 			if (nodeTransforms.size() > 0) {
-				// If the current top level node is animated, we need to make a buffer node so the transform is not changed
-				if (isAnimated) {
-					GLTF::Node* bufferNode = new GLTF::Node();
-					bufferNodes++;
-					node->children.push_back(bufferNode);
-					node = bufferNode;
-				}
-
 				// Any prior node transforms get flattened out onto the last node
 				COLLADABU::Math::Matrix4 matrix = COLLADABU::Math::Matrix4::IDENTITY;
 				matrix = getFlattenedTransform(nodeTransforms);
@@ -195,7 +208,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 		if (matrix != COLLADABU::Math::Matrix4::IDENTITY) {
 			if (isAnimated) {
 				GLTF::Node* bufferNode = new GLTF::Node();
-				bufferNodes++;
 				node->children.push_back(bufferNode);
 				node = bufferNode;
 			}
@@ -218,7 +230,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					skin->joints.push_back(NULL);
 				}
 				skin->joints[i] = node;
-				node->jointName = id;
 				break;
 			}
 		}
@@ -236,9 +247,15 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			node->skin = skin;
 
 			GLTF::Mesh* skinnedMesh = _skinnedMeshes[uniqueId];
-			GLTF::Node* skinnedMeshNode = new GLTF::Node();
-			skinnedMeshNode->mesh = skinnedMesh;
-			node->children.push_back(skinnedMeshNode);
+			if (node->mesh != NULL) {
+				GLTF::Node* skinnedMeshNode = new GLTF::Node();
+				skinnedMeshNode->transform = new GLTF::Node::TransformMatrix();
+				skinnedMeshNode->mesh = skinnedMesh;
+				node->children.push_back(skinnedMeshNode);
+			}
+			else {
+				node->mesh = skinnedMesh;
+			}
 
 			const COLLADAFW::MaterialBindingArray &materialBindings = instanceController->getMaterialBindings();
 			for (size_t j = 0; j < materialBindings.getCount(); j++) {
@@ -258,14 +275,8 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				std::string skeletonId = skeletonURI.getFragment();
 				std::map<std::string, GLTF::Node*>::iterator iter = _nodes.find(skeletonId);
 				if (iter != _nodes.end()) {
-					if (skeletonNode == NULL) {
-						skeletonNode = node;
-					}
-					else {
-						skeletonNode = new GLTF::Node();
-						node->children.push_back(skeletonNode);
-					}
-					skeletonNode->skeleton = iter->second;
+					skin->skeleton = iter->second;
+					break;
 				}
 			}
 		}
@@ -328,6 +339,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				if (node->mesh != NULL) {
 					// Split out a new child node if this one already has a mesh
 					GLTF::Node* meshNode = new GLTF::Node();
+					meshNode->transform = new GLTF::Node::TransformMatrix();
 					meshNode->mesh = mesh;
 					node->children.push_back(meshNode);
 				}
@@ -503,7 +515,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			case COLLADAFW::MeshPrimitive::LINE_STRIPS:
 				primitive->mode = GLTF::Primitive::Mode::LINE_STRIP;
 				break;
-			// Having POLYLIST and POLYGONS map to TRIANGLES produces good output for cases where the polygons are already triangles, 
+			// Having POLYLIST and POLYGONS map to TRIANGLES produces good output for cases where the polygons are already triangles,
 			// but in other cases, we may need to triangulate
 			case COLLADAFW::MeshPrimitive::POLYLIST:
 			case COLLADAFW::MeshPrimitive::POLYGONS:
@@ -864,16 +876,16 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 		// One effect makes one template material, it really isn't possible to process more than one of these
 		const COLLADAFW::EffectCommon* effectCommon = commonEffects[0];
 		switch (effectCommon->getShaderType()) {
-		case COLLADAFW::EffectCommon::SHADER_BLINN: 
+		case COLLADAFW::EffectCommon::SHADER_BLINN:
 			material->technique = GLTF::MaterialCommon::BLINN;
 			break;
-		case COLLADAFW::EffectCommon::SHADER_CONSTANT: 
+		case COLLADAFW::EffectCommon::SHADER_CONSTANT:
 			material->technique = GLTF::MaterialCommon::CONSTANT;
 			break;
-		case COLLADAFW::EffectCommon::SHADER_PHONG: 
+		case COLLADAFW::EffectCommon::SHADER_PHONG:
 			material->technique = GLTF::MaterialCommon::PHONG;
 			break;
-		case COLLADAFW::EffectCommon::SHADER_LAMBERT: 
+		case COLLADAFW::EffectCommon::SHADER_LAMBERT:
 			material->technique = GLTF::MaterialCommon::LAMBERT;
 			break;
 		}
@@ -957,14 +969,41 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 	GLTF::Camera* writeCamera = NULL;
 	if (colladaCamera->getCameraType() == COLLADAFW::Camera::ORTHOGRAPHIC) {
 		GLTF::CameraOrthographic* camera = new GLTF::CameraOrthographic();
-		camera->xmag = (float)colladaCamera->getXMag();
-		camera->ymag = (float)colladaCamera->getYMag();
+		float x, y;
+		switch (colladaCamera->getDescriptionType()) {
+		case COLLADAFW::Camera::UNDEFINED:
+			camera->xmag = 1.0;
+			camera->ymag = 1.0;
+			break;
+		case COLLADAFW::Camera::SINGLE_X:
+			camera->xmag = (float)colladaCamera->getXMag().getValue();
+			camera->ymag = 1.0;
+			break;
+		case COLLADAFW::Camera::SINGLE_Y:
+			camera->xmag = 1.0;
+			camera->ymag = (float)colladaCamera->getYMag().getValue();
+			break;
+		case COLLADAFW::Camera::X_AND_Y:
+			camera->xmag = (float)colladaCamera->getXMag().getValue();
+			camera->ymag = (float)colladaCamera->getYMag().getValue();
+			break;
+		case COLLADAFW::Camera::ASPECTRATIO_AND_X:
+			x = (float)colladaCamera->getXMag().getValue();
+			camera->xmag = x;
+			camera->ymag = x / (float)colladaCamera->getAspectRatio().getValue();
+			break;
+		case COLLADAFW::Camera::ASPECTRATIO_AND_Y:
+			y = (float)colladaCamera->getYMag().getValue();
+			camera->xmag = y * (float)colladaCamera->getAspectRatio().getValue();
+			camera->ymag = y;
+			break;
+		};
 		writeCamera = camera;
 	}
 	else if (colladaCamera->getCameraType() == COLLADAFW::Camera::PERSPECTIVE) {
 		GLTF::CameraPerspective* camera = new GLTF::CameraPerspective();
-		float x = (float)(colladaCamera->getXFov().getValue() * (180.0 / 3.14));
-		float y = (float)(colladaCamera->getYFov().getValue() * (180 / 3.14));
+		float x = (float)(colladaCamera->getXFov().getValue() * (PI / 180.0));
+		float y = (float)(colladaCamera->getYFov().getValue() * (PI / 180.0 ));
 		float aspectRatio = (float)colladaCamera->getAspectRatio().getValue();
 		switch (colladaCamera->getDescriptionType()) {
 		case COLLADAFW::Camera::UNDEFINED:
@@ -984,7 +1023,7 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 			break;
 		case COLLADAFW::Camera::ASPECTRATIO_AND_Y:
 			camera->yfov = y;
-			camera->aspectRatio = y;
+			camera->aspectRatio = aspectRatio;
 			break;
 		}
 		writeCamera = camera;
@@ -1027,6 +1066,14 @@ bool COLLADA2GLTF::Writer::writeLight(const COLLADAFW::Light* colladaLight) {
 	return true;
 }
 
+/**
+* Reads and caches the data from a <COLLADAFW::Animation>.
+*
+* This data is used by <COLLADA2GLTFWriter::writeAnimationList> to write out <GLTF::Animation> objects.
+*
+* @param animation The <COLLADAFW::Animation> to process
+* @return `true` if the operation completed succesfully, `false` if an error occured
+*/
 bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation) {
 	GLTF::Animation::Sampler* sampler = new GLTF::Animation::Sampler();
 
@@ -1034,11 +1081,11 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 		COLLADAFW::AnimationCurve *animationCurve = (COLLADAFW::AnimationCurve*)animation;
 		COLLADAFW::FloatOrDoubleArray inputArray = animationCurve->getInputValues();
 		COLLADAFW::FloatOrDoubleArray outputArray = animationCurve->getOutputValues();
-		
+
 		int inputLength = inputArray.getValuesCount();
-		float* inputValues = new float[inputLength];
+		std::vector<float> inputValues = std::vector<float>();
 		int outputLength = outputArray.getValuesCount();
-		float* outputValues = new float[outputLength];
+		std::vector<float> outputValues = std::vector<float>();
 
 		float value;
 		for (int i = 0; i < inputLength; i++) {
@@ -1050,7 +1097,7 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 				value = inputArray.getFloatValues()->getData()[i];
 				break;
 			}
-			inputValues[i] = value;
+			inputValues.push_back(value);
 		}
 		for (int i = 0; i < outputLength; i++) {
 			switch (outputArray.getType()) {
@@ -1061,207 +1108,317 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 				value = outputArray.getFloatValues()->getData()[i];
 				break;
 			}
-			outputValues[i] = value;
+			outputValues.push_back(value);
 		}
-
-		GLTF::Accessor* inputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)inputValues, inputLength, (GLTF::Constants::WebGL)-1);
-		// The type is unknown at this point; this may get replaced during writeAnimationList
-		GLTF::Accessor* outputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputValues, outputLength, (GLTF::Constants::WebGL)-1);
-		
-		sampler->input = inputAccessor;
-		sampler->output = outputAccessor;
-		
-		_animationSamplers[animation->getUniqueId()] = sampler;
+		_animationData[animation->getUniqueId()] = std::make_tuple(inputValues, outputValues);
 	}
 	return true;
 }
 
+void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, int index, size_t offset, float time, float* translationOut) {
+	float startTime = 0;
+	float startTranslation = 0;
+	float endTime = 0;
+	float endTranslation = 0;
+	int inputSize = input.size();
+
+	if (index < 0) {
+		startTranslation = base[offset];
+	}
+	else {
+		startTime = input[index];
+		startTranslation = output[index];
+	}
+	if (index + 1 >= inputSize) {
+		endTime = input.back();
+		endTranslation = output.back();
+	}
+	else {
+		endTime = input[index + 1];
+		endTranslation = output[index + 1];
+	}
+
+	double value = startTranslation;
+	if (endTime != startTime) {
+		value = startTranslation + (endTranslation - startTranslation) * (time - startTime) / (endTime - startTime);
+	}
+	translationOut[offset] = (float)value;
+}
+
+/**
+* Reads a <COLLADAFW::AnimationList> and writes a <GLTF::Animation> object.
+*
+* A <COLLADAFW::AnimationList> targets a transformation on a node. This converter
+* splits out animated targets, so each animation list does target a unique glTF node.
+* However, an animation list may be composed of more than one <COLLADAFW::Animation>. For example,
+* the COLLADA node transformation may be a single translation, however there may
+* by multiple animations, each targeting x, y, or z translation specifically.
+* These should be flattened out. COLLADA does not enforce that each of these animations
+* must operate on the same keyframes list. This function will combine the keyframes for the
+* animation list and linearly interpolate any missing values.
+*
+* @param animation The <COLLADAFW::AnimationList> to process
+* @return `true` if the operation completed succesfully, `false` if an error occured
+*/
 bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* animationList) {
 	const COLLADAFW::AnimationList::AnimationBindings& bindings = animationList->getAnimationBindings();
 	GLTF::Node* node = _animatedNodes[animationList->getUniqueId()];
-	GLTF::Animation* animation = new GLTF::Animation();
+	GLTF::Node::Transform* nodeTransform = node->transform;
+	GLTF::Node::TransformTRS* nodeTransformTRS = NULL;
+	std::set<float> timeSet = std::set<float>();
+	GLTF::Node::TransformMatrix* transformMatrix = NULL;
+	GLTF::Node::TransformTRS* transformTRS = NULL;
+	float* translation = NULL;
+	float* rotation = NULL;
+	float* scale = NULL;
 
-	double* component = new double[1];
+	if (nodeTransform) {
+		if (nodeTransform->type == GLTF::Node::Transform::MATRIX) {
+			nodeTransformTRS = ((GLTF::Node::TransformMatrix*)nodeTransform)->getTransformTRS();
+		}
+		else if (nodeTransform->type == GLTF::Node::Transform::TRS) {
+			nodeTransformTRS = (GLTF::Node::TransformTRS*)nodeTransform;
+		}
+		node->transform = nodeTransformTRS;
+	}
+
+	// Aggregate all of the keyframe times into a set and mark used channels (translation, rotation, scale)
+	bool hasTranslation = false;
+	bool hasRotation = false;
+	bool hasScale = false;
 	for (size_t i = 0; i < bindings.getCount(); i++) {
 		const COLLADAFW::AnimationList::AnimationBinding& binding = bindings[i];
-		GLTF::Animation::Channel* channel = new GLTF::Animation::Channel();
-		GLTF::Animation::Channel::Target* target = new GLTF::Animation::Channel::Target();
-		channel->target = target;
-		animation->channels.push_back(channel);
-		target->node = node;
-		GLTF::Animation::Sampler* sampler = _animationSamplers[binding.animation];
-		channel->sampler = sampler;
-		GLTF::Accessor* output = sampler->output;
+		std::tuple<std::vector<float>, std::vector<float>> animationData = _animationData[binding.animation];
+		std::vector<float> input;
+		std::vector<float> output;
+		std::tie(input, output) = animationData;
 
-		int usesIndex = -1;
-		float* outputData = NULL;
-		GLTF::Accessor::Type type;
-		int count = output->count;
-
-		GLTF::Node::Transform* transform = node->transform;
-		if (transform->type == GLTF::Node::Transform::MATRIX) {
-			transform = ((GLTF::Node::TransformMatrix*)transform)->getTransformTRS();
-			node->transform = transform;
+		for (size_t j = 0; j < input.size(); j++) {
+			timeSet.insert(input[j]);
 		}
 
 		switch (binding.animationClass) {
 		case COLLADAFW::AnimationList::AnimationClass::MATRIX4X4: {
-			float* translation = new float[count / 16 * 3];
-			float* rotation = new float[count / 16 * 4];
-			float* scale = new float[count / 16 * 3];
-			GLTF::Node::TransformMatrix* transformMatrix = new GLTF::Node::TransformMatrix();
-			GLTF::Node::TransformTRS* transformTRS = new GLTF::Node::TransformTRS();
-			float* lastRotation = NULL;
-			for (int j = 0; j < count / 16; j++) {
+			transformMatrix = new GLTF::Node::TransformMatrix();
+			transformTRS = new GLTF::Node::TransformTRS();
+			hasTranslation = true;
+			hasRotation = true;
+			hasScale = true;
+			break;
+		}
+		case COLLADAFW::AnimationList::POSITION_XYZ: {
+			hasTranslation = true;
+			break;
+		}
+		case COLLADAFW::AnimationList::POSITION_X: {
+			hasTranslation = true;
+			break;
+		}
+		case COLLADAFW::AnimationList::POSITION_Y: {
+			hasTranslation = true;
+			break;
+		}
+		case COLLADAFW::AnimationList::POSITION_Z: {
+			hasTranslation = true;
+			break;
+		}
+		case COLLADAFW::AnimationList::AXISANGLE: {
+			hasRotation = true;
+			break;
+		}
+		case COLLADAFW::AnimationList::ANGLE: {
+			hasRotation = true;
+			break;
+		}}
+	}
+	// Map the set back to a vector and sort
+	std::vector<float> times(timeSet.begin(), timeSet.end());
+	std::sort(times.begin(), times.end());
+
+	// Generate translation, rotation, scale for each keyframe
+	if (hasTranslation) {
+		translation = new float[times.size() * 3];
+		// We do this so that if x, y, or z are unspecified, the translation is still valid
+		// For the others, all components will be set, so we don't have to worry about it
+		for (size_t i = 0; i < times.size(); i++) {
+			translation[i * 3] = nodeTransformTRS->translation[0];
+			translation[i * 3 + 1] = nodeTransformTRS->translation[1];
+			translation[i * 3 + 2] = nodeTransformTRS->translation[2];
+		}
+	}
+	if (hasRotation) {
+		rotation = new float[times.size() * 4];
+	}
+	if (hasScale) {
+		scale = new float[times.size() * 3];
+	}
+	float* lastRotation = new float[4];
+	for (size_t j = 0; j < 4; j++) {
+		lastRotation[j] = nodeTransformTRS->rotation[j];
+	}
+	for (size_t i = 0; i < bindings.getCount(); i++) {
+		const COLLADAFW::AnimationList::AnimationBinding& binding = bindings[i];
+		std::tuple<std::vector<float>, std::vector<float>> animationData = _animationData[binding.animation];
+		std::vector<float> input;
+		std::vector<float> output;
+		std::tie(input, output) = animationData;
+		int index = -1;
+		int inputSize = input.size();
+
+		for (size_t j = 0; j < times.size(); j++) {
+			float time = times[j];
+			// If true, this keyframe has no value in this animation
+			bool needsInterpolation = index + 1 >= inputSize || time != input[index + 1];
+			if (!needsInterpolation) {
+				index++;
+			}
+			bool minimizeRotationDistance = false;
+
+			switch (binding.animationClass) {
+			case COLLADAFW::AnimationList::AnimationClass::MATRIX4X4: {
+				// Only POSITION_X, POSITION_Y, and POSITION_Z can exist as multiple animations with the same target, all others will return false if a keyframe value doesn't exist
+				if (needsInterpolation) {
+					return false;
+				}
 				for (int m = 0; m < 4; m++) {
 					for (int n = 0; n < 4; n++) {
-						output->getComponentAtIndex(j * 16 + m * 4 + n, component);
-						transformMatrix->matrix[n * 4 + m] = (float)component[0];
+						transformMatrix->matrix[n * 4 + m] = output[index * 16 + m * 4 + n];
 					}
 				}
 				transformMatrix->getTransformTRS(transformTRS);
 				for (int k = 0; k < 3; k++) {
 					translation[j * 3 + k] = transformTRS->translation[k];
 				}
-				// Sometimes when we decompose a matrix, the quaternion flips; we want to make sure that the quaternion distance between frames is minimal
-				if (lastRotation != NULL) {
-					float flippedDifference = 0.0;
-					float difference = 0.0;
-					for (int k = 0; k < 4; k++) {
-						flippedDifference += (-transformTRS->rotation[k] - lastRotation[k]) * (-transformTRS->rotation[k] - lastRotation[k]);
-						difference += (transformTRS->rotation[k] - lastRotation[k]) * (transformTRS->rotation[k] - lastRotation[k]);
-					}
-					if (flippedDifference < difference) {
-						// Flip the quaternion
-						for (int k = 0; k < 4; k++) {
-							transformTRS->rotation[k] = -transformTRS->rotation[k];
-						}
-					}
-				}
-				else {
-					lastRotation = new float[4];
-				}
 				for (int k = 0; k < 4; k++) {
 					rotation[j * 4 + k] = transformTRS->rotation[k];
-					lastRotation[k] = transformTRS->rotation[k];
 				}
+				minimizeRotationDistance = true;
 				for (int k = 0; k < 3; k++) {
 					scale[j * 3 + k] = transformTRS->scale[k];
 				}
+				break;
 			}
-			animation->channels.clear();
-			GLTF::Animation::Channel* translationChannel = new GLTF::Animation::Channel();
-			GLTF::Animation::Channel::Target* translationTarget = new GLTF::Animation::Channel::Target();
-			translationTarget->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
-			translationTarget->node = node;
-			translationChannel->target = translationTarget;
-			animation->channels.push_back(translationChannel);
-			GLTF::Animation::Sampler* translationSampler = new GLTF::Animation::Sampler();
-			translationChannel->sampler = translationSampler;
-			translationSampler->input = sampler->input;
-			translationSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)translation, count / 16, (GLTF::Constants::WebGL)-1);
-
-			GLTF::Animation::Channel* rotationChannel = new GLTF::Animation::Channel();
-			GLTF::Animation::Channel::Target* rotationTarget = new GLTF::Animation::Channel::Target();
-			rotationTarget->path = GLTF::Animation::Channel::Target::Path::ROTATION;
-			rotationTarget->node = node;
-			rotationChannel->target = rotationTarget;
-			animation->channels.push_back(rotationChannel);
-			GLTF::Animation::Sampler* rotationSampler = new GLTF::Animation::Sampler();
-			rotationChannel->sampler = rotationSampler;
-			rotationSampler->input = sampler->input;
-			rotationSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)rotation, count / 16, (GLTF::Constants::WebGL)-1);
-
-			GLTF::Animation::Channel* scaleChannel = new GLTF::Animation::Channel();
-			GLTF::Animation::Channel::Target* scaleTarget = new GLTF::Animation::Channel::Target();
-			scaleTarget->path = GLTF::Animation::Channel::Target::Path::SCALE;
-			scaleTarget->node = node;
-			scaleChannel->target = scaleTarget;
-			animation->channels.push_back(scaleChannel);
-			GLTF::Animation::Sampler* scaleSampler = new GLTF::Animation::Sampler();
-			scaleChannel->sampler = scaleSampler;
-			scaleSampler->input = sampler->input;
-			scaleSampler->output = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)scale, count / 16, (GLTF::Constants::WebGL)-1);
-			break;
-		}
-		case COLLADAFW::AnimationList::AnimationClass::POSITION_XYZ: {
-			// The output data is already in the correct format
-			outputData = (float*)output->bufferView->buffer->data;
-			type = GLTF::Accessor::Type::VEC3;
-			target->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
-			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count / 3, (GLTF::Constants::WebGL)-1);
-			sampler->output = output;
-			break;
-		}
-		case COLLADAFW::AnimationList::AnimationClass::POSITION_X: {
-			usesIndex = 0;
-		}
-		case COLLADAFW::AnimationList::AnimationClass::POSITION_Y: {
-			if (usesIndex < 0) {
-				usesIndex = 1;
+			case COLLADAFW::AnimationList::POSITION_XYZ: {
+				if (needsInterpolation) {
+					return false;
+				}
+				translation[j * 3] = output[index * 3];
+				translation[j * 3 + 1] = output[index * 3 + 1];
+				translation[j * 3 + 2] = output[index * 3 + 2];
+				break;
 			}
-		}
-		case COLLADAFW::AnimationList::AnimationClass::POSITION_Z: {
-			if (usesIndex < 0) {
-				usesIndex = 2;
+			case COLLADAFW::AnimationList::POSITION_X: {
+				if (needsInterpolation) {
+					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 0, time, translation + (j * 3));
+				}
+				else {
+					translation[j * 3] = output[index];
+				}
+				break;
 			}
-			// The output data needs to be padded with 0's 
-			float* outputData = new float[count * 3];
-			type = GLTF::Accessor::Type::VEC3;
-			target->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
-			for (int j = 0; j < count; j++) {
-				output->getComponentAtIndex(j, component);
-				for (int k = 0; k < 3; k++) {
-					if (k == usesIndex) {
-						outputData[j * 3 + k] = (float)component[0];
+			case COLLADAFW::AnimationList::POSITION_Y: {
+				if (needsInterpolation) {
+					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 1, time, translation + (j * 3));
+				}
+				else {
+					translation[j * 3 + 1] = output[index];
+				}
+				break;
+			}
+			case COLLADAFW::AnimationList::POSITION_Z: {
+				if (needsInterpolation) {
+					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 2, time, translation + (j * 3));
+				}
+				else {
+					translation[j * 3 + 2] = output[index];
+				}
+				break;
+			}
+			case COLLADAFW::AnimationList::AXISANGLE: {
+				if (needsInterpolation) {
+					return false;
+				}
+				rotation[j * 4] = output[index * 4];
+				rotation[j * 4 + 1] = output[index * 4 + 1];
+				rotation[j * 4 + 2] = output[index * 4 + 2];
+				rotation[j * 4 + 3] = output[index * 4 + 3];
+				break;
+			}
+			case COLLADAFW::AnimationList::ANGLE: {
+				float* nodeRotation = nodeTransformTRS->rotation;
+				COLLADABU::Math::Real angle;
+				COLLADABU::Math::Vector3 axis;
+				COLLADABU::Math::Quaternion quaternion = COLLADABU::Math::Quaternion(nodeRotation[3], nodeRotation[0], nodeRotation[1], nodeRotation[2]);
+				quaternion.toAngleAxis(angle, axis);
+				angle = COLLADABU::Math::Utils::degToRad(output[index]);
+				quaternion.fromAngleAxis(angle, axis);
+				rotation[j * 4] = (float)quaternion.x;
+				rotation[j * 4 + 1] = (float)quaternion.y;
+				rotation[j * 4 + 2] = (float)quaternion.z;
+				rotation[j * 4 + 3] = (float)quaternion.w;
+				minimizeRotationDistance = true;
+				break;
+			}}
+			// Sometimes when we decompose quaternions and then regenerate them, they flip chirality; this minimize the distance between quaternions to keep animations smooth
+			if (minimizeRotationDistance) {
+				// Flip to minimize distance if necessary
+				float flippedDifference = 0.0;
+				float difference = 0.0;
+				for (int k = 0; k < 4; k++) {
+					flippedDifference += (-rotation[j * 4 + k] - lastRotation[k]) * (-rotation[j * 4 + k] - lastRotation[k]);
+					difference += (rotation[j * 4 + k] - lastRotation[k]) * (rotation[j * 4 + k] - lastRotation[k]);
+				}
+				for (int k = 0; k < 4; k++) {
+					if (flippedDifference < difference) {
+						// Flip the quaternion
+						rotation[j * 4 + k] = -rotation[j * 4 + k];
 					}
-					else {
-						outputData[j * 3 + k] = 0;
-					}
+					lastRotation[k] = rotation[j * 4 + k];
 				}
 			}
-			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, (GLTF::Constants::WebGL)-1);
-			sampler->output = output;
-			break;
 		}
-		case COLLADAFW::AnimationList::AXISANGLE: {
-			// The output data is already in the correct format
-			outputData = (float*)output->bufferView->buffer->data;
-			type = GLTF::Accessor::Type::VEC4;
-			target->path = GLTF::Animation::Channel::Target::Path::ROTATION;
-			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count / 4, (GLTF::Constants::WebGL)-1);
-			sampler->output = output;
-			break;
-		}
-		case COLLADAFW::AnimationList::ANGLE: {
-			// The angle needs to be applied to the existing quaternion
-			if (transform != NULL) {
-				if (transform->type == GLTF::Node::Transform::TRS) {
-					GLTF::Node::TransformTRS* transformTRS = (GLTF::Node::TransformTRS*)transform;
-					float* rotation = transformTRS->rotation;
-					outputData = new float[count * 4];
-					type = GLTF::Accessor::Type::VEC4;
-					target->path = GLTF::Animation::Channel::Target::Path::ROTATION;
+	}
 
-					COLLADABU::Math::Real angle;
-					COLLADABU::Math::Vector3 axis;
-					for (int j = 0; j < count; j++) {
-						COLLADABU::Math::Quaternion quaternion = COLLADABU::Math::Quaternion(rotation[3], rotation[0], rotation[1], rotation[2]);
-						quaternion.toAngleAxis(angle, axis);
-						output->getComponentAtIndex(j, component);
-						angle = COLLADABU::Math::Utils::degToRad(component[0]);
-						quaternion.fromAngleAxis(angle, axis);
-						outputData[j * 4] = (float)quaternion.x;
-						outputData[j * 4 + 1] = (float)quaternion.y;
-						outputData[j * 4 + 2] = (float)quaternion.z;
-						outputData[j * 4 + 3] = (float)quaternion.w;
-					}
-				}
-			}
-			output = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)outputData, count, (GLTF::Constants::WebGL)-1);
-			sampler->output = output;
-			break;
-		}}
+	GLTF::Animation* animation = new GLTF::Animation();
+	GLTF::Accessor* inputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)times.data(), times.size(), (GLTF::Constants::WebGL)-1);
+	if (hasTranslation) {
+		GLTF::Animation::Channel* channel = new GLTF::Animation::Channel();
+		GLTF::Animation::Channel::Target* target = new GLTF::Animation::Channel::Target();
+		GLTF::Animation::Sampler* sampler = new GLTF::Animation::Sampler();
+		GLTF::Accessor* outputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)translation, times.size(), (GLTF::Constants::WebGL) - 1);
+		sampler->input = inputAccessor;
+		sampler->output = outputAccessor;
+		target->node = node;
+		target->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
+		channel->target = target;
+		channel->sampler = sampler;
+		animation->channels.push_back(channel);
+	}
+	if (hasRotation) {
+		GLTF::Animation::Channel* channel = new GLTF::Animation::Channel();
+		GLTF::Animation::Channel::Target* target = new GLTF::Animation::Channel::Target();
+		GLTF::Animation::Sampler* sampler = new GLTF::Animation::Sampler();
+		GLTF::Accessor* outputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)rotation, times.size(), (GLTF::Constants::WebGL) - 1);
+		sampler->input = inputAccessor;
+		sampler->output = outputAccessor;
+		target->node = node;
+		target->path = GLTF::Animation::Channel::Target::Path::ROTATION;
+		channel->target = target;
+		channel->sampler = sampler;
+		animation->channels.push_back(channel);
+	}
+	if (hasScale) {
+		GLTF::Animation::Channel* channel = new GLTF::Animation::Channel();
+		GLTF::Animation::Channel::Target* target = new GLTF::Animation::Channel::Target();
+		GLTF::Animation::Sampler* sampler = new GLTF::Animation::Sampler();
+		GLTF::Accessor* outputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT, (unsigned char*)scale, times.size(), (GLTF::Constants::WebGL) - 1);
+		sampler->input = inputAccessor;
+		sampler->output = outputAccessor;
+		target->node = node;
+		target->path = GLTF::Animation::Channel::Target::Path::SCALE;
+		channel->target = target;
+		channel->sampler = sampler;
+		animation->channels.push_back(channel);
 	}
 	_asset->animations.push_back(animation);
 	return true;
@@ -1278,19 +1435,25 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 	// Write inverseBindMatrices and bindShapeMatrix
 	const COLLADAFW::Matrix4Array& matrixArray = skinControllerData->getInverseBindMatrices();
 	size_t matrixArrayCount = matrixArray.getCount();
-	float* inverseBindMatrices = new float[matrixArrayCount * 16];
+	GLTF::Node::TransformMatrix* bindShapeMatrix = new GLTF::Node::TransformMatrix();
+	packColladaMatrix(skinControllerData->getBindShapeMatrix(), bindShapeMatrix);
+	GLTF::Node::TransformMatrix* inverseBindMatrix = new GLTF::Node::TransformMatrix();
+	float* inverseBindMatrices = new float[16 * matrixArrayCount];
 	for (size_t i = 0; i < matrixArrayCount; i++) {
-		packColladaMatrix(matrixArray[i], inverseBindMatrices, i * 16);
+		packColladaMatrix(matrixArray[i], inverseBindMatrix);
+		inverseBindMatrix->premultiply(bindShapeMatrix);
+		for (size_t j = 0; j < 16; j++) {
+			inverseBindMatrices[i * 16 + j] = inverseBindMatrix->matrix[j];
+		}
 	}
 	skin->inverseBindMatrices = new GLTF::Accessor(GLTF::Accessor::Type::MAT4, GLTF::Constants::WebGL::FLOAT, (unsigned char*)inverseBindMatrices, matrixArrayCount, (GLTF::Constants::WebGL)-1);
-	packColladaMatrix(skinControllerData->getBindShapeMatrix(), skin->bindShapeMatrix, 0);
 
 	// Cache joint and weight data
 	// COLLADA can have different numbers of joints for a single vertex
 	// We have to make this uniform across all vertices to make it into a GLTF primitive attribute
 	size_t maxJointsPerVertex = 0;
 	const COLLADAFW::UIntValuesArray& jointsPerVertexArray = skinControllerData->getJointsPerVertex();
-	
+
 	size_t totalVertices = 0;
 	for (size_t i = 0; i < jointsPerVertexArray.getCount(); i++) {
 		size_t jointsPerVertex = jointsPerVertexArray[i];
@@ -1300,7 +1463,7 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 		}
 	}
 
-	// Right now most loaders require JOINT and WEIGHT to be `vec4`
+	// JOINTS_0 and WEIGHTS_0 must be `vec4`
 	maxJointsPerVertex = 4;
 
 	GLTF::Accessor::Type type;
@@ -1410,9 +1573,9 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 				}
 			}
 			GLTF::Accessor* weightAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weightArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
-			primitive->attributes["WEIGHT"] = weightAccessor;
+			primitive->attributes["WEIGHTS_0"] = weightAccessor;
 			GLTF::Accessor* jointAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)jointArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
-			primitive->attributes["JOINT"] = jointAccessor;
+			primitive->attributes["JOINTS_0"] = jointAccessor;
 		}
 
 		_skinInstances[skinControllerId] = skin;

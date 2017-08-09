@@ -67,11 +67,36 @@ void GLTF::Node::TransformMatrix::premultiply(GLTF::Node::TransformMatrix* trans
 	}
 }
 
+void GLTF::Node::TransformMatrix::scaleUniform(float scale) {
+	for (int i = 0; i < 11; i++) {
+		this->matrix[i] *= scale;
+	}
+}
+
 bool GLTF::Node::TransformMatrix::isIdentity() {
 	return matrix[0] == 1 && matrix[1] == 0 && matrix[2] == 0 && matrix[3] == 0 &&
 		matrix[4] == 0 && matrix[5] == 1 && matrix[6] == 0 && matrix[7] == 0 &&
 		matrix[8] == 0 && matrix[9] == 0 && matrix[10] == 1 && matrix[11] == 0 &&
 		matrix[12] == 0 && matrix[13] == 0 && matrix[14] == 0 && matrix[15] == 1;
+}
+
+bool GLTF::Node::TransformTRS::isIdentityTranslation() {
+	return translation[0] == 0 && 
+		translation[1] == 0 && 
+		translation[2] == 0;
+}
+
+bool GLTF::Node::TransformTRS::isIdentityRotation() {
+	return rotation[0] == 0 &&
+		rotation[1] == 0 &&
+		rotation[2] == 0 &&
+		rotation[3] == 1;
+}
+
+bool GLTF::Node::TransformTRS::isIdentityScale() {
+	return scale[0] == 1 &&
+		scale[1] == 1 &&
+		scale[2] == 1;
 }
 
 
@@ -220,43 +245,43 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 	if (transform != NULL) {
 		if (transform->type == GLTF::Node::Transform::MATRIX) {
 			GLTF::Node::TransformMatrix* transformMatrix = (GLTF::Node::TransformMatrix*)transform;
-			jsonWriter->Key("matrix");
-			jsonWriter->StartArray();
-			for (int i = 0; i < 16; i++) {
-				jsonWriter->Double(transformMatrix->matrix[i]);
+			if (!transformMatrix->isIdentity()) {
+				jsonWriter->Key("matrix");
+				jsonWriter->StartArray();
+				for (int i = 0; i < 16; i++) {
+					jsonWriter->Double(transformMatrix->matrix[i]);
+				}
+				jsonWriter->EndArray();
 			}
-			jsonWriter->EndArray();
 		} else if (transform->type == GLTF::Node::Transform::TRS) {
 			GLTF::Node::TransformTRS* transformTRS = (GLTF::Node::TransformTRS*)transform;
-			jsonWriter->Key("translation");
-			jsonWriter->StartArray();
-			for (int i = 0; i < 3; i++) {
-				jsonWriter->Double(transformTRS->translation[i]);
+			if (!transformTRS->isIdentityTranslation()) {
+				jsonWriter->Key("translation");
+				jsonWriter->StartArray();
+				for (int i = 0; i < 3; i++) {
+					jsonWriter->Double(transformTRS->translation[i]);
+				}
+				jsonWriter->EndArray();
 			}
-			jsonWriter->EndArray();
 
-			jsonWriter->Key("rotation");
-			jsonWriter->StartArray();
-			for (int i = 0; i < 4; i++) {
-				jsonWriter->Double(transformTRS->rotation[i]);
+			if (!transformTRS->isIdentityRotation()) {
+				jsonWriter->Key("rotation");
+				jsonWriter->StartArray();
+				for (int i = 0; i < 4; i++) {
+					jsonWriter->Double(transformTRS->rotation[i]);
+				}
+				jsonWriter->EndArray();
 			}
-			jsonWriter->EndArray();
 
-			jsonWriter->Key("scale");
-			jsonWriter->StartArray();
-			for (int i = 0; i < 3; i++) {
-				jsonWriter->Double(transformTRS->scale[i]);
-			}
-			jsonWriter->EndArray();
+			if (!transformTRS->isIdentityScale()) {
+				jsonWriter->Key("scale");
+				jsonWriter->StartArray();
+				for (int i = 0; i < 3; i++) {
+					jsonWriter->Double(transformTRS->scale[i]);
+				}
+				jsonWriter->EndArray();
+			} 
 		}
-	}
-	if (skeleton != NULL) {
-		jsonWriter->Key("skeleton");
-		jsonWriter->Int(skeleton->id);
-	}
-	if (jointName != "") {
-		jsonWriter->Key("jointName");
-		jsonWriter->String(jointName.c_str());
 	}
 	if (skin != NULL) {
 		jsonWriter->Key("skin");

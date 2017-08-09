@@ -1,11 +1,14 @@
 #include "GLTFAsset.h"
 
 #include <algorithm>
+#include <functional>
 #include <map>
 #include <set>
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+std::map<GLTF::Image*, GLTF::Texture*> _pbrTextureCache;
 
 GLTF::Asset::Asset() {
 	metadata = new GLTF::Asset::Metadata();
@@ -42,156 +45,281 @@ GLTF::Scene* GLTF::Asset::getDefaultScene() {
 	return scene;
 }
 
-std::set<GLTF::Node*> GLTF::Asset::getAllNodes() {
+std::vector<GLTF::Accessor*> GLTF::Asset::getAllAccessors() {
+	std::set<GLTF::Accessor*> uniqueAccessors;
+	std::vector<GLTF::Accessor*> accessors;
+	for (GLTF::Skin* skin : getAllSkins()) {
+		GLTF::Accessor* inverseBindMatrices = skin->inverseBindMatrices;
+		if (inverseBindMatrices != NULL) {
+			if (uniqueAccessors.find(inverseBindMatrices) == uniqueAccessors.end()) {
+				accessors.push_back(inverseBindMatrices);
+				uniqueAccessors.insert(inverseBindMatrices);
+			}
+		}
+	}
+
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+		for (const auto attribute : primitive->attributes) {
+			if (uniqueAccessors.find(attribute.second) == uniqueAccessors.end()) {
+				accessors.push_back(attribute.second);
+				uniqueAccessors.insert(attribute.second);
+			}
+		}
+		GLTF::Accessor* indicesAccessor = primitive->indices;
+		if (indicesAccessor != NULL) {
+			if (uniqueAccessors.find(indicesAccessor) == uniqueAccessors.end()) {
+				accessors.push_back(indicesAccessor);
+				uniqueAccessors.insert(indicesAccessor);
+			}
+		}
+	}
+
+	for (GLTF::Animation* animation : animations) {
+		for (GLTF::Animation::Channel* channel : animation->channels) {
+			GLTF::Animation::Sampler* sampler = channel->sampler;
+			if (uniqueAccessors.find(sampler->input) == uniqueAccessors.end()) {
+				accessors.push_back(sampler->input);
+				uniqueAccessors.insert(sampler->input);
+			}
+			if (uniqueAccessors.find(sampler->output) == uniqueAccessors.end()) {
+				accessors.push_back(sampler->output);
+				uniqueAccessors.insert(sampler->input);
+			}
+		}
+	}
+	return accessors;
+}
+
+std::vector<GLTF::Node*> GLTF::Asset::getAllNodes() {
 	std::vector<GLTF::Node*> nodeStack;
-	std::set<GLTF::Node*> nodes;
+	std::vector<GLTF::Node*> nodes;
+	std::set<GLTF::Node*> uniqueNodes;
 	for (GLTF::Node* node : getDefaultScene()->nodes) {
 		nodeStack.push_back(node);
 	}
 	while (nodeStack.size() > 0) {
 		GLTF::Node* node = nodeStack.back();
-		std::set<GLTF::Node*>::iterator it = std::find(nodes.begin(), nodes.end(), node);
-		if (it == nodes.end()) {
-			nodes.insert(node);
+		if (uniqueNodes.find(node) == uniqueNodes.end()) {
+			nodes.push_back(node);
+			uniqueNodes.insert(node);
 		}
 		nodeStack.pop_back();
 		for (GLTF::Node* child : node->children) {
 			nodeStack.push_back(child);
 		}
-		if (node->skeleton != NULL) {
-			nodeStack.push_back(node->skeleton);
+		GLTF::Skin* skin = node->skin;
+		if (skin != NULL) {
+			GLTF::Node* skeleton = skin->skeleton;
+			if (skeleton != NULL) {
+				nodeStack.push_back(skeleton);
+			}
+			for (GLTF::Node* jointNode : skin->joints) {
+				nodeStack.push_back(jointNode);
+			}
 		}
 	}
 	return nodes;
 }
 
-std::set<GLTF::Mesh*> GLTF::Asset::getAllMeshes() {
-	std::set<GLTF::Mesh*> meshes;
+std::vector<GLTF::Mesh*> GLTF::Asset::getAllMeshes() {
+	std::vector<GLTF::Mesh*> meshes;
+	std::set<GLTF::Mesh*> uniqueMeshes;
 	for (GLTF::Node* node : getAllNodes()) {
 		if (node->mesh != NULL) {
-			meshes.insert(node->mesh);
+			if (uniqueMeshes.find(node->mesh) == uniqueMeshes.end()) {
+				meshes.push_back(node->mesh);
+				uniqueMeshes.insert(node->mesh);
+			}
 		}
 	}
 	return meshes;
 }
 
-std::set<GLTF::Primitive*> GLTF::Asset::getAllPrimitives() {
-	std::set<GLTF::Primitive*> primitives;
+std::vector<GLTF::Primitive*> GLTF::Asset::getAllPrimitives() {
+	std::vector<GLTF::Primitive*> primitives;
+	std::set<GLTF::Primitive*> uniquePrimitives;
 	for (GLTF::Mesh* mesh : getAllMeshes()) {
 		for (GLTF::Primitive* primitive : mesh->primitives) {
-			primitives.insert(primitive);
+			if (uniquePrimitives.find(primitive) == uniquePrimitives.end()) {
+				primitives.push_back(primitive);
+				uniquePrimitives.insert(primitive);
+			}
 		}
 	}
 	return primitives;
 }
 
-std::set<GLTF::Skin*> GLTF::Asset::getAllSkins() {
-	std::set<GLTF::Skin*> skins;
+std::vector<GLTF::Skin*> GLTF::Asset::getAllSkins() {
+	std::vector<GLTF::Skin*> skins;
+	std::set<GLTF::Skin*> uniqueSkins;
 	for (GLTF::Node* node : getAllNodes()) {
 		GLTF::Skin* skin = node->skin;
 		if (skin != NULL) {
-			skins.insert(skin);
+			if (uniqueSkins.find(skin) == uniqueSkins.end()) {
+				skins.push_back(skin);
+				uniqueSkins.insert(skin);
+			}
 		}
 	}
 	return skins;
 }
 
-std::set<GLTF::Material*> GLTF::Asset::getAllMaterials() {
-	std::set<GLTF::Material*> materials;
+std::vector<GLTF::Material*> GLTF::Asset::getAllMaterials() {
+	std::vector<GLTF::Material*> materials;
+	std::set<GLTF::Material*> uniqueMaterials;
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
 		GLTF::Material* material = primitive->material;
 		if (material != NULL) {
-			materials.insert(material);
+			if (uniqueMaterials.find(material) == uniqueMaterials.end()) {
+				materials.push_back(material);
+				uniqueMaterials.insert(material);
+			}
 		}
 	}
 	return materials;
 }
 
-std::set<GLTF::Technique*> GLTF::Asset::getAllTechniques() {
-	std::set<GLTF::Technique*> techniques;
+std::vector<GLTF::Technique*> GLTF::Asset::getAllTechniques() {
+	std::vector<GLTF::Technique*> techniques;
+	std::set<GLTF::Technique*> uniqueTechniques;
 	for (GLTF::Material* material : getAllMaterials()) {
 		GLTF::Technique* technique = material->technique;
 		if (technique != NULL) {
-			techniques.insert(technique);
+			if (uniqueTechniques.find(technique) == uniqueTechniques.end()) {
+				techniques.push_back(technique);
+				uniqueTechniques.insert(technique);
+			}
 		}
 	}
 	return techniques;
 }
 
-std::set<GLTF::Program*> GLTF::Asset::getAllPrograms() {
-	std::set<GLTF::Program*> programs;
+std::vector<GLTF::Program*> GLTF::Asset::getAllPrograms() {
+	std::vector<GLTF::Program*> programs;
+	std::set<GLTF::Program*> uniquePrograms;
 	for (GLTF::Technique* technique : getAllTechniques()) {
 		GLTF::Program* program = technique->program;
 		if (program != NULL) {
-			programs.insert(program);
+			if (uniquePrograms.find(program) == uniquePrograms.end()) {
+				programs.push_back(program);
+				uniquePrograms.insert(program);
+			}
 		}
 	}
 	return programs;
 }
-std::set<GLTF::Shader*> GLTF::Asset::getAllShaders() {
-	std::set<GLTF::Shader*> shaders;
+std::vector<GLTF::Shader*> GLTF::Asset::getAllShaders() {
+	std::vector<GLTF::Shader*> shaders;
+	std::set<GLTF::Shader*> uniqueShaders;
 	for (GLTF::Program* program : getAllPrograms()) {
 		GLTF::Shader* vertexShader = program->vertexShader;
 		if (vertexShader != NULL) {
-			shaders.insert(vertexShader);
+			if (uniqueShaders.find(vertexShader) == uniqueShaders.end()) {
+				shaders.push_back(vertexShader);
+				uniqueShaders.insert(vertexShader);
+			}
 		}
 		GLTF::Shader* fragmentShader = program->fragmentShader;
 		if (fragmentShader != NULL) {
-			shaders.insert(fragmentShader);
+			if (uniqueShaders.find(vertexShader) == uniqueShaders.end()) {
+				shaders.push_back(fragmentShader);
+				uniqueShaders.insert(fragmentShader);
+			}
 		}
 	}
 	return shaders;
 }
 
-std::set<GLTF::Texture*> GLTF::Asset::getAllTextures() {
-	std::set<GLTF::Texture*> textures;
+std::vector<GLTF::Texture*> GLTF::Asset::getAllTextures() {
+	std::vector<GLTF::Texture*> textures;
+	std::set<GLTF::Texture*> uniqueTextures;
 	for (GLTF::Material* material : getAllMaterials()) {
 		if (material->type == GLTF::Material::MATERIAL || material->type == GLTF::Material::MATERIAL_COMMON) {
 			GLTF::Material::Values* values = material->values;
 			if (values->ambientTexture != NULL) {
-				textures.insert(values->ambientTexture);
+				if (uniqueTextures.find(values->ambientTexture) == uniqueTextures.end()) {
+					textures.push_back(values->ambientTexture);
+					uniqueTextures.insert(values->ambientTexture);
+				}
 			}
 			if (values->diffuseTexture != NULL) {
-				textures.insert(values->diffuseTexture);
+				if (uniqueTextures.find(values->diffuseTexture) == uniqueTextures.end()) {
+					textures.push_back(values->diffuseTexture);
+					uniqueTextures.insert(values->diffuseTexture);
+				}
 			}
 			if (values->emissionTexture != NULL) {
-				textures.insert(values->emissionTexture);
+				if (uniqueTextures.find(values->emissionTexture) == uniqueTextures.end()) {
+					textures.push_back(values->emissionTexture);
+					uniqueTextures.insert(values->emissionTexture);
+				}
 			}
 			if (values->specularTexture != NULL) {
-				textures.insert(values->specularTexture);
+				if (uniqueTextures.find(values->specularTexture) == uniqueTextures.end()) {
+					textures.push_back(values->specularTexture);
+					uniqueTextures.insert(values->specularTexture);
+				}
 			}
 		}
 		else if (material->type == GLTF::Material::PBR_METALLIC_ROUGHNESS) {
 			GLTF::MaterialPBR* materialPBR = (GLTF::MaterialPBR*)material;
 			if (materialPBR->metallicRoughness->baseColorTexture != NULL) {
-				textures.insert(materialPBR->metallicRoughness->baseColorTexture->texture);
+				if (uniqueTextures.find(materialPBR->metallicRoughness->baseColorTexture->texture) == uniqueTextures.end()) {
+					textures.push_back(materialPBR->metallicRoughness->baseColorTexture->texture);
+					uniqueTextures.insert(materialPBR->metallicRoughness->baseColorTexture->texture);
+				}
 			}
 			if (materialPBR->metallicRoughness->metallicRoughnessTexture != NULL) {
-				textures.insert(materialPBR->metallicRoughness->metallicRoughnessTexture->texture);
+				if (uniqueTextures.find(materialPBR->metallicRoughness->metallicRoughnessTexture->texture) == uniqueTextures.end()) {
+					textures.push_back(materialPBR->metallicRoughness->metallicRoughnessTexture->texture);
+					uniqueTextures.insert(materialPBR->metallicRoughness->metallicRoughnessTexture->texture);
+				}
+			}
+			if (materialPBR->emissiveTexture != NULL) {
+				if (uniqueTextures.find(materialPBR->emissiveTexture->texture) == uniqueTextures.end()) {
+					textures.push_back(materialPBR->emissiveTexture->texture);
+					uniqueTextures.insert(materialPBR->emissiveTexture->texture);
+				}
 			}
 			if (materialPBR->normalTexture != NULL) {
-				textures.insert(materialPBR->normalTexture->texture);
+				if (uniqueTextures.find(materialPBR->normalTexture->texture) == uniqueTextures.end()) {
+					textures.push_back(materialPBR->normalTexture->texture);
+					uniqueTextures.insert(materialPBR->normalTexture->texture);
+				}
 			}
 			if (materialPBR->occlusionTexture != NULL) {
-				textures.insert(materialPBR->occlusionTexture->texture);
+				if (uniqueTextures.find(materialPBR->occlusionTexture->texture) == uniqueTextures.end()) {
+					textures.push_back(materialPBR->occlusionTexture->texture);
+					uniqueTextures.insert(materialPBR->occlusionTexture->texture);
+				}
 			}
 			if (materialPBR->specularGlossiness->diffuseTexture != NULL) {
-				textures.insert(materialPBR->specularGlossiness->diffuseTexture->texture);
+				if (uniqueTextures.find(materialPBR->specularGlossiness->diffuseTexture->texture) == uniqueTextures.end()) {
+					textures.push_back(materialPBR->specularGlossiness->diffuseTexture->texture);
+					uniqueTextures.insert(materialPBR->specularGlossiness->diffuseTexture->texture);
+				}
 			}
 			if (materialPBR->specularGlossiness->specularGlossinessTexture != NULL) {
-				textures.insert(materialPBR->specularGlossiness->specularGlossinessTexture->texture);
+				if (uniqueTextures.find(materialPBR->specularGlossiness->specularGlossinessTexture->texture) == uniqueTextures.end()) {
+					textures.push_back(materialPBR->specularGlossiness->specularGlossinessTexture->texture);
+					uniqueTextures.insert(materialPBR->specularGlossiness->specularGlossinessTexture->texture);
+				}
 			}
 		}
 	}
 	return textures;
 }
 
-std::set<GLTF::Image*> GLTF::Asset::getAllImages() {
-	std::set<GLTF::Image*> images;
+std::vector<GLTF::Image*> GLTF::Asset::getAllImages() {
+	std::vector<GLTF::Image*> images;
+	std::set<GLTF::Image*> uniqueImages;
 	for (GLTF::Texture* texture : getAllTextures()) {
 		GLTF::Image* image = texture->source;
 		if (image != NULL) {
-			images.insert(image);
+			if (uniqueImages.find(image) == uniqueImages.end()) {
+				images.push_back(image);
+				uniqueImages.insert(image);
+			}
 		}
 	}
 	return images;
@@ -223,34 +351,67 @@ void GLTF::Asset::removeUnusedSemantics() {
 	}
 }
 
-
-
-void GLTF::Asset::removeUnusedNodes() {
-	std::vector<GLTF::Node*> nodeStack;
-
-	for (GLTF::Node* node : getDefaultScene()->nodes) {
-		nodeStack.push_back(node);
+bool isUnusedNode(GLTF::Node* node, std::set<GLTF::Node*> skinNodes, bool isPbr) {
+	if (node->children.size() == 0 && node->mesh == NULL && node->camera == NULL && node->skin == NULL) {
+		if (isPbr || node->light == NULL || node->light->type == GLTF::MaterialCommon::Light::AMBIENT) {
+			if (std::find(skinNodes.begin(), skinNodes.end(), node) == skinNodes.end()) {
+				return true;
+			}
+		}
 	}
-	while (nodeStack.size() > 0) {
-		GLTF::Node* node = nodeStack.back();
-		nodeStack.pop_back();
-		for (size_t i = 0; i < node->children.size(); i++) {
-			GLTF::Node* child = node->children[i];
-			if (child->children.size() == 0 && child->skeleton == NULL && child->mesh == NULL && child->camera == NULL && child->light == NULL && child->skin == NULL && child->jointName == "") {
-				// this node is extraneous, remove it
-				node->children.erase(node->children.begin() + i);
+	return false;
+}
+
+void GLTF::Asset::removeUnusedNodes(GLTF::Options* options) {
+	std::vector<GLTF::Node*> nodeStack;
+	std::set<GLTF::Node*> skinNodes;
+	bool isPbr = !options->glsl && !options->materialsCommon;
+	for (GLTF::Skin* skin : getAllSkins()) {
+		if (skin->skeleton != NULL) {
+			skinNodes.insert(skin->skeleton);
+		}
+		for (GLTF::Node* jointNode : skin->joints) {
+			skinNodes.insert(jointNode);
+		}
+	}
+
+	GLTF::Scene* defaultScene = getDefaultScene();
+	bool needsPass = true;
+	while (needsPass) {
+		needsPass = false;
+		for (size_t i = 0; i < defaultScene->nodes.size(); i++) {
+			GLTF::Node* node = defaultScene->nodes[i];
+			if (isUnusedNode(node, skinNodes, isPbr)) {
+				defaultScene->nodes.erase(defaultScene->nodes.begin() + i);
 				i--;
-				// add the parent back to the node stack for re-evaluation
-				nodeStack.push_back(node);
 			}
 			else {
-				nodeStack.push_back(child);
+				nodeStack.push_back(node);
+			}
+		}
+		while (nodeStack.size() > 0) {
+			GLTF::Node* node = nodeStack.back();
+			nodeStack.pop_back();
+			for (size_t i = 0; i < node->children.size(); i++) {
+				GLTF::Node* child = node->children[i];
+				if (isUnusedNode(child, skinNodes, isPbr)) {
+					// this node is extraneous, remove it
+					node->children.erase(node->children.begin() + i);
+					i--;
+					if (node->children.size() == 0) {
+						// another pass may be required to clean up the parent
+						needsPass = true;
+					}
+				}
+				else {
+					nodeStack.push_back(child);
+				}
 			}
 		}
 	}
 }
 
-GLTF::BufferView* packAccessorsForTarget(std::vector<GLTF::Accessor*> accessors, GLTF::Constants::WebGL target) {
+GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> accessors, GLTF::Constants::WebGL target, size_t byteStride) {
 	std::map<GLTF::Accessor*, size_t> byteOffsets;
 	size_t byteLength = 0;
 	for (GLTF::Accessor* accessor : accessors) {
@@ -266,25 +427,26 @@ GLTF::BufferView* packAccessorsForTarget(std::vector<GLTF::Accessor*> accessors,
 	GLTF::BufferView* bufferView = new GLTF::BufferView(bufferData, byteLength, target);
 	for (GLTF::Accessor* accessor : accessors) {
 		size_t byteOffset = byteOffsets[accessor];
-		GLTF::Accessor* packedAccessor = new GLTF::Accessor(accessor->type, accessor->componentType, byteOffset, 0, accessor->count, bufferView);
+		GLTF::Accessor* packedAccessor = new GLTF::Accessor(accessor->type, accessor->componentType, byteOffset, accessor->count, bufferView);
 		int numberOfComponents = accessor->getNumberOfComponents();
-		double* component = new double[numberOfComponents];
+		float* component = new float[numberOfComponents];
 		for (int i = 0; i < accessor->count; i++) {
 			accessor->getComponentAtIndex(i, component);
 			packedAccessor->writeComponentAtIndex(i, component);
 		}
 		accessor->byteOffset = packedAccessor->byteOffset;
-		accessor->byteStride = packedAccessor->byteStride;
 		accessor->bufferView = packedAccessor->bufferView;
 	}
 	return bufferView;
 }
 
 GLTF::Buffer* GLTF::Asset::packAccessors() {
+  /*
+<<<<<<< HEAD
 	std::vector<GLTF::Accessor*> attributeAccessors;
 	std::vector<GLTF::Accessor*> indicesAccessors;
 	std::vector<GLTF::Accessor*> animationAccessors;
-  std::vector<GLTF::BufferView*> compressedBufferViews;
+        std::vector<GLTF::BufferView*> compressedBufferViews;
 
 	for (GLTF::Skin* skin : getAllSkins()) {
 		GLTF::Accessor* inverseBindMatrices = skin->inverseBindMatrices;
@@ -297,48 +459,81 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 	}
 
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
-    // For primitives using compressed data.
-    auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
-    if (draco_ext_itr != primitive->extensions.end()) {
-      compressedBufferViews.push_back(((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView);
-      continue;
-    }
+          // For primitives using compressed data.
+          auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
+          if (draco_ext_itr != primitive->extensions.end()) {
+            compressedBufferViews.push_back(((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView);
+            continue;
+          }
+          for (const auto attribute : primitive->attributes) {
+            GLTF::Accessor* attributeAccessor = attribute.second;
+            std::vector<GLTF::Accessor*>::iterator it = std::find(attributeAccessors.begin(), attributeAccessors.end(), attributeAccessor);
+            // Accessors might not have bufferViews.
+            if (it == attributeAccessors.end() &&
+                attributeAccessor->bufferView != NULL) {
+              attributeAccessors.push_back(attributeAccessor);
+            }
+          }
+          GLTF::Accessor* indicesAccessor = primitive->indices;
+          if (indicesAccessor != NULL) {
+            std::vector<GLTF::Accessor*>::iterator it = std::find(indicesAccessors.begin(), indicesAccessors.end(), indicesAccessor);
+            if (it == indicesAccessors.end() &&
+                indicesAccessor->bufferView != NULL) {
+              indicesAccessors.push_back(indicesAccessor);
+            }
+=======
+*/
+	std::map<GLTF::Constants::WebGL, std::map<int, std::vector<GLTF::Accessor*>>> accessorGroups;
+	accessorGroups[GLTF::Constants::WebGL::ARRAY_BUFFER] = std::map<int, std::vector<GLTF::Accessor*>>();
+	accessorGroups[GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER] = std::map<int, std::vector<GLTF::Accessor*>>();
+	accessorGroups[(GLTF::Constants::WebGL)-1] = std::map<int, std::vector<GLTF::Accessor*>>();
 
-		for (const auto attribute : primitive->attributes) {
-			GLTF::Accessor* attributeAccessor = attribute.second;
-			std::vector<GLTF::Accessor*>::iterator it = std::find(attributeAccessors.begin(), attributeAccessors.end(), attributeAccessor);
-      // Accessors might not have bufferViews.
-			if (it == attributeAccessors.end() &&
-          attributeAccessor->bufferView != NULL) {
-				attributeAccessors.push_back(attributeAccessor);
-			}
+	size_t byteLength = 0;
+	for (GLTF::Accessor* accessor : getAllAccessors()) {
+		GLTF::Constants::WebGL target = accessor->bufferView->target;
+		auto targetGroup = accessorGroups[target];
+		int byteStride = accessor->getByteStride();
+		auto findByteStrideGroup = targetGroup.find(byteStride);
+		std::vector<GLTF::Accessor*> byteStrideGroup;
+		if (findByteStrideGroup == targetGroup.end()) {
+			byteStrideGroup = std::vector<GLTF::Accessor*>();
 		}
-		GLTF::Accessor* indicesAccessor = primitive->indices;
-		if (indicesAccessor != NULL) {
-			std::vector<GLTF::Accessor*>::iterator it = std::find(indicesAccessors.begin(), indicesAccessors.end(), indicesAccessor);
-			if (it == indicesAccessors.end() &&
-          indicesAccessor->bufferView != NULL) {
-				indicesAccessors.push_back(indicesAccessor);
-			}
+		else {
+			byteStrideGroup = findByteStrideGroup->second;
 		}
+		byteStrideGroup.push_back(accessor);
+		targetGroup[byteStride] = byteStrideGroup;
+		accessorGroups[target] = targetGroup;
+		byteLength += accessor->bufferView->byteLength;
 	}
 
-	for (GLTF::Animation* animation : animations) {
-		for (GLTF::Animation::Channel* channel : animation->channels) {
-			GLTF::Animation::Sampler* sampler = channel->sampler;
-			GLTF::Accessor* input = sampler->input;
-			std::vector<GLTF::Accessor*>::iterator it = std::find(animationAccessors.begin(), animationAccessors.end(), input);
-			if (it == animationAccessors.end()) {
-				animationAccessors.push_back(input);
+	std::vector<int> byteStrides;
+	std::map<int, std::vector<GLTF::BufferView*>> bufferViews;
+	for (auto targetGroup : accessorGroups) {
+		for (auto byteStrideGroup : targetGroup.second) {
+			GLTF::Constants::WebGL target = targetGroup.first;
+			int byteStride = byteStrideGroup.first;
+			GLTF::BufferView* bufferView = packAccessorsForTargetByteStride(byteStrideGroup.second, target, byteStride);
+			if (target == GLTF::Constants::WebGL::ARRAY_BUFFER) {
+				bufferView->byteStride = byteStride;
 			}
-			GLTF::Accessor* output = sampler->output;
-			it = std::find(animationAccessors.begin(), animationAccessors.end(), output);
-			if (it == animationAccessors.end()) {
-				animationAccessors.push_back(output);
+			auto findBufferViews = bufferViews.find(byteStride);
+			std::vector<GLTF::BufferView*> bufferViewGroup;
+			if (findBufferViews == bufferViews.end()) {
+				byteStrides.push_back(byteStride);
+				bufferViewGroup = std::vector<GLTF::BufferView*>();
 			}
+			else {
+				bufferViewGroup = findBufferViews->second;
+			}
+			bufferViewGroup.push_back(bufferView);
+			bufferViews[byteStride] = bufferViewGroup;
 		}
 	}
+	std::sort(byteStrides.begin(), byteStrides.end(), std::greater<int>());
 
+/*
+<<<<<<< HEAD
 	GLTF::BufferView* attributeBufferView = packAccessorsForTarget(attributeAccessors, GLTF::Constants::WebGL::ARRAY_BUFFER);
 	GLTF::BufferView* indicesBufferView = packAccessorsForTarget(indicesAccessors, GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
 	GLTF::BufferView* animationBufferView = packAccessorsForTarget(animationAccessors, (GLTF::Constants::WebGL) - 1);
@@ -371,18 +566,35 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
     byteOffset += compressedBufferView->byteLength;
   }
 	
+=======
+*/
+	// Pack these into a buffer sorted from largest byteStride to smallest
+	unsigned char* bufferData = new unsigned char[byteLength];
 	GLTF::Buffer* buffer = new GLTF::Buffer(bufferData, byteLength);
-	attributeBufferView->buffer = buffer;
-	indicesBufferView->buffer = buffer;
-	indicesBufferView->byteOffset = attributeBufferView->byteLength;
-	animationBufferView->buffer = buffer;
-	animationBufferView->byteOffset = attributeBufferView->byteLength + indicesBufferView->byteLength + padding;
+	size_t byteOffset = 0;
+	for (int byteStride : byteStrides) {
+		for (GLTF::BufferView* bufferView : bufferViews[byteStride]) {
+			std::memcpy(bufferData + byteOffset, bufferView->buffer->data, bufferView->byteLength);
+			bufferView->byteOffset = byteOffset;
+			bufferView->buffer = buffer;
+			byteOffset += bufferView->byteLength;
+		}
+	}
 
   for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
     compressedBufferView->buffer = buffer;
   }
 
 	return buffer;
+}
+
+void GLTF::Asset::requireExtension(std::string extension) {
+	useExtension(extension);
+	extensionsRequired.insert(extension);
+}
+
+void GLTF::Asset::useExtension(std::string extension) {
+	extensionsUsed.insert(extension);
 }
 
 void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
@@ -422,8 +634,12 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 				for (GLTF::Node* child : node->children) {
 					nodeStack.push_back(child);
 				}
-				if (node->skeleton != NULL) {
-					nodeStack.push_back(node->skeleton);
+				if (node->skin != NULL) {
+					GLTF::Skin* skin = node->skin;
+					if (skin->skeleton != NULL) {
+						GLTF::Node* skeletonNode = skin->skeleton;
+						nodeStack.push_back(skin->skeleton);
+					}
 				}
 			}
 			jsonWriter->StartObject();
@@ -496,7 +712,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->StartArray();
 		for (GLTF::Mesh* mesh : meshes) {
 			for (GLTF::Primitive* primitive : mesh->primitives) {
-				if (primitive->material) {
+				if (primitive->material && primitive->material->id < 0) {
 					GLTF::Material* material = primitive->material;
 					if (!options->materialsCommon) {
 						if (material->type == GLTF::Material::Type::MATERIAL_COMMON) {
@@ -511,29 +727,52 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 									material->technique = findTechnique->second;
 								}
 								else {
-									material = materialCommon->getMaterial(lights);
+									bool hasColor = primitive->attributes.find("COLOR_0") != primitive->attributes.end();
+									material = materialCommon->getMaterial(lights, hasColor);
 									generatedTechniques[techniqueKey] = material->technique;
 								}
 							}
 							else {
-								material = materialCommon->getMaterialPBR(options->specularGlossiness);
-								if (options->metallicRoughnessTexturePath != "") {
+								GLTF::MaterialPBR* materialPbr = materialCommon->getMaterialPBR(options->specularGlossiness);
+								if (options->lockOcclusionMetallicRoughness && materialPbr->occlusionTexture != NULL) {
 									GLTF::MaterialPBR::Texture* metallicRoughnessTexture = new GLTF::MaterialPBR::Texture();
-									GLTF::Image* image = GLTF::Image::load(options->metallicRoughnessTexturePath);
-									GLTF::Texture* texture = new GLTF::Texture();
-									texture->sampler = globalSampler;
-									texture->source = image;
-									metallicRoughnessTexture->texture = texture;
-									((GLTF::MaterialPBR*)material)->metallicRoughness->metallicRoughnessTexture = metallicRoughnessTexture;
+									metallicRoughnessTexture->texture = materialPbr->occlusionTexture->texture;
+									materialPbr->metallicRoughness->metallicRoughnessTexture = metallicRoughnessTexture;
 								}
+								else if (options->metallicRoughnessTexturePaths.size() > 0) {
+									std::string metallicRoughnessTexturePath = options->metallicRoughnessTexturePaths[0];
+									if (options->metallicRoughnessTexturePaths.size() > 1) {
+										size_t index = materials.size();
+										if (index < options->metallicRoughnessTexturePaths.size()) {
+											metallicRoughnessTexturePath = options->metallicRoughnessTexturePaths[index];
+										}
+									}
+									if (options->metallicRoughnessTexturePaths.size() == 1) {
+										metallicRoughnessTexturePath = options->metallicRoughnessTexturePaths[0];
+									}
+									GLTF::MaterialPBR::Texture* metallicRoughnessTexture = new GLTF::MaterialPBR::Texture();
+									GLTF::Image* image = GLTF::Image::load(metallicRoughnessTexturePath);
+									std::map<GLTF::Image*, GLTF::Texture*>::iterator textureCacheIt = _pbrTextureCache.find(image);
+									GLTF::Texture* texture;
+									if (textureCacheIt == _pbrTextureCache.end()) {
+										texture = new GLTF::Texture();
+										texture->sampler = globalSampler;
+										texture->source = image;
+										_pbrTextureCache[image] = texture;
+									}
+									else {
+										texture = textureCacheIt->second;
+									}
+									metallicRoughnessTexture->texture = texture;
+									materialPbr->metallicRoughness->metallicRoughnessTexture = metallicRoughnessTexture;
+								}
+								material = materialPbr;
 							}
 						}
 					}
 					primitive->material = material;
-					if (material->id < 0) {
-						material->id = materials.size();
-						materials.push_back(material);
-					}
+					material->id = materials.size();
+					materials.push_back(material);
 				}
 				if (primitive->indices) {
 					GLTF::Accessor* indices = primitive->indices;
@@ -655,12 +894,12 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 						techniques.push_back(technique);
 					}
 					if (!usesTechniqueWebGL) {
-						this->extensions.insert("KHR_technique_webgl");
+						this->requireExtension("KHR_technique_webgl");
 						usesTechniqueWebGL = true;
 					}
 				}
 				else if (material->type == GLTF::Material::Type::MATERIAL_COMMON && !usesMaterialsCommon) {
-					this->extensions.insert("KHR_materials_common");
+					this->requireExtension("KHR_materials_common");
 					usesMaterialsCommon = true;
 				}
 				GLTF::Texture* ambientTexture = material->values->ambientTexture;
@@ -708,7 +947,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 				}
 				if (options->specularGlossiness) {
 					if (!usesSpecularGlossiness) {
-						this->extensions.insert("KHR_materials_pbrSpecularGlossiness");
+						this->useExtension("KHR_materials_pbrSpecularGlossiness");
 						usesSpecularGlossiness = true;
 					}
 					GLTF::MaterialPBR::Texture* diffuseTexture = materialPBR->specularGlossiness->diffuseTexture;
@@ -897,16 +1136,18 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	buffers.clear();
 
 	// Write extensionsUsed and extensionsRequired
-	if (this->extensions.size() > 0) {
+	if (this->extensionsRequired.size() > 0) {
 		jsonWriter->Key("extensionsRequired");
 		jsonWriter->StartArray();
-		for (const std::string extension : this->extensions) {
+		for (const std::string extension : this->extensionsRequired) {
 			jsonWriter->String(extension.c_str());
 		}
 		jsonWriter->EndArray();
+	}
+	if (this->extensionsUsed.size() > 0) {
 		jsonWriter->Key("extensionsUsed");
 		jsonWriter->StartArray();
-		for (const std::string extension : this->extensions) {
+		for (const std::string extension : this->extensionsUsed) {
 			jsonWriter->String(extension.c_str());
 		}
 		jsonWriter->EndArray();

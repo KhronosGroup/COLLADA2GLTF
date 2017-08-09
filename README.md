@@ -3,8 +3,10 @@
 </p>
 
 # COLLADA2GLTF
-[![Build Status](https://travis-ci.org/lasalvavida/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/lasalvavida/COLLADA2GLTF)
-[![Build Status](https://ci.appveyor.com/api/projects/status/cmt54n4t1hqwtix9/branch/master)](https://ci.appveyor.com/project/lasalvavida/collada2gltf/history)
+[![Build Status](https://travis-ci.org/KhronosGroup/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/COLLADA2GLTF)
+[![Build Status](https://ci.appveyor.com/api/projects/status/3xtpxjohflwd5t1p/branch/master)](https://ci.appveyor.com/project/Khronoswebmaster/collada2gltf/history)
+
+# COLLADA to glTF converter
 
 A command-line tool to convert COLLADA (`.dae`) files to [glTF 2.0](https://github.com/KhronosGroup/glTF).
 
@@ -63,3 +65,6 @@ COLLADA2GLTF[.exe] [input] [output] [options]
 | -t, --separateTextures | false | No | Output textures separately |
 | -b, --binary | false | No | Output Binary glTF |
 | -m, --materialsCommon | false | No | Output materials using the KHR_materials_common extension |
+| --metallicRoughnessTextures | | No | Paths to images to use as the PBR metallicRoughness textures |
+| --specularGlossiness | false | No | output PBR materials with the KHR_materials_pbrSpecularGlossiness extension |
+| --lockOcclusionMetallicRoughness | false | No | Set `metallicRoughnessTexture` to be the same as the `occlusionTexture` in materials where an ambient texture is defined |

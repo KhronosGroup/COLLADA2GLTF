@@ -22,14 +22,20 @@ namespace GLTF {
 	  float xmag;
 	  float ymag;
 
+	  CameraOrthographic() {
+		  type = Type::ORTHOGRAPHIC;
+	  }
 	  virtual void writeJSON(void* writer, GLTF::Options* options);
   };
 
   class CameraPerspective : public GLTF::Camera {
   public:
-	  float aspectRatio;
+	  float aspectRatio = 0;
 	  float yfov;
 
+	  CameraPerspective() {
+		  type = Type::PERSPECTIVE;
+	  }
 	  virtual void writeJSON(void* writer, GLTF::Options* options);
   };
 }
