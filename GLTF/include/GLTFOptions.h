@@ -16,7 +16,7 @@ namespace GLTF {
 		bool binary = false;
 		bool lockOcclusionMetallicRoughness = false;
 		bool materialsCommon = false;
-                bool dracoCompression = true;
+		bool dracoCompression = true;
 		bool glsl = false;
 		bool specularGlossiness = false;
 		std::vector<std::string> metallicRoughnessTexturePaths;

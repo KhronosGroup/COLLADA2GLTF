@@ -580,10 +580,11 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 			byteOffset += bufferView->byteLength;
 		}
 	}
-
+/*
   for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
     compressedBufferView->buffer = buffer;
   }
+*/
 
 	return buffer;
 }
@@ -789,6 +790,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 					}
 				}
     
+#ifdef USE_DRACO
         // BufferView of compressed data does not belong to Accessors.
         auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
         if (draco_ext_itr != primitive->extensions.end()) {
@@ -798,6 +800,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
             bufferViews.push_back(bufferView);
           }
         }
+#endif
 			}
 			jsonWriter->StartObject();
 			mesh->writeJSON(writer, options);
@@ -871,8 +874,10 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 		}
 		jsonWriter->EndArray();
 	}
+#ifdef USE_DRACO
   if (options->dracoCompression)
     this->extensions.insert("KHR_draco_mesh_compression");
+#endif
 	meshes.clear();
 	accessors.clear();
 

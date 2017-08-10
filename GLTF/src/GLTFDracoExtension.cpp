@@ -1,12 +1,10 @@
+#ifdef USE_DRACO
 #include "GLTFDracoExtension.h"
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-#define TEST_DRACO
-#ifdef TEST_DRACO
 #include <iostream>
-#endif
 
 const char* GLTF::DracoAttribute::getTypeName() {
 	switch (this->type) {
@@ -60,3 +58,5 @@ void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
   jsonWriter->Key("version");
   jsonWriter->String(this->version.c_str());
 }
+
+#endif // USE_DRACO

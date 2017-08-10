@@ -681,7 +681,8 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
         writeCompressedPrimitive(primitive, buildAttributes, buildIndices);
       } else {
         // Create indices accessor
-        GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
+        GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT,
+            (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
 			  primitive->indices = indices;
 			  // Create attribute accessors
 			  for (const auto& entry : buildAttributes) {
@@ -691,7 +692,8 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				if (semantic.find("TEXCOORD") == 0) {
 					type = GLTF::Accessor::Type::VEC2;
 				}
-				GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)&attributeData[0], attributeData.size() / GLTF::Accessor::getNumberOfComponents(type), GLTF::Constants::WebGL::ARRAY_BUFFER);
+				GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT,
+            (unsigned char*)&attributeData[0], attributeData.size() / GLTF::Accessor::getNumberOfComponents(type), GLTF::Constants::WebGL::ARRAY_BUFFER);
 				primitive->attributes[semantic] = accessor;
 			  }
       }
@@ -792,8 +794,8 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
 #endif
   
   // Compress the mesh
-  int position_quantization = 12;
-  int texcoord_quantization = 10;
+  int position_quantization = 16;
+  int texcoord_quantization = 14;
   int normal_quantization = 10;
       
   draco::EncoderOptions encoder_options = draco::CreateDefaultEncoderOptions();
