@@ -8,7 +8,8 @@
 ./COLLADA2GLTF-bin -i ../../glTF-Sample-Models/sourceModels/ReciprocatingSaw/ReciprocatingSaw.dae -d -s -o ../../gltf-test/sampleModels/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf
 
 ./COLLADA2GLTF-bin -i ../../glTF-Sample-Models/sourceModels/Buggy/Buggy.dae -d -s -o ../../gltf-test/sampleModels/Buggy/glTF-Draco/Buggy.gltf
-
+./COLLADA2GLTF-bin -i ../../glTF-Sample-Models/sourceModels/BoxAnimated/BoxAnimated.dae -d -s -o ../../gltf-test/sampleModels/BoxAnimated/glTF-Draco/BoxAnimated.gltf
+./COLLADA2GLTF-bin -i ../../glTF-Sample-Models/sourceModels/CesiumMilkTruck/CesiumMilkTruck.dae -d -s -o ../../gltf-test/sampleModels/CesiumMilkTruck/glTF-Draco/CesiumMilkTruck.gltf
 
 ./COLLADA2GLTF-bin -i ../../glTF-Sample-Models/sourceModels/RiggedSimple/RiggedSimple.dae -d -s -o ../../gltf-test/sampleModels/RiggedSimple/glTF-Draco/RiggedSimple.gltf
 

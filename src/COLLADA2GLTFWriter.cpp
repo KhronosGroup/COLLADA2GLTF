@@ -680,8 +680,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
         // TODO: Support other modes.
         writeCompressedPrimitive(primitive, buildAttributes, buildIndices);
       }
-        // Create indices accessor
-      
+      // Create indices accessor
       GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR,
           GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0],
           buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
@@ -736,7 +735,6 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
   // Add attributes to Draco mesh.
   // TODO: Right now we are writing each attributes compactly. Need to support
   // interleaved attributes.
-  int totalByteOffset = 0; 
   for (const auto& entry : buildAttributes) {
     // First create Accessor without data.
     std::string semantic = entry.first;
@@ -748,12 +746,10 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
     // TODO: Verify all attributes have the same number.
     draco_extension->vertexCount = vertexCount;
 
-    /*
     // Clear existing accessors.
-    GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, totalByteOffset, 0, vertexCount,
+    GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, 0, vertexCount,
                                                   (GLTF::BufferView*)NULL);
     primitive->attributes[semantic] = accessor;
-    */
 
     std::cout << "Adding " << semantic << " attribute (" << buildAttributes.size() << ") to mesh.\n";
 
@@ -786,8 +782,6 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
       memcpy(&vertex_data[0], &attributeData[i.value() * componentCount], sizeof(float) * componentCount);
       att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
     }
-
-    totalByteOffset += sizeof(float) * attributeData.size();
   }
 #ifdef TEST_DRACO
   draco::ObjEncoder obj_encoder;
@@ -800,7 +794,7 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
 #endif
   
   // Compress the mesh
-  int position_quantization = 12;
+  int position_quantization = 10;
   int texcoord_quantization = 10;
   int normal_quantization = 10;
       
@@ -812,7 +806,7 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
   draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh.get(),
                                        draco::GeometryAttribute::NORMAL, normal_quantization);
       
-  const int speed = 5; 
+  const int speed = 2;
   draco::SetSpeedOptions(&encoder_options, speed, speed);
      
   draco::EncoderBuffer buffer;

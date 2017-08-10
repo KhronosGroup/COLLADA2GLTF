@@ -498,6 +498,8 @@ GLTF::Buffer* GLTF::Asset::packAccessorsWithCompressedAssets() {
 
 	size_t byteLength = 0;
 	for (GLTF::Accessor* accessor : accessors) {
+    if (!accessor->bufferView) { continue;
+    }
 		GLTF::Constants::WebGL target = accessor->bufferView->target;
 		auto targetGroup = accessorGroups[target];
 		int byteStride = accessor->getByteStride();
