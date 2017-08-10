@@ -5,7 +5,7 @@
 #include "rapidjson/writer.h"
 
 #include <iostream>
-
+/*
 const char* GLTF::DracoAttribute::getTypeName() {
 	switch (this->type) {
 	case GLTF::Accessor::Type::SCALAR:
@@ -30,7 +30,7 @@ void GLTF::DracoAttribute::writeJSON(void* writer, GLTF::Options* options) {
   rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
   jsonWriter->String(this->semantic.c_str());
 }
-
+*/
 void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
   rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
@@ -38,16 +38,19 @@ void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
 
   jsonWriter->Key("bufferView");
   jsonWriter->Int(this->bufferView->id);
+  /*
   jsonWriter->Key("indexCount");
   jsonWriter->Int(this->indexCount);
   jsonWriter->Key("vertexCount");
   jsonWriter->Int(this->vertexCount);
+  */
   jsonWriter->Key("attributes");
-  jsonWriter->StartArray();
-  for (const auto& attribute : this->attributes) {
-    attribute->writeJSON(jsonWriter, options);
-  }
-  jsonWriter->EndArray();
+	jsonWriter->StartObject();
+	for (const auto& attribute : this->attribute_to_id) {
+		jsonWriter->Key(attribute.first.c_str());
+		jsonWriter->Int(attribute.second);
+	}
+	jsonWriter->EndObject();
   jsonWriter->Key("version");
   jsonWriter->String(this->version.c_str());
 }

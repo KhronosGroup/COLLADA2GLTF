@@ -719,7 +719,6 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
   primitive->extensions["KHR_draco_mesh_compression"] = (GLTF::Extension*)draco_extension;
 
   // Add faces to Draco mesh.
-  draco_extension->indexCount = buildIndices.size();
   const int numTriangles = buildIndices.size() / 3;
   draco_mesh->SetNumFaces(numTriangles);
   for (draco::FaceIndex i(0); i < numTriangles; ++i) {
@@ -744,11 +743,11 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
     const int componentCount = GLTF::Accessor::getNumberOfComponents(type);
     const int vertexCount = attributeData.size() / componentCount;
     // TODO: Verify all attributes have the same number.
-    draco_extension->vertexCount = vertexCount;
 
     // Clear existing accessors.
-    GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, 0, vertexCount,
-                                                  (GLTF::BufferView*)NULL);
+    GLTF::Accessor* accessor = new GLTF::Accessor(
+        type, GLTF::Constants::WebGL::FLOAT, 0, vertexCount,
+        (GLTF::BufferView*)NULL);
     primitive->attributes[semantic] = accessor;
 
     std::cout << "Adding " << semantic << " attribute (" << buildAttributes.size() << ") to mesh.\n";
@@ -764,9 +763,6 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
     else if (semantic.find("COLOR") == 0)
       att_type = draco::GeometryAttribute::COLOR;
     
-    // Create DracoAttribute in the extension
-    GLTF::DracoAttribute* draco_att = new GLTF::DracoAttribute(semantic, GLTF::Constants::WebGL::FLOAT, type);
-    draco_extension->attributes.push_back(draco_att);
 
     draco::PointAttribute att;
     // TODO: Use accessor's normalized field.
@@ -775,6 +771,9 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
     // First set to use identity mapping and do deduplication later.
     int att_id = draco_mesh->AddAttribute(att, /* identity_mapping */ true, vertexCount);
     draco::PointAttribute *att_ptr = draco_mesh->attribute(att_id);
+
+    //GLTF::DracoAttribute* draco_att = new GLTF::DracoAttribute(semantic);
+    draco_extension->attribute_to_id[semantic] = att_id;
 
     std::cout << "Adding " << vertexCount << " vertex data.\n";
     for (draco::PointIndex i(0); i < vertexCount; ++i) {
