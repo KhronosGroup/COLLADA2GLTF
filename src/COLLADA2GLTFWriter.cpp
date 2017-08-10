@@ -679,23 +679,26 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
           primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
         // TODO: Support other modes.
         writeCompressedPrimitive(primitive, buildAttributes, buildIndices);
-      } else {
+      }
         // Create indices accessor
-        GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT,
-            (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
-			  primitive->indices = indices;
-			  // Create attribute accessors
-			  for (const auto& entry : buildAttributes) {
-			    	std::string semantic = entry.first;
-				std::vector<float> attributeData = entry.second;
-				GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC3;
-				if (semantic.find("TEXCOORD") == 0) {
+      
+      GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR,
+          GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0],
+          buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
+      primitive->indices = indices;
+      // Create attribute accessors
+      for (const auto& entry : buildAttributes) {
+        std::string semantic = entry.first;
+        std::vector<float> attributeData = entry.second;
+        GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC3;
+        if (semantic.find("TEXCOORD") == 0) {
 					type = GLTF::Accessor::Type::VEC2;
-				}
-				GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT,
-            (unsigned char*)&attributeData[0], attributeData.size() / GLTF::Accessor::getNumberOfComponents(type), GLTF::Constants::WebGL::ARRAY_BUFFER);
-				primitive->attributes[semantic] = accessor;
-			  }
+        }
+        GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT,
+            (unsigned char*)&attributeData[0],
+            attributeData.size() / GLTF::Accessor::getNumberOfComponents(type),
+            GLTF::Constants::WebGL::ARRAY_BUFFER);
+        primitive->attributes[semantic] = accessor;
       }
 			mesh->primitives.push_back(primitive);
 			positionMapping[primitive] = mapping;
@@ -745,9 +748,12 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
     // TODO: Verify all attributes have the same number.
     draco_extension->vertexCount = vertexCount;
 
+    /*
+    // Clear existing accessors.
     GLTF::Accessor* accessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, totalByteOffset, 0, vertexCount,
                                                   (GLTF::BufferView*)NULL);
     primitive->attributes[semantic] = accessor;
+    */
 
     std::cout << "Adding " << semantic << " attribute (" << buildAttributes.size() << ") to mesh.\n";
 
@@ -820,7 +826,7 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
   std::memcpy(allocatedData, buffer.data(), buffer.size());
   GLTF::BufferView* bufferView = new GLTF::BufferView(allocatedData, buffer.size());
   draco_extension->bufferView = bufferView;
-  std::cout << "Done! Encoded mesh.\n";
+  std::cout << "Done! Encoded mesh of size " << buffer.size() << ".\n";
   return true;
 }
 

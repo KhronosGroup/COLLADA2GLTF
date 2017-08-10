@@ -45,6 +45,9 @@ namespace GLTF {
 		void removeUnusedSemantics();
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
+#ifdef USE_DRACO
+		GLTF::Buffer* packAccessorsWithCompressedAssets();
+#endif
 		void requireExtension(std::string extension);
 		void useExtension(std::string extension);
 		virtual void writeJSON(void* writer, GLTF::Options* options);

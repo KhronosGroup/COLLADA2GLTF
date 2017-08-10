@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef USE_DRACO
+//#ifdef USE_DRACO
 
 #include <map>
 #include <string>
@@ -40,4 +40,4 @@ namespace GLTF {
   };
 }
 
-#endif // USE_DRACO
+//#endif // USE_DRACO

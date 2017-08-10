@@ -440,26 +440,11 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 	return bufferView;
 }
 
-GLTF::Buffer* GLTF::Asset::packAccessors() {
+#ifdef USE_DRACO
+GLTF::Buffer* packAccessorsWithCompressedAssets() {
   /*
-<<<<<<< HEAD
-	std::vector<GLTF::Accessor*> attributeAccessors;
-	std::vector<GLTF::Accessor*> indicesAccessors;
-	std::vector<GLTF::Accessor*> animationAccessors;
-        std::vector<GLTF::BufferView*> compressedBufferViews;
-
-	for (GLTF::Skin* skin : getAllSkins()) {
-		GLTF::Accessor* inverseBindMatrices = skin->inverseBindMatrices;
-		if (inverseBindMatrices != NULL) {
-			std::vector<GLTF::Accessor*>::iterator it = std::find(attributeAccessors.begin(), attributeAccessors.end(), inverseBindMatrices);
-			if (it == attributeAccessors.end()) {
-				attributeAccessors.push_back(inverseBindMatrices);
-			}
-		}
-	}
-
-	for (GLTF::Primitive* primitive : getAllPrimitives()) {
-          // For primitives using compressed data.
+  for (GLTF::Primitive* primitive : getAllPrimitives()) {
+  // For primitives using compressed data.
           auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
           if (draco_ext_itr != primitive->extensions.end()) {
             compressedBufferViews.push_back(((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView);
@@ -585,6 +570,73 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
     compressedBufferView->buffer = buffer;
   }
 */
+
+	return buffer;
+}
+#endif
+GLTF::Buffer* GLTF::Asset::packAccessors() {
+
+	std::map<GLTF::Constants::WebGL, std::map<int, std::vector<GLTF::Accessor*>>> accessorGroups;
+	accessorGroups[GLTF::Constants::WebGL::ARRAY_BUFFER] = std::map<int, std::vector<GLTF::Accessor*>>();
+	accessorGroups[GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER] = std::map<int, std::vector<GLTF::Accessor*>>();
+	accessorGroups[(GLTF::Constants::WebGL)-1] = std::map<int, std::vector<GLTF::Accessor*>>();
+
+	size_t byteLength = 0;
+	for (GLTF::Accessor* accessor : getAllAccessors()) {
+		GLTF::Constants::WebGL target = accessor->bufferView->target;
+		auto targetGroup = accessorGroups[target];
+		int byteStride = accessor->getByteStride();
+		auto findByteStrideGroup = targetGroup.find(byteStride);
+		std::vector<GLTF::Accessor*> byteStrideGroup;
+		if (findByteStrideGroup == targetGroup.end()) {
+			byteStrideGroup = std::vector<GLTF::Accessor*>();
+		}
+		else {
+			byteStrideGroup = findByteStrideGroup->second;
+		}
+		byteStrideGroup.push_back(accessor);
+		targetGroup[byteStride] = byteStrideGroup;
+		accessorGroups[target] = targetGroup;
+		byteLength += accessor->bufferView->byteLength;
+	}
+
+	std::vector<int> byteStrides;
+	std::map<int, std::vector<GLTF::BufferView*>> bufferViews;
+	for (auto targetGroup : accessorGroups) {
+		for (auto byteStrideGroup : targetGroup.second) {
+			GLTF::Constants::WebGL target = targetGroup.first;
+			int byteStride = byteStrideGroup.first;
+			GLTF::BufferView* bufferView = packAccessorsForTargetByteStride(byteStrideGroup.second, target, byteStride);
+			if (target == GLTF::Constants::WebGL::ARRAY_BUFFER) {
+				bufferView->byteStride = byteStride;
+			}
+			auto findBufferViews = bufferViews.find(byteStride);
+			std::vector<GLTF::BufferView*> bufferViewGroup;
+			if (findBufferViews == bufferViews.end()) {
+				byteStrides.push_back(byteStride);
+				bufferViewGroup = std::vector<GLTF::BufferView*>();
+			}
+			else {
+				bufferViewGroup = findBufferViews->second;
+			}
+			bufferViewGroup.push_back(bufferView);
+			bufferViews[byteStride] = bufferViewGroup;
+		}
+	}
+	std::sort(byteStrides.begin(), byteStrides.end(), std::greater<int>());
+
+	// Pack these into a buffer sorted from largest byteStride to smallest
+	unsigned char* bufferData = new unsigned char[byteLength];
+	GLTF::Buffer* buffer = new GLTF::Buffer(bufferData, byteLength);
+	size_t byteOffset = 0;
+	for (int byteStride : byteStrides) {
+		for (GLTF::BufferView* bufferView : bufferViews[byteStride]) {
+			std::memcpy(bufferData + byteOffset, bufferView->buffer->data, bufferView->byteLength);
+			bufferView->byteOffset = byteOffset;
+			bufferView->buffer = buffer;
+			byteOffset += bufferView->byteLength;
+		}
+	}
 
 	return buffer;
 }
@@ -875,8 +927,9 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->EndArray();
 	}
 #ifdef USE_DRACO
-  if (options->dracoCompression)
-    this->extensions.insert("KHR_draco_mesh_compression");
+  if (options->dracoCompression) {
+    this->useExtension("KHR_draco_mesh_compression");
+  }
 #endif
 	meshes.clear();
 	accessors.clear();

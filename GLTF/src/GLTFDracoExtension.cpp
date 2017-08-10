@@ -1,4 +1,4 @@
-#ifdef USE_DRACO
+//#ifdef USE_DRACO
 #include "GLTFDracoExtension.h"
 
 #include "rapidjson/stringbuffer.h"
@@ -30,10 +30,6 @@ void GLTF::DracoAttribute::writeJSON(void* writer, GLTF::Options* options) {
   rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
   jsonWriter->Key("semantic");
   jsonWriter->String(this->semantic.c_str());
-  jsonWriter->Key("componentType");
-  jsonWriter->Int((int)this->componentType);
-  jsonWriter->Key("type");
-  jsonWriter->String(this->getTypeName());
 }
 
 void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
@@ -59,4 +55,4 @@ void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
   jsonWriter->String(this->version.c_str());
 }
 
-#endif // USE_DRACO
+//#endif // USE_DRACO
