@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "GLTFAnimation.h"
+#include "GLTFDracoExtension.h"
 #include "GLTFObject.h"
 #include "GLTFScene.h"
 
@@ -45,9 +46,9 @@ namespace GLTF {
 		void removeUnusedSemantics();
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
-#ifdef USE_DRACO
+//#ifdef USE_DRACO
 		GLTF::Buffer* packAccessorsWithCompressedAssets();
-#endif
+//#endif
 		void requireExtension(std::string extension);
 		void useExtension(std::string extension);
 		virtual void writeJSON(void* writer, GLTF::Options* options);

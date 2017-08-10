@@ -165,7 +165,17 @@ int main(int argc, const char **argv) {
 
 		asset->removeUnusedNodes(options);
 		asset->removeUnusedSemantics();
-		GLTF::Buffer* buffer = asset->packAccessors();
+    GLTF::Buffer* buffer;
+//#ifdef USE_DRACO
+    if (options->dracoCompression) {
+      buffer = asset->packAccessorsWithCompressedAssets();
+      std::cout << "Pack for compressed glTF asset.\n";
+    } else {
+//#endif
+      buffer = asset->packAccessors();
+//#ifdef USE_DRACO
+    }
+//#endif
 
 		// Create image bufferViews for binary glTF
 		if (options->binary && options->embeddedTextures) {
