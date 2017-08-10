@@ -17,7 +17,7 @@ namespace GLTF {
       DracoAttribute(const std::string& semantic,
           GLTF::Constants::WebGL componentType,
           GLTF::Accessor::Type type) :
-        semantic(semantic), componentType(componentType), type(type) {};
+        semantic(semantic), componentType(componentType), type(type) {}
       
       GLTF::Constants::WebGL componentType;
       std::string semantic;
@@ -29,7 +29,10 @@ namespace GLTF {
   
   class DracoExtension : public GLTF::Object {
     public:
-    
+     DracoExtension() {
+       // TODO: Get it from encoder.
+      version = "0.9.1";
+     } 
       GLTF::BufferView* bufferView = NULL;
       int indexCount = 0;
       int vertexCount = 0;

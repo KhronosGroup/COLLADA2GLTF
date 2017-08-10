@@ -28,7 +28,6 @@ const char* GLTF::DracoAttribute::getTypeName() {
 
 void GLTF::DracoAttribute::writeJSON(void* writer, GLTF::Options* options) {
   rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
-  jsonWriter->Key("semantic");
   jsonWriter->String(this->semantic.c_str());
 }
 
@@ -46,9 +45,7 @@ void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
   jsonWriter->Key("attributes");
   jsonWriter->StartArray();
   for (const auto& attribute : this->attributes) {
-    jsonWriter->StartObject();
     attribute->writeJSON(jsonWriter, options);
-    jsonWriter->EndObject();
   }
   jsonWriter->EndArray();
   jsonWriter->Key("version");

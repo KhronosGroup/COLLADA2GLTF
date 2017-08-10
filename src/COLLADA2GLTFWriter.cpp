@@ -800,8 +800,8 @@ bool COLLADA2GLTF::Writer::writeCompressedPrimitive(GLTF::Primitive* primitive,
 #endif
   
   // Compress the mesh
-  int position_quantization = 16;
-  int texcoord_quantization = 14;
+  int position_quantization = 12;
+  int texcoord_quantization = 10;
   int normal_quantization = 10;
       
   draco::EncoderOptions encoder_options = draco::CreateDefaultEncoderOptions();
