@@ -1004,7 +1004,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	}
 //#ifdef USE_DRACO
   if (options->dracoCompression) {
-    this->requiredExtension("KHR_draco_mesh_compression");
+    this->requireExtension("KHR_draco_mesh_compression");
   }
 //#endif
 	meshes.clear();
