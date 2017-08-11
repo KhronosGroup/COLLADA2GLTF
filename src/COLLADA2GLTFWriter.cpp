@@ -810,6 +810,8 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
     att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
   }
 
+  std::cout << "Mesh now has " << draco_mesh->num_attributes() << " attributes.\n";
+
   return true;
 }
 

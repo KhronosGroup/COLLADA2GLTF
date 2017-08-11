@@ -488,11 +488,24 @@ bool GLTF::Asset::compressPrimitives() {
     const int speed = 2;
     draco::SetSpeedOptions(&encoder_options, speed, speed);
      
+    std::cout << "Mesh now has " << draco_mesh->num_attributes() << " attributes.\n";
     draco::EncoderBuffer buffer;
     if (!draco::EncodeMeshToBuffer(*draco_mesh, encoder_options, &buffer)) {
       std::cerr << "Error: Encode mesh.\n";
       return false;
     }
+/*
+    // Test Decoding
+    draco::DecoderBuffer decoder_buffer;
+    decoder_buffer.Init(buffer.data(), buffer.size());
+    const draco::EncodedGeometryType geom_type = draco::GetEncodedGeometryType(&decoder_buffer);
+    if (geom_type == draco::TRIANGULAR_MESH) {
+      std::unique_ptr<draco::Mesh> in_mesh = draco::DecodeMeshFromBuffer(&decoder_buffer);
+      if (in_mesh) {
+        std::cout << "Decoded Mesh has " << in_mesh->num_attributes() << " attributes.\n";
+      }
+    }
+*/
 
     // Add data to bufferview
     unsigned char* allocatedData = (unsigned char*)malloc(buffer.size());
