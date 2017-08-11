@@ -1,5 +1,15 @@
 #include "GLTFAsset.h"
 
+#define TEST_DRACO
+#ifdef TEST_DRACO
+#include "mesh_io.h"
+#include "obj_encoder.h"
+#include <ctime>
+#include <chrono>
+#include <sstream>
+#include <iostream>
+#endif
+
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -13,9 +23,6 @@ std::map<GLTF::Image*, GLTF::Texture*> _pbrTextureCache;
 GLTF::Asset::Asset() {
 	metadata = new GLTF::Asset::Metadata();
 	globalSampler = new GLTF::Sampler();
-#ifdef USE_DRACO
-  draco_mesh = std::unique_ptr<draco::Mesh>(new draco::Mesh());
-#endif
 }
 
 void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
@@ -446,7 +453,53 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 #ifdef USE_DRACO
 bool GLTF::Asset::compressPrimitives() {
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+    auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
+    if (draco_ext_itr == primitive->extensions.end()) {
+      // No extension exists.
+      continue;
+    }
+    GLTF::DracoExtension* draco_extension = (GLTF::DracoExtension*)draco_ext_itr->second;
+    draco::Mesh *draco_mesh = draco_extension->draco_mesh.get();
 
+#ifdef TEST_DRACO
+ 
+    draco::ObjEncoder obj_encoder;
+    std::time_t result = std::time(nullptr);
+    std::ostringstream oss;
+    oss << "draco_" << result << ".obj";
+    if (!obj_encoder.EncodeToFile(*draco_mesh, oss.str())) {
+      std::cerr << "Error: write to obj file.\n";
+    }
+#endif
+ 
+    // Compress the mesh
+    int position_quantization = 10;
+    int texcoord_quantization = 10;
+    int normal_quantization = 10;
+
+    draco::EncoderOptions encoder_options = draco::CreateDefaultEncoderOptions();
+    draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh,
+                                       draco::GeometryAttribute::POSITION, position_quantization);
+    draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh,
+                                       draco::GeometryAttribute::TEX_COORD, texcoord_quantization);
+    draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh,
+                                       draco::GeometryAttribute::NORMAL, normal_quantization);
+      
+    const int speed = 2;
+    draco::SetSpeedOptions(&encoder_options, speed, speed);
+     
+    draco::EncoderBuffer buffer;
+    if (!draco::EncodeMeshToBuffer(*draco_mesh, encoder_options, &buffer)) {
+      std::cerr << "Error: Encode mesh.\n";
+      return false;
+    }
+
+    // Add data to bufferview
+    unsigned char* allocatedData = (unsigned char*)malloc(buffer.size());
+    std::memcpy(allocatedData, buffer.data(), buffer.size());
+    GLTF::BufferView* bufferView = new GLTF::BufferView(allocatedData, buffer.size());
+    draco_extension->bufferView = bufferView;
+    std::cout << "Done! Encoded mesh of size " << buffer.size() << ".\n";
   }
   return true;
 }
@@ -834,7 +887,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 					material->id = materials.size();
 					materials.push_back(material);
 				}
-//#ifdef USE_DRACO
+#ifdef USE_DRACO
         // BufferView of compressed data does not belong to Accessors.
         auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
         if (draco_ext_itr != primitive->extensions.end()) {
@@ -845,7 +898,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
           }
           continue;
         }
-//#endif
+#endif
 				if (primitive->indices) {
 					GLTF::Accessor* indices = primitive->indices;
 					if (indices->id < 0) {

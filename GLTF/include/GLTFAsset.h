@@ -53,7 +53,6 @@ namespace GLTF {
 		GLTF::Buffer* packAccessors();
 
 #ifdef USE_DRACO
-    std::unique_ptr<draco::Mesh> draco_mesh;
     bool compressPrimitives();
 		GLTF::Buffer* packAccessorsWithCompressedAssets();
 #endif

@@ -51,8 +51,6 @@ void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->Int(attribute.second);
 	}
 	jsonWriter->EndObject();
-  jsonWriter->Key("version");
-  jsonWriter->String(this->version.c_str());
 }
 
 //#endif // USE_DRACO

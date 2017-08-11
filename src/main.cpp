@@ -166,16 +166,24 @@ int main(int argc, const char **argv) {
 		asset->removeUnusedNodes(options);
 		asset->removeUnusedSemantics();
     GLTF::Buffer* buffer;
-//#ifdef USE_DRACO
+
+    if (options->dracoCompression) {
+      asset->compressPrimitives();
+    }
+/*
+#ifdef USE_DRACO
     if (options->dracoCompression) {
       buffer = asset->packAccessorsWithCompressedAssets();
       std::cout << "Pack for compressed glTF asset.\n";
     } else {
-//#endif
+#endif
+*/
       buffer = asset->packAccessors();
-//#ifdef USE_DRACO
+/*
+#ifdef USE_DRACO
     }
-//#endif
+#endif
+*/
 
 		// Create image bufferViews for binary glTF
 		if (options->binary && options->embeddedTextures) {
@@ -226,6 +234,7 @@ int main(int argc, const char **argv) {
 			}
 			else {
 				std::cout << "ERROR: Couldn't write buffer to path '" << uri << "'" << std::endl;
+				std::cout << "ERROR: Buffer size is " << buffer->byteLength << ".\n";
 			}
 		}
 
