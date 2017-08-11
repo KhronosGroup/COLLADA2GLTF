@@ -13,6 +13,9 @@ std::map<GLTF::Image*, GLTF::Texture*> _pbrTextureCache;
 GLTF::Asset::Asset() {
 	metadata = new GLTF::Asset::Metadata();
 	globalSampler = new GLTF::Sampler();
+#ifdef USE_DRACO
+  draco_mesh = std::unique_ptr<draco::Mesh>(new draco::Mesh());
+#endif
 }
 
 void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
@@ -440,7 +443,15 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 	return bufferView;
 }
 
-//#ifdef USE_DRACO
+#ifdef USE_DRACO
+bool GLTF::Asset::compressPrimitives() {
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+
+  }
+  return true;
+}
+
+
 GLTF::Buffer* GLTF::Asset::packAccessorsWithCompressedAssets() {
 	std::set<GLTF::Accessor*> uniqueAccessors;
 	std::vector<GLTF::Accessor*> accessors;
@@ -569,7 +580,7 @@ GLTF::Buffer* GLTF::Asset::packAccessorsWithCompressedAssets() {
 
 	return buffer;
 }
-//#endif
+#endif
 
 GLTF::Buffer* GLTF::Asset::packAccessors() {
 	std::map<GLTF::Constants::WebGL, std::map<int, std::vector<GLTF::Accessor*>>> accessorGroups;

@@ -3,6 +3,9 @@ cmake_minimum_required (VERSION 3.1.0)
 set(PROJECT_NAME COLLADA2GLTF)
 
 project(${PROJECT_NAME})
+
+set(PROJECT_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+
 if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
@@ -16,6 +19,21 @@ endif()
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
 option(USE_DRACO "Use Draco Compression Extension." ON)
+
+# Draco
+if (USE_DRACO)
+  message(STATUS "Using Draco.")
+  add_definitions( -DUSE_DRACO )
+  include_directories(dependencies/draco/)
+  include_directories(dependencies/draco/compression)
+  include_directories(dependencies/draco/compression/config)
+  include_directories(dependencies/draco/core)
+  include_directories(dependencies/draco/io)
+  include_directories(dependencies/draco/mesh)
+  include_directories(dependencies/draco/point_cloud)
+  add_subdirectory(dependencies/draco)
+endif()
+
 
 # GLTF
 include_directories(GLTF/include)
@@ -44,19 +62,6 @@ if(MSVC)
    target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
    target_link_libraries(${PROJECT_NAME} GLTF COLLADASaxFrameworkLoader stdc++fs)
-endif()
-
-# Draco
-if (USE_DRACO)
-  add_definitions( -DUSE_DRACO )
-  include_directories(dependencies/draco/)
-  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/compression)
-  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/compression/config)
-  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/core)
-  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/io)
-  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/mesh)
-  include_directories(${COLLADA2GLTF_SOURCE_DIR}/dependencies/draco/point_cloud)
-  add_subdirectory(dependencies/draco)
 endif()
 
 # ahoy
