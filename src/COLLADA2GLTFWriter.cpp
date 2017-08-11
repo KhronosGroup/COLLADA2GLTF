@@ -784,20 +784,33 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
 
   // Add joint
   std::cout << "Adding JOINTS attribute to mesh.\n";
+  for (int i = 0; i < vertexCount * componentCount; ++i) {
+    std::cout << jointArray[i] << " ";
+  }
   draco::PointAttribute joint_att;
-  joint_att.Init(att_type, NULL, componentCount, draco::DT_UINT16, /* normalized */ false,
-      /* stride */ sizeof(unsigned short) * componentCount, /* byte_offset */ 0);
+  // TODO: For now use as float
+  joint_att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false,
+      /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
   int joint_att_id = draco_mesh->AddAttribute(joint_att, /* identity_mapping */ true, vertexCount);
   draco_extension->attribute_to_id["JOINTS_0"] = joint_att_id;
   att_ptr = draco_mesh->attribute(joint_att_id);
   for (draco::PointIndex i(0); i < vertexCount; ++i) {
-    std::vector<unsigned short> vertex_data(componentCount);
-    memcpy(&vertex_data[0], &jointArray[i.value() * componentCount], sizeof(unsigned short) * componentCount);
+    std::vector<float> vertex_data(componentCount);
+    vertex_data[0] = jointArray[i.value() * componentCount];
+    vertex_data[1] = jointArray[i.value() * componentCount + 1];
+    vertex_data[2] = jointArray[i.value() * componentCount + 2];
+    vertex_data[3] = jointArray[i.value() * componentCount + 3];
+    // memcpy(&vertex_data[0], &jointArray[i.value() * componentCount], sizeof(unsigned short) * componentCount);
     att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
   }
 
   // Add weight
   std::cout << "Adding WEIGHTS attribute to mesh.\n";
+  for (int i = 0; i < vertexCount * componentCount; ++i) {
+    std::cout << weightArray[i] << " ";
+  }
+  std::cout << std::endl;
+
   draco::PointAttribute weight_att;
   weight_att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false,
       /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
@@ -806,7 +819,7 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
   att_ptr = draco_mesh->attribute(weight_att_id);
   for (draco::PointIndex i(0); i < vertexCount; ++i) {
     std::vector<float> vertex_data(componentCount);
-    memcpy(&vertex_data[0], &weightArray[i.value() * componentCount], sizeof(unsigned short) * componentCount);
+    memcpy(&vertex_data[0], &weightArray[i.value() * componentCount], sizeof(float) * componentCount);
     att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
   }
 
