@@ -476,16 +476,19 @@ bool GLTF::Asset::compressPrimitives() {
     int pos_quantization_bits= 14;
     int tex_coords_quantization_bits = 10;
     int normals_quantization_bits = 10;
+    int generic_quantization_bits = 8;
     encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION,
                                      pos_quantization_bits);
     encoder.SetAttributeQuantization(draco::GeometryAttribute::TEX_COORD,
                                      tex_coords_quantization_bits);
     encoder.SetAttributeQuantization(draco::GeometryAttribute::NORMAL,
                                      normals_quantization_bits);
+    //encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC,
+    //                                 normals_quantization_bits);
     const int speed = 5;
     encoder.SetSpeedOptions(speed, speed);
 
-    std::cout << "Mesh now has " << draco_mesh->num_attributes() << " attributes.\n";
+    // std::cout << "Mesh now has " << draco_mesh->num_attributes() << " attributes.\n";
     draco::EncoderBuffer buffer;
     const draco::Status status = encoder.EncodeMeshToBuffer(*draco_mesh, &buffer);
     if (!status.ok()) {
@@ -511,7 +514,7 @@ bool GLTF::Asset::compressPrimitives() {
     std::memcpy(allocatedData, buffer.data(), buffer.size());
     GLTF::BufferView* bufferView = new GLTF::BufferView(allocatedData, buffer.size());
     draco_extension->bufferView = bufferView;
-    std::cout << "Done! Encoded mesh of size " << buffer.size() << ".\n";
+    // std::cout << "Done! Encoded mesh of size " << buffer.size() << ".\n";
   }
   return true;
 }
@@ -1001,7 +1004,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	}
 //#ifdef USE_DRACO
   if (options->dracoCompression) {
-    this->useExtension("KHR_draco_mesh_compression");
+    this->requiredExtension("KHR_draco_mesh_compression");
   }
 //#endif
 	meshes.clear();

@@ -34,7 +34,7 @@ void GLTF::DracoAttribute::writeJSON(void* writer, GLTF::Options* options) {
 void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
   rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
-  std::cout << "Writing draco extension.\n";
+  // std::cout << "Writing draco extension.\n";
 
   jsonWriter->Key("bufferView");
   jsonWriter->Int(this->bufferView->id);
