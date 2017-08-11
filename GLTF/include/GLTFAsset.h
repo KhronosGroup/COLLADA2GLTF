@@ -6,7 +6,7 @@
 
 #ifdef USE_DRACO
 #include <memory>
-#include "encode.h"
+#include "draco/compression/encode.h"
 #endif
 
 #include "GLTFAnimation.h"

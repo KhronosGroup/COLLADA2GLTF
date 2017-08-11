@@ -10,7 +10,7 @@
 #include "COLLADA2GLTFExtrasHandler.h"
 
 #ifdef USE_DRACO
-#include "encode.h"
+#include "draco/compression/encode.h"
 #endif
 
 namespace COLLADA2GLTF {

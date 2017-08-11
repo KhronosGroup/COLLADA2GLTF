@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "encode.h"
+#include "draco/compression/encode.h"
 #include "GLTFAccessor.h"
 #include "GLTFBufferView.h"
 #include "GLTFConstants.h"

@@ -1,6 +1,5 @@
 #include "GLTFAsset.h"
 
-#define TEST_DRACO
 #ifdef TEST_DRACO
 #include "mesh_io.h"
 #include "obj_encoder.h"
@@ -471,29 +470,29 @@ bool GLTF::Asset::compressPrimitives() {
       std::cerr << "Error: write to obj file.\n";
     }
 #endif
- 
     // Compress the mesh
-    int position_quantization = 10;
-    int texcoord_quantization = 10;
-    int normal_quantization = 10;
+    // Setup encoder options.
+    draco::Encoder encoder;
+    int pos_quantization_bits= 14;
+    int tex_coords_quantization_bits = 10;
+    int normals_quantization_bits = 10;
+    encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION,
+                                     pos_quantization_bits);
+    encoder.SetAttributeQuantization(draco::GeometryAttribute::TEX_COORD,
+                                     tex_coords_quantization_bits);
+    encoder.SetAttributeQuantization(draco::GeometryAttribute::NORMAL,
+                                     normals_quantization_bits);
+    const int speed = 5;
+    encoder.SetSpeedOptions(speed, speed);
 
-    draco::EncoderOptions encoder_options = draco::CreateDefaultEncoderOptions();
-    draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh,
-                                       draco::GeometryAttribute::POSITION, position_quantization);
-    draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh,
-                                       draco::GeometryAttribute::TEX_COORD, texcoord_quantization);
-    draco::SetNamedAttributeQuantization(&encoder_options, *draco_mesh,
-                                       draco::GeometryAttribute::NORMAL, normal_quantization);
-      
-    const int speed = 2;
-    draco::SetSpeedOptions(&encoder_options, speed, speed);
-     
     std::cout << "Mesh now has " << draco_mesh->num_attributes() << " attributes.\n";
     draco::EncoderBuffer buffer;
-    if (!draco::EncodeMeshToBuffer(*draco_mesh, encoder_options, &buffer)) {
+    const draco::Status status = encoder.EncodeMeshToBuffer(*draco_mesh, &buffer);
+    if (!status.ok()) {
       std::cerr << "Error: Encode mesh.\n";
       return false;
     }
+     
 /*
     // Test Decoding
     draco::DecoderBuffer decoder_buffer;
