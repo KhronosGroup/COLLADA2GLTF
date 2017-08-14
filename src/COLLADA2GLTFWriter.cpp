@@ -783,12 +783,6 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
   draco::PointAttribute *att_ptr = nullptr;
 
   // Add joint
-  /*
-  std::cout << "Adding JOINTS attribute to mesh.\n";
-  for (int i = 0; i < vertexCount * componentCount; ++i) {
-    std::cout << jointArray[i] << " ";
-  }
-  */
   draco::PointAttribute joint_att;
   // TODO: For now use as float
   joint_att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false,
@@ -807,13 +801,6 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
   }
 
   // Add weight
-  /*
-  std::cout << "Adding WEIGHTS attribute to mesh.\n";
-  for (int i = 0; i < vertexCount * componentCount; ++i) {
-    std::cout << weightArray[i] << " ";
-  }
-  std::cout << std::endl;
-  */
 
   draco::PointAttribute weight_att;
   weight_att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false,
