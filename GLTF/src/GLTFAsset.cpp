@@ -538,14 +538,19 @@ GLTF::Buffer* GLTF::Asset::packAccessorsWithCompressedAssets() {
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
     // TODO: If some attribute is left not compressed.
     auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
+    bool has_compression = false;
     if (draco_ext_itr != primitive->extensions.end()) {
       compressedBufferViews.push_back(((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView);
-      continue;
+      has_compression = true;
     }
 		for (const auto attribute : primitive->attributes) {
 			if (uniqueAccessors.find(attribute.second) == uniqueAccessors.end()) {
 				accessors.push_back(attribute.second);
 				uniqueAccessors.insert(attribute.second);
+        if (has_compression && attribute.second->bufferView) {
+          delete attribute.second->bufferView;
+          attribute.second->bufferView = NULL;
+        }
 			}
 		}
 		GLTF::Accessor* indicesAccessor = primitive->indices;
@@ -553,6 +558,10 @@ GLTF::Buffer* GLTF::Asset::packAccessorsWithCompressedAssets() {
 			if (uniqueAccessors.find(indicesAccessor) == uniqueAccessors.end()) {
 				accessors.push_back(indicesAccessor);
 				uniqueAccessors.insert(indicesAccessor);
+        if (has_compression && indicesAccessor->bufferView) {
+          delete indicesAccessor->bufferView;
+          indicesAccessor->bufferView = NULL;
+        }
 			}
 		}
 	}
@@ -578,7 +587,8 @@ GLTF::Buffer* GLTF::Asset::packAccessorsWithCompressedAssets() {
 
 	size_t byteLength = 0;
 	for (GLTF::Accessor* accessor : accessors) {
-    if (!accessor->bufferView) { continue;
+    if (!accessor->bufferView) { 
+      continue;
     }
 		GLTF::Constants::WebGL target = accessor->bufferView->target;
 		auto targetGroup = accessorGroups[target];
@@ -912,7 +922,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
             bufferView->id = bufferViews.size();
             bufferViews.push_back(bufferView);
           }
-          continue;
+          // continue;
         }
 #endif
 				if (primitive->indices) {
