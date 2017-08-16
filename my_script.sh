@@ -16,6 +16,7 @@
 ./COLLADA2GLTF-bin -i ../../glTF-Sample-Models/sourceModels/CesiumMan/CesiumMan.dae -d -s -o ../../gltf-test/sampleModels/CesiumMan/glTF-Draco/CesiumMan.gltf
 ./COLLADA2GLTF-bin -i ../../glTF-Sample-Models/sourceModels/Monster/Monster.dae -d -s -o ../../gltf-test/sampleModels/Monster/glTF-Draco/Monster.gltf
 ./COLLADA2GLTF-bin -i ../../glTF-Sample-Models/sourceModels/BrainStem/BrainStem.dae -d -s -o ../../gltf-test/sampleModels/BrainStem/glTF-Draco/BrainStem.gltf
+./COLLADA2GLTF-bin -i ../../glTF-Sample-Models/sourceModels/VC/VC.dae -d -s -o ../../gltf-test/sampleModels/VC/glTF-Draco/VC.gltf
 
 
 
