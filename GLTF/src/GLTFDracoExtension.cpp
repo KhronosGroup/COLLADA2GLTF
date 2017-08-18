@@ -5,32 +5,7 @@
 #include "rapidjson/writer.h"
 
 #include <iostream>
-/*
-const char* GLTF::DracoAttribute::getTypeName() {
-	switch (this->type) {
-	case GLTF::Accessor::Type::SCALAR:
-		return "SCALAR";
-	case GLTF::Accessor::Type::VEC2:
-		return "VEC2";
-	case GLTF::Accessor::Type::VEC3:
-		return "VEC3";
-	case GLTF::Accessor::Type::VEC4:
-		return "VEC4";
-	case GLTF::Accessor::Type::MAT2:
-		return "MAT2";
-	case GLTF::Accessor::Type::MAT3:
-		return "MAT3";
-	case GLTF::Accessor::Type::MAT4:
-		return "MAT4";
-	}
-	return "";
-}
 
-void GLTF::DracoAttribute::writeJSON(void* writer, GLTF::Options* options) {
-  rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
-  jsonWriter->String(this->semantic.c_str());
-}
-*/
 void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
   rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 

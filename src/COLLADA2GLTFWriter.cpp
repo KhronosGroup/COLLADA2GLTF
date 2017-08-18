@@ -527,6 +527,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			}
 
 			if (primitive->mode == GLTF::Primitive::Mode::UNKNOWN) {
+        std::cout << "Warning: Unknown primitive mode.\n";
 				continue;
 			}
 			int count = colladaPrimitive->getPositionIndices().getCount();
@@ -665,11 +666,16 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				buildIndices.push_back(buildIndices[end]);
 				buildIndices.push_back(buildIndices[startFace]);
 			}
-      if (_options->dracoCompression &&
-          primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
-        // TODO: Support other modes.
-        if (!addAttributesToDracoMesh(primitive, buildAttributes, buildIndices))
-          return false;
+      if (_options->dracoCompression ) {
+        if (primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
+          // TODO: Support other modes.
+          if (!addAttributesToDracoMesh(primitive, buildAttributes, buildIndices)) {
+            std::cerr << "Error: adding attributes to draco mesh.\n";
+            return false;
+          }
+        } else {
+          std::cout << "Only support mode Triangles now.\n";
+        }
       }
       // Create indices accessor
       GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR,
@@ -775,7 +781,9 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
     
   auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
   if (draco_ext_itr == primitive->extensions.end()) {
-   return true; 
+    // No extension exists.
+    std::cout << "No extension exists to add controller data.\n";
+    return true; 
   }
   GLTF::DracoExtension* draco_extension = (GLTF::DracoExtension*)draco_ext_itr->second;
   draco::Mesh *draco_mesh = draco_extension->draco_mesh.get();

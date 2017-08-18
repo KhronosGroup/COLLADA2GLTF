@@ -451,14 +451,21 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 
 #ifdef USE_DRACO
 bool GLTF::Asset::compressPrimitives() {
+  int totalPrimitives = 0;
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+    totalPrimitives++;
     auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
     if (draco_ext_itr == primitive->extensions.end()) {
       // No extension exists.
+      std::cout << "No extension exists for the primitive.\n";
       continue;
     }
     GLTF::DracoExtension* draco_extension = (GLTF::DracoExtension*)draco_ext_itr->second;
     draco::Mesh *draco_mesh = draco_extension->draco_mesh.get();
+    if (!draco_mesh) {
+      std::cout << "Mesh already compressed.\n";
+      continue;
+    }
 
 #ifdef TEST_DRACO
  
@@ -477,6 +484,7 @@ bool GLTF::Asset::compressPrimitives() {
     int tex_coords_quantization_bits = 8;
     int normals_quantization_bits = 8;
     int color_quantization_bits = 6;
+    int generic_quantization_bits = 2;
 
     encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION,
                                      pos_quantization_bits);
@@ -486,6 +494,8 @@ bool GLTF::Asset::compressPrimitives() {
                                      normals_quantization_bits);
     encoder.SetAttributeQuantization(draco::GeometryAttribute::COLOR,
                                      color_quantization_bits);
+    // encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC,
+    //                                 generic_quantization_bits);
     const int speed = 5;
     encoder.SetSpeedOptions(speed, speed);
 
@@ -515,8 +525,11 @@ bool GLTF::Asset::compressPrimitives() {
     std::memcpy(allocatedData, buffer.data(), buffer.size());
     GLTF::BufferView* bufferView = new GLTF::BufferView(allocatedData, buffer.size());
     draco_extension->bufferView = bufferView;
+    // Remove the mesh.
+    draco_extension->draco_mesh.reset();
     // std::cout << "Done! Encoded mesh of size " << buffer.size() << ".\n";
   }
+    
   return true;
 }
 
@@ -535,14 +548,20 @@ GLTF::Buffer* GLTF::Asset::packAccessorsWithCompressedAssets() {
 	}
 
 	std::vector<GLTF::BufferView*> compressedBufferViews;
+	std::set<GLTF::BufferView*> uniqueCompressedBufferViews;
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
     // TODO: If some attribute is left not compressed.
     auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
     bool has_compression = false;
     if (draco_ext_itr != primitive->extensions.end()) {
-      compressedBufferViews.push_back(((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView);
       has_compression = true;
+      GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView;
+      if (uniqueCompressedBufferViews.find(bufferView) == uniqueCompressedBufferViews.end()) {
+        compressedBufferViews.push_back(bufferView);
+        uniqueCompressedBufferViews.insert(bufferView);
+      }
     }
+
 		for (const auto attribute : primitive->attributes) {
 			if (uniqueAccessors.find(attribute.second) == uniqueAccessors.end()) {
 				accessors.push_back(attribute.second);

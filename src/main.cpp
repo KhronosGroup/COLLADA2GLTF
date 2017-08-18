@@ -170,7 +170,6 @@ int main(int argc, const char **argv) {
     if (options->dracoCompression) {
       asset->compressPrimitives();
     }
-    
 
 #ifdef USE_DRACO
     if (options->dracoCompression) {
