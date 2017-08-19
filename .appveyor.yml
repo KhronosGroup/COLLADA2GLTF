@@ -21,10 +21,6 @@ configuration:
 - Debug
 - Release
 
-cache:
-- cmake-build/dependencies -> appveyor.yml, .gitmodules
-- cmake-build/GLTF/dependencies -> appveyor.yml, .gitmodules
-
 install:
 - powershell -Command "(gc .gitmodules) -replace 'git@github.com:', 'https://github.com/' | Out-File .gitmodules" -encoding UTF8
 - git submodule update --init --recursive
