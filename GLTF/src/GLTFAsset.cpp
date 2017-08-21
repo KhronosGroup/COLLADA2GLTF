@@ -480,10 +480,10 @@ bool GLTF::Asset::compressPrimitives() {
     // Compress the mesh
     // Setup encoder options.
     draco::Encoder encoder;
-    int pos_quantization_bits= 10;
-    int tex_coords_quantization_bits = 8;
-    int normals_quantization_bits = 8;
-    int color_quantization_bits = 6;
+    int pos_quantization_bits= 6;
+    int tex_coords_quantization_bits = 4;
+    int normals_quantization_bits = 4;
+    int color_quantization_bits = 3;
     int generic_quantization_bits = 2;
 
     encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION,
@@ -494,8 +494,8 @@ bool GLTF::Asset::compressPrimitives() {
                                      normals_quantization_bits);
     encoder.SetAttributeQuantization(draco::GeometryAttribute::COLOR,
                                      color_quantization_bits);
-    // encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC,
-    //                                 generic_quantization_bits);
+    encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC,
+                                     generic_quantization_bits);
     const int speed = 5;
     encoder.SetSpeedOptions(speed, speed);
 
