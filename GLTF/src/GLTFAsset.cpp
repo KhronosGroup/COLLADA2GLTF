@@ -449,6 +449,64 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 	return bufferView;
 }
 
+bool GLTF::Asset::getGeometriesStats() {
+	std::set<GLTF::BufferView*> uniqueBufferViews;
+  std::unordered_map<std::string, int> att_data_size;
+  att_data_size["INDICES"] = 0;
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+    for (auto att : primitive->attributes) {
+      auto att_ptr = att_data_size.find(att.first);
+      if (att_ptr == att_data_size.end()) {
+        att_data_size[att.first] = 0;
+      }
+      if (uniqueBufferViews.find(att.second->bufferView) ==
+          uniqueBufferViews.end()) {
+        uniqueBufferViews.insert(att.second->bufferView);
+        att_data_size[att.first] += att.second->bufferView->byteLength;
+      }
+    }
+    if (uniqueBufferViews.find(primitive->indices->bufferView) ==
+        uniqueBufferViews.end()) {
+      uniqueBufferViews.insert(primitive->indices->bufferView);
+      att_data_size["INDICES"] += primitive->indices->bufferView->byteLength;
+    }
+  }
+  int total_size = 0;
+  for (auto att : att_data_size) {
+    total_size += att.second;
+  }
+
+  std::cout << "Total size : " << total_size << std::endl;
+  att_data_size["ANIMATION"] = 0;
+	for (GLTF::Animation* animation : animations) {
+		for (GLTF::Animation::Channel* channel : animation->channels) {
+			GLTF::Animation::Sampler* sampler = channel->sampler;
+      if (uniqueBufferViews.find(sampler->input->bufferView) ==
+          uniqueBufferViews.end()) {
+        uniqueBufferViews.insert(sampler->input->bufferView);
+        att_data_size["ANIMATION"] += sampler->input->bufferView->byteLength;
+      }
+      if (uniqueBufferViews.find(sampler->output->bufferView) ==
+          uniqueBufferViews.end()) {
+        uniqueBufferViews.insert(sampler->output->bufferView);
+        att_data_size["ANIMATION"] += sampler->output->bufferView->byteLength;
+      }
+    }
+  }
+  for (auto att : att_data_size) {
+    std::cout << att.first << " : " << att.second << std::endl;
+  }
+
+	size_t total_bufferview = 0;
+	for (GLTF::Accessor* accessor : getAllAccessors()) {
+    total_bufferview += accessor->bufferView->byteLength;
+  }
+  std::cout << "Total from bufferView : " << total_bufferview << std::endl;
+  double mesh_percent = (double)total_size / (double)total_bufferview;
+  std::cout << "Mesh percentage : " << mesh_percent * 100.0 << std::endl;
+  return true;
+}
+
 #ifdef USE_DRACO
 bool GLTF::Asset::compressPrimitives() {
   int totalPrimitives = 0;
@@ -480,10 +538,10 @@ bool GLTF::Asset::compressPrimitives() {
     // Compress the mesh
     // Setup encoder options.
     draco::Encoder encoder;
-    int pos_quantization_bits= 6;
-    int tex_coords_quantization_bits = 4;
-    int normals_quantization_bits = 4;
-    int color_quantization_bits = 3;
+    int pos_quantization_bits= 10;
+    int tex_coords_quantization_bits = 8;
+    int normals_quantization_bits = 8;
+    int color_quantization_bits = 6;
     int generic_quantization_bits = 2;
 
     encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION,
@@ -496,8 +554,6 @@ bool GLTF::Asset::compressPrimitives() {
                                      color_quantization_bits);
     encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC,
                                      generic_quantization_bits);
-    const int speed = 5;
-    encoder.SetSpeedOptions(speed, speed);
 
     // std::cout << "Mesh now has " << draco_mesh->num_attributes() << " attributes.\n";
     draco::EncoderBuffer buffer;

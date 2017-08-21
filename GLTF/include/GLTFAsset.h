@@ -52,6 +52,8 @@ namespace GLTF {
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
 
+    bool getGeometriesStats();
+
 #ifdef USE_DRACO
     bool compressPrimitives();
 		GLTF::Buffer* packAccessorsWithCompressedAssets();
