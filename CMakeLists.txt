@@ -3,9 +3,6 @@ cmake_minimum_required (VERSION 3.1.0)
 set(PROJECT_NAME COLLADA2GLTF)
 
 project(${PROJECT_NAME})
-
-set(PROJECT_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
-
 if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
@@ -18,11 +15,10 @@ endif()
 
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
-option(USE_DRACO "Use Draco Compression Extension." ON)
+option(USE_DRACO "Use Draco Compression Extension." OFF)
 
 # Draco
 if (USE_DRACO)
-  message(STATUS "Using Draco.")
   add_definitions( -DUSE_DRACO )
   include_directories(dependencies/draco/src)
   add_subdirectory(dependencies/draco)
@@ -62,19 +58,16 @@ endif()
 include_directories(dependencies/ahoy/include)
 add_subdirectory(dependencies/ahoy)
 
-set(TARGET_LIBS ${PROJECT_NAME} )
-if (MSVC)
-  list(APPEND TARGET_LIBS ahoy)
+add_executable(${PROJECT_NAME}-bin src/main.cpp)
+if(MSVC)
+   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  list(APPEND TARGET_LIBS ahoy stdc++fs)
+   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy stdc++fs)
 endif()
 
 if (USE_DRACO)
-  list(APPEND TARGET_LIBS draco)
+   target_link_libraries(${PROJECT_NAME}-bin draco)
 endif()
-
-add_executable(${PROJECT_NAME}-bin src/main.cpp)
-target_link_libraries(${PROJECT_NAME}-bin ${TARGET_LIBS})
 
 if(TEST_ENABLED)
   enable_testing()

@@ -139,8 +139,8 @@ int main(int argc, const char **argv) {
 		}
                 if (options->dracoCompression) {
 #ifndef USE_DRACO
-                  std::cout << "Warning: Draco compression extension is not enabled. Please rebuild the project using flag -DUSE_DRACO.\n";
-                  options->dracoCompression = 0;
+			std::cout << "Warning: Draco compression extension is not enabled. Please rebuild the project using flag -DUSE_DRACO.\n";
+			options->dracoCompression = false;
 #endif
                 }
 
@@ -165,23 +165,17 @@ int main(int argc, const char **argv) {
 
 		asset->removeUnusedNodes(options);
 		asset->removeUnusedSemantics();
-    GLTF::Buffer* buffer;
-
-    asset->getGeometriesStats();
-    if (options->dracoCompression) {
-      asset->compressPrimitives();
-    }
-
+		GLTF::Buffer* buffer;
 #ifdef USE_DRACO
-    if (options->dracoCompression) {
-      buffer = asset->packAccessorsWithCompressedAssets();
-      std::cout << "Pack for compressed glTF asset.\n";
-    } else {
+		asset->getGeometriesStats();
+		if (options->dracoCompression) {
+			asset->compressPrimitives();
+			buffer = asset->packAccessorsWithCompressedAssets();
+		} else {
 #endif
-
-      buffer = asset->packAccessors();
+			buffer = asset->packAccessors();
 #ifdef USE_DRACO
-    }
+		}
 #endif
 
 
@@ -234,7 +228,6 @@ int main(int argc, const char **argv) {
 			}
 			else {
 				std::cout << "ERROR: Couldn't write buffer to path '" << uri << "'" << std::endl;
-				std::cout << "ERROR: Buffer size is " << buffer->byteLength << ".\n";
 			}
 		}
 

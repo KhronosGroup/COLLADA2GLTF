@@ -73,12 +73,15 @@ namespace COLLADA2GLTF {
 		virtual bool writeLibraryNodes(const COLLADAFW::LibraryNodes* libraryNodes);
 
 		bool writeMesh(const COLLADAFW::Mesh* mesh);
+
 #ifdef USE_DRACO
-    bool addAttributesToDracoMesh(GLTF::Primitive* primitive,
-        const std::map<std::string, std::vector<float>>& buildAttributes,
-        const std::vector<unsigned short>& buildIndices);
-    bool addControllerDataToDracoMesh(GLTF::Primitive* primitive,
-        unsigned short* jointArray, float* weightArray);
+		/** Add attributes of mesh to draco compression extension.*/
+		bool addAttributesToDracoMesh(GLTF::Primitive* primitive,
+				const std::map<std::string, std::vector<float>>& buildAttributes,
+				const std::vector<unsigned short>& buildIndices);
+
+		/** Add joint indices and joint weights to draco compression extension.*/
+		bool addControllerDataToDracoMesh(GLTF::Primitive* primitive, unsigned short* jointArray, float* weightArray);
 #endif
 
 		/** Writes the geometry.
