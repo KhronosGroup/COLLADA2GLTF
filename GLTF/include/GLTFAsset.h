@@ -4,6 +4,12 @@
 #include <string>
 #include <vector>
 
+#ifdef USE_DRACO
+#include <memory>
+#include "draco/compression/encode.h"
+#include "GLTFDracoExtension.h"
+#endif
+
 #include "GLTFAnimation.h"
 #include "GLTFObject.h"
 #include "GLTFScene.h"
@@ -45,6 +51,12 @@ namespace GLTF {
 		void removeUnusedSemantics();
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
+
+#ifdef USE_DRACO
+		bool compressPrimitives();
+		GLTF::Buffer* packAccessorsWithCompressedAssets();
+#endif
+
 		void requireExtension(std::string extension);
 		void useExtension(std::string extension);
 		virtual void writeJSON(void* writer, GLTF::Options* options);

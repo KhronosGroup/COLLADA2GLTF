@@ -81,6 +81,11 @@ int main(int argc, const char **argv) {
 		->defaults(false)
 		->description("set metallicRoughnessTexture to be the same as the occlusionTexture in materials where an ambient texture is defined");
 
+	parser->define("d", &options->dracoCompression)
+		->alias("dracoCompression")
+		->defaults(false)
+		->description("compress the geometries using Draco compression extension");
+
 	if (parser->parse(argc, argv)) {
 		// Resolve and sanitize paths
 		path inputPath = path(options->inputPath);
@@ -132,6 +137,12 @@ int main(int argc, const char **argv) {
 			std::cout << "ERROR: Cannot enable lockOcclusionMetallicRoughness unless the materials are exported as PBR" << std::endl;
 			return -1;
 		}
+                if (options->dracoCompression) {
+#ifndef USE_DRACO
+			std::cout << "Warning: Draco compression extension is not enabled. Please rebuild the project using flag -DUSE_DRACO.\n";
+			options->dracoCompression = false;
+#endif
+                }
 
 		// Create the output directory if it does not exist
 		path outputDirectory = outputPath.parent_path();
@@ -154,7 +165,18 @@ int main(int argc, const char **argv) {
 
 		asset->removeUnusedNodes(options);
 		asset->removeUnusedSemantics();
-		GLTF::Buffer* buffer = asset->packAccessors();
+		GLTF::Buffer* buffer;
+#ifdef USE_DRACO
+		if (options->dracoCompression) {
+			asset->compressPrimitives();
+			buffer = asset->packAccessorsWithCompressedAssets();
+		} else {
+#endif
+			buffer = asset->packAccessors();
+#ifdef USE_DRACO
+		}
+#endif
+
 
 		// Create image bufferViews for binary glTF
 		if (options->binary && options->embeddedTextures) {

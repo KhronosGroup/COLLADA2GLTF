@@ -19,6 +19,15 @@ endif()
 
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
+option(USE_DRACO "Use Draco Compression Extension." OFF)
+
+# Draco
+if (USE_DRACO)
+  add_definitions( -DUSE_DRACO )
+  include_directories(dependencies/draco/src)
+  add_subdirectory(dependencies/draco)
+endif()
+
 
 # GLTF
 include_directories(GLTF/include)
@@ -124,6 +133,10 @@ if(MSVC)
    target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
    target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy stdc++fs)
+endif()
+
+if (USE_DRACO)
+   target_link_libraries(${PROJECT_NAME}-bin draco)
 endif()
 
 if(TEST_ENABLED)

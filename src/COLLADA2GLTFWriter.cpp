@@ -553,7 +553,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			}
 			if (colladaPrimitive->hasTangentIndices()) {
 				semantic = "TANGENT";
-;				buildAttributes[semantic] = std::vector<float>();
+				buildAttributes[semantic] = std::vector<float>();
 				semanticIndices[semantic] = colladaPrimitive->getTangentIndices().getData();
 				semanticData[semantic] = &colladaMesh->getTangents();
 				primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
@@ -665,6 +665,17 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				buildIndices.push_back(buildIndices[end]);
 				buildIndices.push_back(buildIndices[startFace]);
 			}
+#ifdef USE_DRACO
+			if (_options->dracoCompression ) {
+				// TODO: Support other modes.
+				if (primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
+					if (!addAttributesToDracoMesh(primitive, buildAttributes, buildIndices)) {
+						std::cerr << "Error: adding attributes to draco mesh.\n";
+						return false;
+					}
+				}
+			}
+#endif
 			// Create indices accessor
 			GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
 			primitive->indices = indices;
@@ -688,6 +699,103 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	_meshInstances[uniqueId] = mesh;
 	return true;
 }
+
+#ifdef USE_DRACO
+bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<unsigned short>& buildIndices) {
+	// Add extension to primitive.
+	GLTF::DracoExtension* draco_extension = new GLTF::DracoExtension();
+	primitive->extensions["KHR_draco_mesh_compression"] = (GLTF::Extension*)draco_extension;
+
+	// Create Draco mesh for compression.
+	std::unique_ptr<draco::Mesh> draco_mesh(new draco::Mesh());
+	// Add faces to Draco mesh.
+	const int numTriangles = buildIndices.size() / 3;
+	draco_mesh->SetNumFaces(numTriangles);
+	for (draco::FaceIndex i(0); i < numTriangles; ++i) {
+		draco::Mesh::Face face;
+		face[0] = buildIndices[i.value() * 3];
+		face[1] = buildIndices[i.value() * 3 + 1];
+		face[2] = buildIndices[i.value() * 3 + 2];
+		draco_mesh->SetFace(i, face);
+	}
+
+	// Add attributes to Draco mesh.
+	for (const auto& entry : buildAttributes) {
+		// First create Accessor without data.
+		std::string semantic = entry.first;
+		std::vector<float> attributeData = entry.second;
+		GLTF::Accessor::Type type = semantic.find("TEXCOORD") == 0 ? GLTF::Accessor::Type::VEC2 : GLTF::Accessor::Type::VEC3;
+		const int componentCount = GLTF::Accessor::getNumberOfComponents(type);
+		const int vertexCount = attributeData.size() / componentCount;
+
+		// Create attributes for Draco mesh.
+		draco::GeometryAttribute::Type att_type = draco::GeometryAttribute::GENERIC;
+		if (semantic == "POSITION")
+			att_type = draco::GeometryAttribute::POSITION;
+		else if (semantic == "NORMAL")
+			att_type = draco::GeometryAttribute::NORMAL;
+		else if (semantic.find("TEXCOORD") == 0)
+			att_type = draco::GeometryAttribute::TEX_COORD;
+		else if (semantic.find("COLOR") == 0)
+			att_type = draco::GeometryAttribute::COLOR;
+
+		draco::PointAttribute att;
+		att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false, /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
+		int att_id = draco_mesh->AddAttribute(att, /* identity_mapping */ true, vertexCount);
+		draco::PointAttribute *att_ptr = draco_mesh->attribute(att_id);
+		draco_extension->attribute_to_id[semantic] = att_id;
+
+		for (draco::PointIndex i(0); i < vertexCount; ++i) {
+			std::vector<float> vertex_data(componentCount);
+			memcpy(&vertex_data[0], &attributeData[i.value() * componentCount], sizeof(float) * componentCount);
+			att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
+		}
+	}
+	draco_extension->draco_mesh = std::move(draco_mesh);
+	return true;
+}
+
+bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primitive, unsigned short* jointArray, float* weightArray) {
+	const int vertexCount = primitive->attributes["POSITION"]->count;
+	const GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC4;
+	int componentCount = GLTF::Accessor::getNumberOfComponents(type);
+    
+	auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
+	if (draco_ext_itr == primitive->extensions.end()) {
+		// No extension exists.
+		return true; 
+	}
+	GLTF::DracoExtension* draco_extension = (GLTF::DracoExtension*)draco_ext_itr->second;
+	draco::Mesh *draco_mesh = draco_extension->draco_mesh.get();
+	draco::GeometryAttribute::Type att_type = draco::GeometryAttribute::GENERIC;
+	draco::PointAttribute *att_ptr = nullptr;
+
+	// Add joint indices.
+	draco::PointAttribute joint_att;
+	joint_att.Init(att_type, NULL, componentCount, draco::DT_UINT16, /* normalized */ false, /* stride */ sizeof(unsigned short) * componentCount, /* byte_offset */ 0);
+	int joint_att_id = draco_mesh->AddAttribute(joint_att, /* identity_mapping */ true, vertexCount);
+	draco_extension->attribute_to_id["JOINTS_0"] = joint_att_id;
+	att_ptr = draco_mesh->attribute(joint_att_id);
+	for (draco::PointIndex i(0); i < vertexCount; ++i) {
+		std::vector<unsigned short> vertex_data(componentCount);
+		memcpy(&vertex_data[0], &jointArray[i.value() * componentCount], sizeof(unsigned short) * componentCount);
+		att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
+	}
+
+	// Add joint weights
+	draco::PointAttribute weight_att;
+	weight_att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false, /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
+	int weight_att_id = draco_mesh->AddAttribute(weight_att, /* identity_mapping */ true, vertexCount);
+	draco_extension->attribute_to_id["WEIGHTS_0"] = weight_att_id;
+	att_ptr = draco_mesh->attribute(weight_att_id);
+	for (draco::PointIndex i(0); i < vertexCount; ++i) {
+		std::vector<float> vertex_data(componentCount);
+		memcpy(&vertex_data[0], &weightArray[i.value() * componentCount], sizeof(float) * componentCount);
+		att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
+	}
+	return true;
+}
+#endif
 
 bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
 	switch (geometry->getType()) {
@@ -1439,6 +1547,14 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 					weightArray[i * numberOfComponents + j] = weight[j];
 				}
 			}
+
+#ifdef USE_DRACO
+			if (_options->dracoCompression && primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
+					if (!addControllerDataToDracoMesh(primitive, jointArray, weightArray))
+						return false;
+			}
+#endif
+
 			GLTF::Accessor* weightAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weightArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
 			primitive->attributes["WEIGHTS_0"] = weightAccessor;
 			GLTF::Accessor* jointAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)jointArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);

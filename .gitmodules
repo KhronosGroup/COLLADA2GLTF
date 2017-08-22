@@ -10,3 +10,6 @@
 [submodule "dependencies/ahoy"]
 	path = dependencies/ahoy
 	url = https://github.com/lasalvavida/ahoy.git
+[submodule "dependencies/draco"]
+	path = dependencies/draco
+	url = https://github.com/google/draco

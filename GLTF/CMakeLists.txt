@@ -25,6 +25,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
    target_link_libraries(${PROJECT_NAME} stdc++fs)
 endif()
 
+if (USE_DRACO)
+   target_link_libraries(${PROJECT_NAME} draco)
+endif()
+
 if (test)
   enable_testing()
 
