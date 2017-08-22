@@ -167,7 +167,6 @@ int main(int argc, const char **argv) {
 		asset->removeUnusedSemantics();
 		GLTF::Buffer* buffer;
 #ifdef USE_DRACO
-		asset->getGeometriesStats();
 		if (options->dracoCompression) {
 			asset->compressPrimitives();
 			buffer = asset->packAccessorsWithCompressedAssets();
