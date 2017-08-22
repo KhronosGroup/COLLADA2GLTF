@@ -30,7 +30,7 @@ These binaries are updated whenever master changes, the build succeeds, and the 
   cd COLLADA2GLTF
   mkdir build
   cd build
-  cmake .. #-Dtest=ON
+  cmake .. #-Dtest=ON -DUSE_DRACO=ON
   # Linux
   make
   # Windows
@@ -65,6 +65,7 @@ COLLADA2GLTF[.exe] [input] [output] [options]
 | -t, --separateTextures | false | No | Output textures separately |
 | -b, --binary | false | No | Output Binary glTF |
 | -m, --materialsCommon | false | No | Output materials using the KHR_materials_common extension |
+| -d, --dracoCompression | false | No | Output meshes using Draco compression extension, must use `-DUSE_DRACO=ON` flag in CMake when building |
 | --metallicRoughnessTextures | | No | Paths to images to use as the PBR metallicRoughness textures |
 | --specularGlossiness | false | No | output PBR materials with the KHR_materials_pbrSpecularGlossiness extension |
 | --lockOcclusionMetallicRoughness | false | No | Set `metallicRoughnessTexture` to be the same as the `occlusionTexture` in materials where an ambient texture is defined |
