@@ -471,25 +471,23 @@ bool GLTF::Asset::compressPrimitives() {
 		auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
 		if (dracoExtensionPtr == primitive->extensions.end()) {
 			// No extension exists.
-			std::cout << "No extension exists for the primitive.\n";
 			continue;
 		}
 		GLTF::DracoExtension* dracoExtension = (GLTF::DracoExtension*)dracoExtensionPtr->second;
 		draco::Mesh *dracoMesh = dracoExtension->dracoMesh.get();
 		if (!dracoMesh) {
-			std::cout << "Duplicated mesh. Skipped.\n";
 			continue;
 		}
 
 		// Compress the mesh
 		// Setup encoder options.
 		draco::Encoder encoder;
-		int pos_quantization_bits= 14;
-		int tex_coords_quantization_bits = 10;
-		int normals_quantization_bits = 10;
-		int color_quantization_bits = 8;
+		int pos_quantization_bits= 10;
+		int tex_coords_quantization_bits = 8;
+		int normals_quantization_bits = 8;
+		int color_quantization_bits = 6;
 		// Used for compressing joint indices and joint weights.
-		int generic_quantization_bits = 8;
+		int generic_quantization_bits = 2;
 
 		encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION, pos_quantization_bits);
 		encoder.SetAttributeQuantization(draco::GeometryAttribute::TEX_COORD, tex_coords_quantization_bits);

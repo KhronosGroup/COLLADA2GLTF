@@ -667,10 +667,10 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			}
 #ifdef USE_DRACO
 			if (_options->dracoCompression ) {
-				// TODO: Support other modes.
+				// Currently only support triangles. 
 				if (primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
 					if (!addAttributesToDracoMesh(primitive, buildAttributes, buildIndices)) {
-						std::cerr << "Error: adding attributes to draco mesh.\n";
+            // Error adding attributes to draco mesh.
 						return false;
 					}
 				}
