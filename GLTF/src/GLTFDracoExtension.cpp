@@ -12,7 +12,7 @@ void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
 	jsonWriter->Int(this->bufferView->id);
 	jsonWriter->Key("attributes");
 	jsonWriter->StartObject();
-	for (const auto& attribute : this->attribute_to_id) {
+	for (const auto& attribute : this->attributeToId) {
 		jsonWriter->Key(attribute.first.c_str());
 		jsonWriter->Int(attribute.second);
 	}

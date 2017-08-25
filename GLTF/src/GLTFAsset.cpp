@@ -359,16 +359,16 @@ void GLTF::Asset::removeUnusedSemantics() {
 
 #ifdef USE_DRACO
 void GLTF::Asset::removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic) {
-	auto extension_ptr = primitive->extensions.find("KHR_draco_mesh_compression");
-	if (extension_ptr != primitive->extensions.end()) {
-		GLTF::DracoExtension* draco_extension = (GLTF::DracoExtension*)extension_ptr->second;
-		auto att_ptr = draco_extension->attribute_to_id.find(semantic);
-		if (att_ptr != draco_extension->attribute_to_id.end()) {
-			const int att_id = att_ptr->second;
+	auto extensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+	if (extensionPtr != primitive->extensions.end()) {
+		GLTF::DracoExtension* dracoExtension = (GLTF::DracoExtension*)extensionPtr->second;
+		auto attPtr = dracoExtension->attributeToId.find(semantic);
+		if (attPtr != dracoExtension->attributeToId.end()) {
+			const int att_id = attPtr->second;
 			// Remove from the extension.
-			draco_extension->attribute_to_id.erase(att_ptr);
+			dracoExtension->attributeToId.erase(attPtr);
 			// Remove from draco mesh.
-			draco_extension->draco_mesh->DeleteAttribute(att_id);
+			dracoExtension->dracoMesh->DeleteAttribute(att_id);
 		}
 	}
 }
@@ -468,15 +468,15 @@ bool GLTF::Asset::compressPrimitives() {
 	int totalPrimitives = 0;
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
 		totalPrimitives++;
-		auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
-		if (draco_ext_itr == primitive->extensions.end()) {
+		auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+		if (dracoExtensionPtr == primitive->extensions.end()) {
 			// No extension exists.
 			std::cout << "No extension exists for the primitive.\n";
 			continue;
 		}
-		GLTF::DracoExtension* draco_extension = (GLTF::DracoExtension*)draco_ext_itr->second;
-		draco::Mesh *draco_mesh = draco_extension->draco_mesh.get();
-		if (!draco_mesh) {
+		GLTF::DracoExtension* dracoExtension = (GLTF::DracoExtension*)dracoExtensionPtr->second;
+		draco::Mesh *dracoMesh = dracoExtension->dracoMesh.get();
+		if (!dracoMesh) {
 			std::cout << "Duplicated mesh. Skipped.\n";
 			continue;
 		}
@@ -498,7 +498,7 @@ bool GLTF::Asset::compressPrimitives() {
 		encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC, generic_quantization_bits);
 
 		draco::EncoderBuffer buffer;
-		const draco::Status status = encoder.EncodeMeshToBuffer(*draco_mesh, &buffer);
+		const draco::Status status = encoder.EncodeMeshToBuffer(*dracoMesh, &buffer);
 		if (!status.ok()) {
 			std::cerr << "Error: Encode mesh.\n";
 			return false;
@@ -508,9 +508,9 @@ bool GLTF::Asset::compressPrimitives() {
 		unsigned char* allocatedData = (unsigned char*)malloc(buffer.size());
 		std::memcpy(allocatedData, buffer.data(), buffer.size());
 		GLTF::BufferView* bufferView = new GLTF::BufferView(allocatedData, buffer.size());
-		draco_extension->bufferView = bufferView;
+		dracoExtension->bufferView = bufferView;
 		// Remove the mesh so duplicated primitives don't need to compress again.
-		draco_extension->draco_mesh.reset();
+		dracoExtension->dracoMesh.reset();
 	}
 	return true;
 }
@@ -532,11 +532,11 @@ GLTF::Buffer* GLTF::Asset::packAccessorsWithCompressedAssets() {
 	std::vector<GLTF::BufferView*> compressedBufferViews;
 	std::set<GLTF::BufferView*> uniqueCompressedBufferViews;
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
-		auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
+		auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
 		bool has_compression = false;
-		if (draco_ext_itr != primitive->extensions.end()) {
+		if (dracoExtensionPtr != primitive->extensions.end()) {
 			has_compression = true;
-			GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView;
+			GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)dracoExtensionPtr->second)->bufferView;
 			if (uniqueCompressedBufferViews.find(bufferView) == uniqueCompressedBufferViews.end()) {
 				compressedBufferViews.push_back(bufferView);
 				uniqueCompressedBufferViews.insert(bufferView);
@@ -916,9 +916,9 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 				}
 #ifdef USE_DRACO
 				// Find bufferViews of compressed data. These bufferViews does not belong to Accessors.
-				auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
-					if (draco_ext_itr != primitive->extensions.end()) {
-						GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)draco_ext_itr->second)->bufferView;
+				auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+					if (dracoExtensionPtr != primitive->extensions.end()) {
+						GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)dracoExtensionPtr->second)->bufferView;
 						if (bufferView->id < 0) {
 							bufferView->id = bufferViews.size();
 							bufferViews.push_back(bufferView);

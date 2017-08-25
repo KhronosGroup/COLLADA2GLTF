@@ -5,7 +5,6 @@
 #include <vector>
 
 #ifdef USE_DRACO
-#include <memory>
 #include "draco/compression/encode.h"
 #include "GLTFDracoExtension.h"
 #endif

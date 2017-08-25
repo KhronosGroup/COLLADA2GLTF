@@ -703,20 +703,20 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 #ifdef USE_DRACO
 bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<unsigned short>& buildIndices) {
 	// Add extension to primitive.
-	GLTF::DracoExtension* draco_extension = new GLTF::DracoExtension();
-	primitive->extensions["KHR_draco_mesh_compression"] = (GLTF::Extension*)draco_extension;
+	GLTF::DracoExtension* dracoExtension = new GLTF::DracoExtension();
+	primitive->extensions["KHR_draco_mesh_compression"] = (GLTF::Extension*)dracoExtension;
 
 	// Create Draco mesh for compression.
-	std::unique_ptr<draco::Mesh> draco_mesh(new draco::Mesh());
+	std::unique_ptr<draco::Mesh> dracoMesh(new draco::Mesh());
 	// Add faces to Draco mesh.
 	const int numTriangles = buildIndices.size() / 3;
-	draco_mesh->SetNumFaces(numTriangles);
+	dracoMesh->SetNumFaces(numTriangles);
 	for (draco::FaceIndex i(0); i < numTriangles; ++i) {
 		draco::Mesh::Face face;
 		face[0] = buildIndices[i.value() * 3];
 		face[1] = buildIndices[i.value() * 3 + 1];
 		face[2] = buildIndices[i.value() * 3 + 2];
-		draco_mesh->SetFace(i, face);
+		dracoMesh->SetFace(i, face);
 	}
 
 	// Add attributes to Draco mesh.
@@ -741,11 +741,11 @@ bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, 
 
 		draco::PointAttribute att;
 		att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false, /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
-		int att_id = draco_mesh->AddAttribute(att, /* identity_mapping */ true, vertexCount);
-		draco::PointAttribute *att_ptr = draco_mesh->attribute(att_id);
+		int att_id = dracoMesh->AddAttribute(att, /* identity_mapping */ true, vertexCount);
+		draco::PointAttribute *att_ptr = dracoMesh->attribute(att_id);
 		// Unique id of attribute is set to attribute id initially.
 		// To note that the attribute id is not necessary to be the same as unique id after compressing the mesh, but the unqiue id will not change.
-		draco_extension->attribute_to_id[semantic] = att_id;
+		dracoExtension->attributeToId[semantic] = att_id;
 
 		for (draco::PointIndex i(0); i < vertexCount; ++i) {
 			std::vector<float> vertex_data(componentCount);
@@ -753,7 +753,7 @@ bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, 
 			att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
 		}
 	}
-	draco_extension->draco_mesh = std::move(draco_mesh);
+	dracoExtension->dracoMesh = std::move(dracoMesh);
 	return true;
 }
 
@@ -762,23 +762,23 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
 	const GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC4;
 	int componentCount = GLTF::Accessor::getNumberOfComponents(type);
     
-	auto draco_ext_itr = primitive->extensions.find("KHR_draco_mesh_compression");
-	if (draco_ext_itr == primitive->extensions.end()) {
+	auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+	if (dracoExtensionPtr == primitive->extensions.end()) {
 		// No extension exists.
 		return true; 
 	}
-	GLTF::DracoExtension* draco_extension = (GLTF::DracoExtension*)draco_ext_itr->second;
-	draco::Mesh *draco_mesh = draco_extension->draco_mesh.get();
+	GLTF::DracoExtension* dracoExtension = (GLTF::DracoExtension*)dracoExtensionPtr->second;
+	draco::Mesh *dracoMesh = dracoExtension->dracoMesh.get();
 	draco::GeometryAttribute::Type att_type = draco::GeometryAttribute::GENERIC;
 	draco::PointAttribute *att_ptr = nullptr;
 
 	// Add joint indices.
 	draco::PointAttribute joint_att;
 	joint_att.Init(att_type, NULL, componentCount, draco::DT_UINT16, /* normalized */ false, /* stride */ sizeof(unsigned short) * componentCount, /* byte_offset */ 0);
-	int joint_att_id = draco_mesh->AddAttribute(joint_att, /* identity_mapping */ true, vertexCount);
+	int joint_att_id = dracoMesh->AddAttribute(joint_att, /* identity_mapping */ true, vertexCount);
 	// Unique id is set to attribute id initially.
-	draco_extension->attribute_to_id["JOINTS_0"] = joint_att_id;
-	att_ptr = draco_mesh->attribute(joint_att_id);
+	dracoExtension->attributeToId["JOINTS_0"] = joint_att_id;
+	att_ptr = dracoMesh->attribute(joint_att_id);
 	for (draco::PointIndex i(0); i < vertexCount; ++i) {
 		std::vector<unsigned short> vertex_data(componentCount);
 		memcpy(&vertex_data[0], &jointArray[i.value() * componentCount], sizeof(unsigned short) * componentCount);
@@ -788,10 +788,10 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
 	// Add joint weights
 	draco::PointAttribute weight_att;
 	weight_att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false, /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
-	int weight_att_id = draco_mesh->AddAttribute(weight_att, /* identity_mapping */ true, vertexCount);
+	int weight_att_id = dracoMesh->AddAttribute(weight_att, /* identity_mapping */ true, vertexCount);
 	// Unique id is set to attribute id initially.
-	draco_extension->attribute_to_id["WEIGHTS_0"] = weight_att_id;
-	att_ptr = draco_mesh->attribute(weight_att_id);
+	dracoExtension->attributeToId["WEIGHTS_0"] = weight_att_id;
+	att_ptr = dracoMesh->attribute(weight_att_id);
 	for (draco::PointIndex i(0); i < vertexCount; ++i) {
 		std::vector<float> vertex_data(componentCount);
 		memcpy(&vertex_data[0], &weightArray[i.value() * componentCount], sizeof(float) * componentCount);
