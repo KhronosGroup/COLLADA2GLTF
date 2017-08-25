@@ -339,17 +339,40 @@ void GLTF::Asset::removeUnusedSemantics() {
 						if (values->ambientTexture == NULL && values->diffuseTexture == NULL && values->emissionTexture == NULL && values->specularTexture == NULL) {
 							std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
 							primitive->attributes.erase(removeTexcoord);
+#ifdef USE_DRACO
+							removeAttributeFromDracoExtension(primitive, semantic);
+#endif
 						}
 					}
 					else {
 						// Right now we don't support multiple sets of texture coordinates
 						primitive->attributes.erase(removeTexcoord);
+#ifdef USE_DRACO
+						removeAttributeFromDracoExtension(primitive, semantic);
+#endif
 					}
 				}
 			}
 		}
 	}
 }
+
+#ifdef USE_DRACO
+void GLTF::Asset::removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic) {
+	auto extension_ptr = primitive->extensions.find("KHR_draco_mesh_compression");
+	if (extension_ptr != primitive->extensions.end()) {
+		GLTF::DracoExtension* draco_extension = (GLTF::DracoExtension*)extension_ptr->second;
+		auto att_ptr = draco_extension->attribute_to_id.find(semantic);
+		if (att_ptr != draco_extension->attribute_to_id.end()) {
+			const int att_id = att_ptr->second;
+			// Remove from the extension.
+			draco_extension->attribute_to_id.erase(att_ptr);
+			// Remove from draco mesh.
+			draco_extension->draco_mesh->DeleteAttribute(att_id);
+		}
+	}
+}
+#endif
 
 bool isUnusedNode(GLTF::Node* node, std::set<GLTF::Node*> skinNodes, bool isPbr) {
 	if (node->children.size() == 0 && node->mesh == NULL && node->camera == NULL && node->skin == NULL) {

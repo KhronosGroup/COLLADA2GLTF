@@ -54,6 +54,7 @@ namespace GLTF {
 
 #ifdef USE_DRACO
 		bool compressPrimitives();
+		void removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic);
 		GLTF::Buffer* packAccessorsWithCompressedAssets();
 #endif
 
