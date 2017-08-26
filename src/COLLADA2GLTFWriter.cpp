@@ -665,7 +665,6 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				buildIndices.push_back(buildIndices[end]);
 				buildIndices.push_back(buildIndices[startFace]);
 			}
-#ifdef USE_DRACO
 			if (_options->dracoCompression ) {
 				// Currently only support triangles. 
 				if (primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
@@ -675,7 +674,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 					}
 				}
 			}
-#endif
+
 			// Create indices accessor
 			GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
 			primitive->indices = indices;
@@ -700,7 +699,6 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	return true;
 }
 
-#ifdef USE_DRACO
 bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<unsigned short>& buildIndices) {
 	// Add extension to primitive.
 	GLTF::DracoExtension* dracoExtension = new GLTF::DracoExtension();
@@ -799,7 +797,6 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
 	}
 	return true;
 }
-#endif
 
 bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
 	switch (geometry->getType()) {
@@ -1552,12 +1549,10 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 				}
 			}
 
-#ifdef USE_DRACO
-			if (_options->dracoCompression && primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
+			if (_options->dracoCompression) {
 					if (!addControllerDataToDracoMesh(primitive, jointArray, weightArray))
 						return false;
 			}
-#endif
 
 			GLTF::Accessor* weightAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weightArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
 			primitive->attributes["WEIGHTS_0"] = weightAccessor;

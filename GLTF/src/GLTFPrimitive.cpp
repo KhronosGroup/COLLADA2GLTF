@@ -14,12 +14,11 @@ GLTF::Object* GLTF::Primitive::clone(GLTF::Object* clone) {
 		primitive->material = this->material;
 		primitive->mode = this->mode;
 
-#ifdef USE_DRACO
+    // Copy draco compression extension.
 		auto draco_ext_itr = this->extensions.find("KHR_draco_mesh_compression");
 		if (draco_ext_itr != this->extensions.end()) {
 			primitive->extensions["KHR_draco_mesh_compression"] = (GLTF::Extension*)draco_ext_itr->second;
 		}
-#endif
 	}
 	return primitive;
 }

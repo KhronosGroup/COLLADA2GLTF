@@ -4,14 +4,12 @@
 #include <string>
 #include <vector>
 
-#ifdef USE_DRACO
-#include "draco/compression/encode.h"
-#include "GLTFDracoExtension.h"
-#endif
-
 #include "GLTFAnimation.h"
+#include "GLTFDracoExtension.h"
 #include "GLTFObject.h"
 #include "GLTFScene.h"
+
+#include "draco/compression/encode.h"
 
 namespace GLTF {
 	class Asset : public GLTF::Object {
@@ -51,11 +49,12 @@ namespace GLTF {
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
 
-#ifdef USE_DRACO
+    // Functions for Draco compression extension.
+    std::vector<GLTF::BufferView*> getAllCompressedBufferView();
 		bool compressPrimitives();
+    void removeUncompressedBufferViews();
 		void removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic);
 		GLTF::Buffer* packAccessorsWithCompressedAssets();
-#endif
 
 		void requireExtension(std::string extension);
 		void useExtension(std::string extension);

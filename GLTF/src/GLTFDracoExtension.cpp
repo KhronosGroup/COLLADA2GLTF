@@ -1,4 +1,3 @@
-#ifdef USE_DRACO
 #include "GLTFDracoExtension.h"
 
 #include "rapidjson/stringbuffer.h"
@@ -18,5 +17,3 @@ void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
 	}
 	jsonWriter->EndObject();
 }
-
-#endif // USE_DRACO

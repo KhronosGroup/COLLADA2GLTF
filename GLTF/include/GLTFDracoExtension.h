@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef USE_DRACO
-
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -23,5 +21,3 @@ namespace GLTF {
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }
-
-#endif // USE_DRACO

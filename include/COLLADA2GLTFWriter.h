@@ -9,9 +9,7 @@
 #include "COLLADA2GLTFOptions.h"
 #include "COLLADA2GLTFExtrasHandler.h"
 
-#ifdef USE_DRACO
 #include "draco/compression/encode.h"
-#endif
 
 namespace COLLADA2GLTF {
 	class Writer : public COLLADAFW::IWriter {
@@ -74,16 +72,6 @@ namespace COLLADA2GLTF {
 
 		bool writeMesh(const COLLADAFW::Mesh* mesh);
 
-#ifdef USE_DRACO
-		/** Add attributes of mesh to draco compression extension.*/
-		bool addAttributesToDracoMesh(GLTF::Primitive* primitive,
-				const std::map<std::string, std::vector<float>>& buildAttributes,
-				const std::vector<unsigned short>& buildIndices);
-
-		/** Add joint indices and joint weights to draco compression extension.*/
-		bool addControllerDataToDracoMesh(GLTF::Primitive* primitive, unsigned short* jointArray, float* weightArray);
-#endif
-
 		/** Writes the geometry.
 		 @return True on succeeded, false otherwise.*/
 		virtual bool writeGeometry(const COLLADAFW::Geometry* geometry);
@@ -132,5 +120,14 @@ namespace COLLADA2GLTF {
 		/** When this method is called, the writer must write the kinematics scene.
 		 @return The writer should return true, if writing succeeded, false otherwise.*/
 		virtual bool writeKinematicsScene(const COLLADAFW::KinematicsScene* kinematicsScene);
+
+		/** Add attributes of mesh to draco compression extension.*/
+		bool addAttributesToDracoMesh(GLTF::Primitive* primitive,
+				const std::map<std::string, std::vector<float>>& buildAttributes,
+				const std::vector<unsigned short>& buildIndices);
+
+		/** Add joint indices and joint weights to draco compression extension.*/
+		bool addControllerDataToDracoMesh(GLTF::Primitive* primitive, unsigned short* jointArray, float* weightArray);
+
 	};
 }

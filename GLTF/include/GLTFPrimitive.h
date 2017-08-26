@@ -4,9 +4,7 @@
 #include <string>
 
 #include "GLTFAccessor.h"
-#ifdef USE_DRACO
 #include "GLTFDracoExtension.h"
-#endif
 #include "GLTFMaterial.h"
 #include "GLTFObject.h"
 
