@@ -25,6 +25,7 @@ namespace COLLADA2GLTF {
 		std::map<COLLADAFW::UniqueId, std::map<GLTF::Primitive*, std::vector<int>>> _meshPositionMapping;
 		std::map<COLLADAFW::UniqueId, GLTF::Skin*> _skinInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Node*> _animatedNodes;
+		std::map<COLLADAFW::UniqueId, float> _originalRotationAngles;
 		std::map<std::string, std::vector<GLTF::Node*>*> _unboundSkeletonNodes;
 		std::map<std::string, GLTF::Node*> _nodes;
 		std::map<COLLADAFW::UniqueId, std::vector<COLLADAFW::UniqueId>> _skinJointNodes;

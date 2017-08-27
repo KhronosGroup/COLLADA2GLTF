@@ -184,6 +184,10 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			node->transform = transform;
 
 			_animatedNodes[animationListId] = node;
+			if (transformation->getTransformationType() == COLLADAFW::Transformation::ROTATE) {
+				COLLADAFW::Rotate* rotate = (COLLADAFW::Rotate*)transformation;
+				_originalRotationAngles[animationListId] = rotate->getRotationAngle();
+			}
 			isAnimated = true;
 		}
 		else {
@@ -1029,7 +1033,14 @@ void interpolateTranslation(float* base, std::vector<float> input, std::vector<f
 */
 bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* animationList) {
 	const COLLADAFW::AnimationList::AnimationBindings& bindings = animationList->getAnimationBindings();
+	COLLADAFW::UniqueId animationListId = animationList->getUniqueId();
 	GLTF::Node* node = _animatedNodes[animationList->getUniqueId()];
+	float originalRotationAngle = NAN;
+	std::map<COLLADAFW::UniqueId, float>::iterator iter = _originalRotationAngles.find(animationListId);
+	if (iter != _originalRotationAngles.end()) {
+		originalRotationAngle = iter->second;
+	}
+
 	GLTF::Node::Transform* nodeTransform = node->transform;
 	GLTF::Node::TransformTRS* nodeTransformTRS = NULL;
 	std::set<float> timeSet = std::set<float>();
@@ -1217,6 +1228,12 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 				COLLADABU::Math::Vector3 axis;
 				COLLADABU::Math::Quaternion quaternion = COLLADABU::Math::Quaternion(nodeRotation[3], nodeRotation[0], nodeRotation[1], nodeRotation[2]);
 				quaternion.toAngleAxis(angle, axis);
+				if (originalRotationAngle != NAN && fabs(COLLADABU::Math::Utils::degToRad(originalRotationAngle) - angle) > 1e-3) {
+					// Quaternion -> axis angle can flip chirality; check it against the original rotation angle and correct the axis direction
+					axis.x = -axis.x;
+					axis.y = -axis.y;
+					axis.z = -axis.z;
+				}
 				angle = COLLADABU::Math::Utils::degToRad(output[index]);
 				quaternion.fromAngleAxis(angle, axis);
 				rotation[j * 4] = (float)quaternion.x;
