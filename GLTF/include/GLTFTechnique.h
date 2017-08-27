@@ -32,6 +32,7 @@ namespace GLTF {
 		bool* depthMask = NULL;
 		GLTF::Program* program = NULL;
 
+		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

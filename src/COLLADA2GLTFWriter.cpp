@@ -144,10 +144,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	group->push_back(node);
 	const COLLADAFW::UniqueId& colladaNodeId = colladaNode->getUniqueId();
 	std::string id = colladaNode->getOriginalId();
-	node->name = colladaNode->getName();
-	if (node->name == "") {
-		node->name = id;
-	}
 	COLLADAFW::TransformationPointerArray transformations = colladaNode->getTransformations();
 
 	std::vector<const COLLADAFW::Transformation*> nodeTransforms;
@@ -186,7 +182,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			_animatedNodes[animationListId] = node;
 			if (transformation->getTransformationType() == COLLADAFW::Transformation::ROTATE) {
 				COLLADAFW::Rotate* rotate = (COLLADAFW::Rotate*)transformation;
-				_originalRotationAngles[animationListId] = rotate->getRotationAngle();
+				_originalRotationAngles[animationListId] = (float)rotate->getRotationAngle();
 			}
 			isAnimated = true;
 		}
@@ -207,6 +203,12 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			}
 		}
 	}
+	node->name = colladaNode->getName();
+	if (node->name == "") {
+		node->name = id;
+	}
+	node->jointName = colladaNode->getSid();
+	node->stringId = id;
 	transform = new GLTF::Node::TransformMatrix();
 	packColladaMatrix(matrix, transform);
 	if (node->transform == NULL) {
@@ -469,6 +471,7 @@ std::string buildAttributeId(const COLLADAFW::MeshVertexData& data, int index, i
 bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	GLTF::Mesh* mesh = new GLTF::Mesh();
 	mesh->name = colladaMesh->getName();
+	mesh->stringId = colladaMesh->getOriginalId();
 	if (mesh->name == "") {
 		mesh->name = colladaMesh->getOriginalId();
 	}
@@ -739,6 +742,7 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 
 	if (commonEffects.getCount() > 0) {
 		GLTF::MaterialCommon* material = new GLTF::MaterialCommon();
+		material->stringId = effect->getOriginalId();
 		material->name = effect->getName();
 		if (material->name == "") {
 			material->name = effect->getOriginalId();
@@ -911,12 +915,15 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	const COLLADABU::URI imageUri = colladaImage->getImageURI();
 	path imagePath = path(_options->basePath) / imageUri.getURIString();
-	_images[colladaImage->getUniqueId()] = GLTF::Image::load(imagePath);
+	GLTF::Image* image = GLTF::Image::load(imagePath);
+	image->stringId = colladaImage->getOriginalId();
+	_images[colladaImage->getUniqueId()] = image;
 	return true;
 }
 
 bool COLLADA2GLTF::Writer::writeLight(const COLLADAFW::Light* colladaLight) {
 	GLTF::MaterialCommon::Light* light = new GLTF::MaterialCommon::Light();
+	light->stringId = colladaLight->getOriginalId();
 	switch (colladaLight->getLightType()) {
 	case COLLADAFW::Light::AMBIENT_LIGHT:
 		light->type = GLTF::MaterialCommon::Light::Type::AMBIENT;
@@ -1273,7 +1280,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		sampler->input = inputAccessor;
 		sampler->output = outputAccessor;
 		target->node = node;
-		target->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
+		target->path = GLTF::Animation::Path::TRANSLATION;
 		channel->target = target;
 		channel->sampler = sampler;
 		animation->channels.push_back(channel);
@@ -1286,7 +1293,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		sampler->input = inputAccessor;
 		sampler->output = outputAccessor;
 		target->node = node;
-		target->path = GLTF::Animation::Channel::Target::Path::ROTATION;
+		target->path = GLTF::Animation::Path::ROTATION;
 		channel->target = target;
 		channel->sampler = sampler;
 		animation->channels.push_back(channel);
@@ -1299,7 +1306,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		sampler->input = inputAccessor;
 		sampler->output = outputAccessor;
 		target->node = node;
-		target->path = GLTF::Animation::Channel::Target::Path::SCALE;
+		target->path = GLTF::Animation::Path::SCALE;
 		channel->target = target;
 		channel->sampler = sampler;
 		animation->channels.push_back(channel);
@@ -1311,6 +1318,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControllerData* skinControllerData) {
 	GLTF::Skin* skin = new GLTF::Skin();
 	COLLADAFW::UniqueId uniqueId = skinControllerData->getUniqueId();
+	skin->stringId = skinControllerData->getOriginalId();
 	skin->name = skinControllerData->getName();
 	if (skin->name == "") {
 		skin->name = skinControllerData->getOriginalId();

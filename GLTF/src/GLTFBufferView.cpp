@@ -19,17 +19,26 @@ GLTF::BufferView::BufferView(unsigned char* data, int dataLength, GLTF::Constant
 	this->target = target;
 }
 
+std::string GLTF::BufferView::typeName() {
+	return "bufferView";
+}
+
 void GLTF::BufferView::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (this->buffer) {
 		jsonWriter->Key("buffer");
-		jsonWriter->Int(this->buffer->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(buffer->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(this->buffer->id);
+		}
 	}
 	jsonWriter->Key("byteOffset");
 	jsonWriter->Int(this->byteOffset);
 	jsonWriter->Key("byteLength");
 	jsonWriter->Int(this->byteLength);
-	if (byteStride != 0) {
+	if (byteStride != 0 && options->version != "1.0") {
 		jsonWriter->Key("byteStride");
 		jsonWriter->Int(this->byteStride);
 	}

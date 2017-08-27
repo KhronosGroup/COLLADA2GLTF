@@ -23,18 +23,33 @@ void GLTF::Primitive::writeJSON(void* writer, GLTF::Options* options) {
 	jsonWriter->StartObject();
 	for (const auto& attribute : this->attributes) {
 		jsonWriter->Key(attribute.first.c_str());
-		jsonWriter->Int(attribute.second->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(attribute.second->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(attribute.second->id);
+		}
 	}
 	jsonWriter->EndObject();
 	if (this->indices) {
 		jsonWriter->Key("indices");
-		jsonWriter->Int(this->indices->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(indices->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(indices->id);
+		}
 	}
 	jsonWriter->Key("mode");
 	jsonWriter->Int((int)this->mode);
 	if (this->material) {
 		jsonWriter->Key("material");
-		jsonWriter->Int(this->material->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(material->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(material->id);
+		}
 	}
 	GLTF::Object::writeJSON(writer, options);
 }

@@ -245,14 +245,30 @@ bool GLTF::Accessor::equals(GLTF::Accessor* accessor) {
 	return true;
 }
 
+std::string GLTF::Accessor::typeName() {
+	return "accessor";
+}
+
 void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (this->bufferView) {
 		jsonWriter->Key("bufferView");
-		jsonWriter->Int(this->bufferView->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(this->bufferView->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(this->bufferView->id);
+		}
 	}
 	jsonWriter->Key("byteOffset");
 	jsonWriter->Int(this->byteOffset);
+	if (options->version == "1.0") {
+		int byteStride = bufferView->byteStride;
+		if (byteStride != 0) {
+			jsonWriter->Key("byteStride");
+			jsonWriter->Int(bufferView->byteStride);
+		}
+	}
 	jsonWriter->Key("componentType");
 	jsonWriter->Int((int)this->componentType);
 	jsonWriter->Key("count");

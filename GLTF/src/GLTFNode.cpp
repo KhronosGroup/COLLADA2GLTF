@@ -217,20 +217,41 @@ GLTF::Node::TransformMatrix* GLTF::Node::TransformTRS::getTransformMatrix() {
 	return result;
 }
 
+std::string GLTF::Node::typeName() {
+	return "node";
+}
+
 void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	
 	if (mesh != NULL) {
-		jsonWriter->Key("mesh");
-		jsonWriter->Int(mesh->id);
+		if (options->version == "1.0") {
+			jsonWriter->Key("meshes");
+			jsonWriter->StartArray();
+			jsonWriter->String(mesh->getStringId().c_str());
+			jsonWriter->EndArray();
+		}
+		else {
+			jsonWriter->Key("mesh");
+			jsonWriter->Int(mesh->id);
+		}
 	}
 	if (children.size() > 0) {
 		jsonWriter->Key("children");
 		jsonWriter->StartArray();
 		for (GLTF::Node* child : children) {
-			jsonWriter->Int(child->id);
+			if (options->version == "1.0") {
+				jsonWriter->String(child->getStringId().c_str());
+			}
+			else {
+				jsonWriter->Int(child->id);
+			}
 		}
 		jsonWriter->EndArray();
+	}
+	if (options->version == "1.0" && jointName != "") {
+		jsonWriter->Key("jointName");
+		jsonWriter->String(jointName.c_str());
 	}
 	if (options->materialsCommon && light != NULL) {
 		jsonWriter->Key("extensions");
@@ -238,7 +259,12 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->Key("KHR_materials_common");
 		jsonWriter->StartObject();
 		jsonWriter->Key("light");
-		jsonWriter->Int(light->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(light->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(light->id);
+		}
 		jsonWriter->EndObject();
 		jsonWriter->EndObject();
 	}
@@ -285,10 +311,26 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 	}
 	if (skin != NULL) {
 		jsonWriter->Key("skin");
-		jsonWriter->Int(skin->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(skin->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(skin->id);
+		}
+		if (skin->skeleton != NULL) {
+			jsonWriter->Key("skeletons");
+			jsonWriter->StartArray();
+			jsonWriter->String(skin->skeleton->getStringId().c_str());
+			jsonWriter->EndArray();
+		}
 	}
 	if (camera != NULL) {
 		jsonWriter->Key("camera");
-		jsonWriter->Int(camera->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(camera->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(camera->id);
+		}
 	}
 }

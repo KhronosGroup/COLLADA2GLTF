@@ -3,6 +3,10 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+std::string GLTF::Technique::typeName() {
+	return "technique";
+}
+
 void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
@@ -49,7 +53,12 @@ void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
 
 	if (program != NULL) {
 		jsonWriter->Key("program");
-		jsonWriter->Int(program->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(program->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(program->id);
+		}
 	}
 
 	if (enableStates.size() > 0 || depthMask != NULL || blendEquationSeparate.size() > 0 || blendFuncSeparate.size() > 0) {

@@ -11,6 +11,7 @@ namespace GLTF {
 	  GLTF::Constants::WebGL wrapS = GLTF::Constants::WebGL::REPEAT;
 	  GLTF::Constants::WebGL wrapT = GLTF::Constants::WebGL::REPEAT;
 
+	  virtual std::string typeName();
 	  virtual void writeJSON(void* writer, GLTF::Options* options);
   };
 }

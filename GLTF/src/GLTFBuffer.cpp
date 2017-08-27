@@ -9,6 +9,10 @@ GLTF::Buffer::Buffer(unsigned char* data, int dataLength) {
 	this->byteLength = dataLength;
 }
 
+std::string GLTF::Buffer::typeName() {
+	return "buffer";
+}
+
 void GLTF::Buffer::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	jsonWriter->Key("byteLength");

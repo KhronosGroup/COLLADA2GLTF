@@ -7,6 +7,10 @@
 
 #include <string>
 
+std::string GLTF::Shader::typeName() {
+	return "shader";
+}
+
 void GLTF::Shader::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 

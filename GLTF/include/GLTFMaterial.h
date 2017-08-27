@@ -39,6 +39,7 @@ namespace GLTF {
 
 		Material();
 		bool hasTexture();
+		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 
@@ -113,6 +114,7 @@ namespace GLTF {
 			float quadraticAttenuation;
 			void* node = NULL;
 
+			virtual std::string typeName();
 			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};
 

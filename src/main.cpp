@@ -70,6 +70,10 @@ int main(int argc, const char **argv) {
 		->defaults(false)
 		->description("output materials using the KHR_materials_common extension");
 
+	parser->define("v", &options->version)
+		->alias("version")
+		->description("glTF version to output (e.g. '1.0', '2.0')");
+
 	parser->define("metallicRoughnessTextures", &options->metallicRoughnessTexturePaths)
 		->description("paths to images to use as the PBR metallicRoughness textures");
 
@@ -120,6 +124,10 @@ int main(int argc, const char **argv) {
 			options->embeddedTextures = false;
 		}
 
+		if (options->version == "1.0" && !options->materialsCommon) {
+			options->glsl = true;
+		}
+
 		if (options->glsl && options->materialsCommon) {
 			std::cout << "ERROR: Cannot export with both glsl and materialsCommon enabled" << std::endl;
 			return -1;
@@ -155,6 +163,9 @@ int main(int argc, const char **argv) {
 		asset->removeUnusedNodes(options);
 		asset->removeUnusedSemantics();
 		GLTF::Buffer* buffer = asset->packAccessors();
+		if (options->binary && options->version == "1.0") {
+			buffer->stringId = "binary_glTF";
+		}
 
 		// Create image bufferViews for binary glTF
 		if (options->binary && options->embeddedTextures) {
