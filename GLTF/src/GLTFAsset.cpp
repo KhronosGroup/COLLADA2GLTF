@@ -337,28 +337,28 @@ std::vector<GLTF::BufferView*> GLTF::Asset::getAllCompressedBufferView() {
 				uniqueCompressedBufferViews.insert(bufferView);
 			}
 		}
-  }
-  return compressedBufferViews;
+	}
+	return compressedBufferViews;
 }
 
 void GLTF::Asset::removeUncompressedBufferViews() {
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
 		auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
 		if (dracoExtensionPtr != primitive->extensions.end()) {
-      // Currently assume all attributes are compressed in Draco extension.
-      for (const auto attribute : primitive->attributes) {
-        if (attribute.second->bufferView) {
-          delete attribute.second->bufferView;
-          attribute.second->bufferView = NULL;
-        }
-      }
-      GLTF::Accessor* indicesAccessor = primitive->indices;
-      if (indicesAccessor != NULL && indicesAccessor->bufferView) {
-        delete indicesAccessor->bufferView;
-        indicesAccessor->bufferView = NULL;
-      }
-    }
-  }
+			// Currently assume all attributes are compressed in Draco extension.
+			for (const auto attribute : primitive->attributes) {
+				if (attribute.second->bufferView) {
+					delete attribute.second->bufferView;
+					attribute.second->bufferView = NULL;
+				}
+			}
+			GLTF::Accessor* indicesAccessor = primitive->indices;
+			if (indicesAccessor != NULL && indicesAccessor->bufferView) {
+				delete indicesAccessor->bufferView;
+				indicesAccessor->bufferView = NULL;
+			}
+		}
+	}
 }
 
 void GLTF::Asset::removeUnusedSemantics() {
@@ -550,9 +550,10 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 
 	size_t byteLength = 0;
 	for (GLTF::Accessor* accessor : getAllAccessors()) {
-    // In glTF 2.0, bufferView is not required in accessor.
-    if (accessor->bufferView == NULL)
-      continue;
+		// In glTF 2.0, bufferView is not required in accessor.
+		if (accessor->bufferView == NULL) {
+			continue;
+		}
 		GLTF::Constants::WebGL target = accessor->bufferView->target;
 		auto targetGroup = accessorGroups[target];
 		int byteStride = accessor->getByteStride();
@@ -570,8 +571,8 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 		byteLength += accessor->bufferView->byteLength;
 	}
 
-  // Go through primitives and look for primitives that use Draco extension.
-  // If extension is not enabled, the vector will be empty.
+	// Go through primitives and look for primitives that use Draco extension.
+	// If extension is not enabled, the vector will be empty.
 	std::vector<GLTF::BufferView*> compressedBufferViews = getAllCompressedBufferView();
 	// Reserve data for compressed data.
 	for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
@@ -616,7 +617,7 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 		}
 	}
 
-  // Append compressed data to buffer. 
+	// Append compressed data to buffer. 
 	for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
 		std::memcpy(bufferData + byteOffset, compressedBufferView->buffer->data, compressedBufferView->byteLength);
 		compressedBufferView->byteOffset = byteOffset;

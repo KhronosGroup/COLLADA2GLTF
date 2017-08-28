@@ -49,10 +49,10 @@ namespace GLTF {
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
 
-    // Functions for Draco compression extension.
-    std::vector<GLTF::BufferView*> getAllCompressedBufferView();
+		// Functions for Draco compression extension.
+		std::vector<GLTF::BufferView*> getAllCompressedBufferView();
 		bool compressPrimitives();
-    void removeUncompressedBufferViews();
+		void removeUncompressedBufferViews();
 		void removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic);
 
 		void requireExtension(std::string extension);

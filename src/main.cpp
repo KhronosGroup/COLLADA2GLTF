@@ -161,7 +161,7 @@ int main(int argc, const char **argv) {
 		asset->removeUnusedSemantics();
 
 		if (options->dracoCompression) {
-      asset->removeUncompressedBufferViews();
+			asset->removeUncompressedBufferViews();
 			asset->compressPrimitives();
 		}
 

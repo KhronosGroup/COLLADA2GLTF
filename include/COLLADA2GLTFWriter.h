@@ -122,9 +122,7 @@ namespace COLLADA2GLTF {
 		virtual bool writeKinematicsScene(const COLLADAFW::KinematicsScene* kinematicsScene);
 
 		/** Add attributes of mesh to draco compression extension.*/
-		bool addAttributesToDracoMesh(GLTF::Primitive* primitive,
-				const std::map<std::string, std::vector<float>>& buildAttributes,
-				const std::vector<unsigned short>& buildIndices);
+		bool addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<unsigned short>& buildIndices);
 
 		/** Add joint indices and joint weights to draco compression extension.*/
 		bool addControllerDataToDracoMesh(GLTF::Primitive* primitive, unsigned short* jointArray, float* weightArray);

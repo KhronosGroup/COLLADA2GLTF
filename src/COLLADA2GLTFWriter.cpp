@@ -669,7 +669,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				// Currently only support triangles. 
 				if (primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
 					if (!addAttributesToDracoMesh(primitive, buildAttributes, buildIndices)) {
-            // Error adding attributes to draco mesh.
+						// Error adding attributes to draco mesh.
 						return false;
 					}
 				}
