@@ -86,6 +86,21 @@ int main(int argc, const char **argv) {
 		->defaults(false)
 		->description("compress the geometries using Draco compression extension");
 
+	parser->define("qp", &options->position_quantization_bits)
+		->description("position quantization bits used in Draco compression extension");
+
+	parser->define("qn", &options->normal_quantization_bits)
+		->description("normal quantization bits used in Draco compression extension");
+
+	parser->define("qt", &options->texcoord_quantization_bits)
+		->description("texture coordinate quantization bits used in Draco compression extension");
+
+	parser->define("qc", &options->color_quantization_bits)
+		->description("color quantization bits used in Draco compression extension");
+
+	parser->define("qj", &options->joint_quantization_bits)
+		->description("joint indices and weights quantization bits used in Draco compression extension");
+
 	if (parser->parse(argc, argv)) {
 		// Resolve and sanitize paths
 		path inputPath = path(options->inputPath);
@@ -162,7 +177,7 @@ int main(int argc, const char **argv) {
 
 		if (options->dracoCompression) {
 			asset->removeUncompressedBufferViews();
-			asset->compressPrimitives();
+			asset->compressPrimitives(options);
 		}
 
 		GLTF::Buffer* buffer = asset->packAccessors();
