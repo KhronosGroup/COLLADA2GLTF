@@ -159,14 +159,13 @@ int main(int argc, const char **argv) {
 
 		asset->removeUnusedNodes(options);
 		asset->removeUnusedSemantics();
-		GLTF::Buffer* buffer;
+
 		if (options->dracoCompression) {
+      asset->removeUncompressedBufferViews();
 			asset->compressPrimitives();
-			buffer = asset->packAccessorsWithCompressedAssets();
-		} else {
-			buffer = asset->packAccessors();
 		}
 
+		GLTF::Buffer* buffer = asset->packAccessors();
 
 		// Create image bufferViews for binary glTF
 		if (options->binary && options->embeddedTextures) {

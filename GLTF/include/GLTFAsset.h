@@ -54,7 +54,6 @@ namespace GLTF {
 		bool compressPrimitives();
     void removeUncompressedBufferViews();
 		void removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic);
-		GLTF::Buffer* packAccessorsWithCompressedAssets();
 
 		void requireExtension(std::string extension);
 		void useExtension(std::string extension);
