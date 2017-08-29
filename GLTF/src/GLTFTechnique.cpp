@@ -29,9 +29,17 @@ void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->Key("semantic");
 			jsonWriter->String(semantic.c_str());
 		}
-		if (parameterValue->node >= 0) {
-			jsonWriter->Key("node");
-			jsonWriter->Int(parameterValue->node);
+		if (options->version == "1.0") {
+			if (parameterValue->nodeString != "") {
+				jsonWriter->Key("node");
+				jsonWriter->String(parameterValue->nodeString.c_str());
+			}
+		}
+		else {
+			if (parameterValue->node >= 0) {
+				jsonWriter->Key("node");
+				jsonWriter->Int(parameterValue->node);
+			}
 		}
 		if (parameterValue->value != NULL) {
 			jsonWriter->Key("value");

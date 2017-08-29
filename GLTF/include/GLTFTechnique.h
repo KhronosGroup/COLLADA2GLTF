@@ -15,6 +15,7 @@ namespace GLTF {
 			int valueLength;
 			float* value = NULL;
 			int node = -1;
+			std::string nodeString;
 			int count = -1;
 
 			Parameter(GLTF::Constants::WebGL type) : type(type) {};

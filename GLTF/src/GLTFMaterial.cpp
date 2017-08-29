@@ -453,6 +453,7 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialComm
 				std::string transformName = name + "Transform";
 				GLTF::Technique::Parameter* nodeTransform = new GLTF::Technique::Parameter("MODELVIEW", GLTF::Constants::WebGL::FLOAT_MAT4);
 				nodeTransform->node = node->id;
+				nodeTransform->nodeString = node->getStringId();
 				technique->parameters[transformName] = nodeTransform;
 				technique->uniforms["u_" + transformName] = transformName;
 				vertexShaderSource += "uniform mat4 u_" + transformName + ";\n";
