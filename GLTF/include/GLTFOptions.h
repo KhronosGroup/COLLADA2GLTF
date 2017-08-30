@@ -19,5 +19,12 @@ namespace GLTF {
 		bool glsl = false;
 		bool specularGlossiness = false;
 		std::vector<std::string> metallicRoughnessTexturePaths;
+		// For Draco compression extension.
+		bool dracoCompression = false;
+		int positionQuantizationBits = 14;
+		int normalQuantizationBits = 10;
+		int texcoordQuantizationBits = 10;
+		int colorQuantizationBits = 8;
+		int jointQuantizationBits = 8;
 	};
 }

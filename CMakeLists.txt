@@ -31,6 +31,9 @@ set(test OFF)
 # RapidJSON
 include_directories(GLTF/dependencies/rapidjson/include)
 
+# Draco
+include_directories(GLTF/dependencies/draco/src)
+
 # Pre-compiled
 if(precompiled MATCHES "X86")
   if(precompiled MATCHES "DEBUG")
@@ -125,6 +128,8 @@ if(MSVC)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
    target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy stdc++fs)
 endif()
+
+target_link_libraries(${PROJECT_NAME}-bin draco)
 
 if(TEST_ENABLED)
   enable_testing()

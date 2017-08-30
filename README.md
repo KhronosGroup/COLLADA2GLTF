@@ -65,6 +65,12 @@ COLLADA2GLTF[.exe] [input] [output] [options]
 | -t, --separateTextures | false | No | Output textures separately |
 | -b, --binary | false | No | Output Binary glTF |
 | -m, --materialsCommon | false | No | Output materials using the KHR_materials_common extension |
+| -d, --dracoCompression | false | No | Output meshes using Draco compression extension |
+| --qp | | No | Quantization bits used for position attributes in Draco compression extension |
+| --qn | | No | Quantization bits used for normal attributes in Draco compression extension |
+| --qt | | No | Quantization bits used for texcoord attributes in Draco compression extension |
+| --qc | | No | Quantization bits used for color attributes in Draco compression extension |
+| --qj | | No | Quantization bits used for joint indice and weight attributes in Draco compression extension |
 | --metallicRoughnessTextures | | No | Paths to images to use as the PBR metallicRoughness textures |
 | --specularGlossiness | false | No | output PBR materials with the KHR_materials_pbrSpecularGlossiness extension |
 | --lockOcclusionMetallicRoughness | false | No | Set `metallicRoughnessTexture` to be the same as the `occlusionTexture` in materials where an ambient texture is defined |

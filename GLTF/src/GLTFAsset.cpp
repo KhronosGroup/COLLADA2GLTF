@@ -325,6 +325,42 @@ std::vector<GLTF::Image*> GLTF::Asset::getAllImages() {
 	return images;
 }
 
+std::vector<GLTF::BufferView*> GLTF::Asset::getAllCompressedBufferView() {
+	std::vector<GLTF::BufferView*> compressedBufferViews;
+	std::set<GLTF::BufferView*> uniqueCompressedBufferViews;
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+		auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+		if (dracoExtensionPtr != primitive->extensions.end()) {
+			GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)dracoExtensionPtr->second)->bufferView;
+			if (uniqueCompressedBufferViews.find(bufferView) == uniqueCompressedBufferViews.end()) {
+				compressedBufferViews.push_back(bufferView);
+				uniqueCompressedBufferViews.insert(bufferView);
+			}
+		}
+	}
+	return compressedBufferViews;
+}
+
+void GLTF::Asset::removeUncompressedBufferViews() {
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+		auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+		if (dracoExtensionPtr != primitive->extensions.end()) {
+			// Currently assume all attributes are compressed in Draco extension.
+			for (const auto attribute : primitive->attributes) {
+				if (attribute.second->bufferView) {
+					delete attribute.second->bufferView;
+					attribute.second->bufferView = NULL;
+				}
+			}
+			GLTF::Accessor* indicesAccessor = primitive->indices;
+			if (indicesAccessor != NULL && indicesAccessor->bufferView) {
+				delete indicesAccessor->bufferView;
+				indicesAccessor->bufferView = NULL;
+			}
+		}
+	}
+}
+
 void GLTF::Asset::removeUnusedSemantics() {
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
 		GLTF::Material* material = primitive->material;
@@ -339,14 +375,31 @@ void GLTF::Asset::removeUnusedSemantics() {
 						if (values->ambientTexture == NULL && values->diffuseTexture == NULL && values->emissionTexture == NULL && values->specularTexture == NULL) {
 							std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
 							primitive->attributes.erase(removeTexcoord);
+							removeAttributeFromDracoExtension(primitive, semantic);
 						}
 					}
 					else {
 						// Right now we don't support multiple sets of texture coordinates
 						primitive->attributes.erase(removeTexcoord);
+						removeAttributeFromDracoExtension(primitive, semantic);
 					}
 				}
 			}
+		}
+	}
+}
+
+void GLTF::Asset::removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic) {
+	auto extensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+	if (extensionPtr != primitive->extensions.end()) {
+		GLTF::DracoExtension* dracoExtension = (GLTF::DracoExtension*)extensionPtr->second;
+		auto attPtr = dracoExtension->attributeToId.find(semantic);
+		if (attPtr != dracoExtension->attributeToId.end()) {
+			const int att_id = attPtr->second;
+			// Remove from the extension.
+			dracoExtension->attributeToId.erase(attPtr);
+			// Remove from draco mesh.
+			dracoExtension->dracoMesh->DeleteAttribute(att_id);
 		}
 	}
 }
@@ -440,6 +493,55 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 	return bufferView;
 }
 
+bool GLTF::Asset::compressPrimitives(GLTF::Options* options) {
+	int totalPrimitives = 0;
+	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+		totalPrimitives++;
+		auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+		if (dracoExtensionPtr == primitive->extensions.end()) {
+			// No extension exists.
+			continue;
+		}
+		GLTF::DracoExtension* dracoExtension = (GLTF::DracoExtension*)dracoExtensionPtr->second;
+		draco::Mesh *dracoMesh = dracoExtension->dracoMesh.get();
+		if (!dracoMesh) {
+			continue;
+		}
+
+		// Compress the mesh
+		// Setup encoder options.
+		draco::Encoder encoder;
+		const int posQuantizationBits = options->positionQuantizationBits;
+		const int texcoordsQuantizationBits = options->texcoordQuantizationBits;
+		const int normalsQuantizationBits = options->normalQuantizationBits;
+		const int colorQuantizationBits = options->colorQuantizationBits;
+		// Used for compressing joint indices and joint weights.
+		const int genericQuantizationBits = options->jointQuantizationBits;
+
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION, posQuantizationBits);
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::TEX_COORD, texcoordsQuantizationBits);
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::NORMAL, normalsQuantizationBits);
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::COLOR, colorQuantizationBits);
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC, genericQuantizationBits);
+
+		draco::EncoderBuffer buffer;
+		const draco::Status status = encoder.EncodeMeshToBuffer(*dracoMesh, &buffer);
+		if (!status.ok()) {
+			std::cerr << "Error: Encode mesh.\n";
+			return false;
+		}
+
+		// Add compressed data to bufferview
+		unsigned char* allocatedData = (unsigned char*)malloc(buffer.size());
+		std::memcpy(allocatedData, buffer.data(), buffer.size());
+		GLTF::BufferView* bufferView = new GLTF::BufferView(allocatedData, buffer.size());
+		dracoExtension->bufferView = bufferView;
+		// Remove the mesh so duplicated primitives don't need to compress again.
+		dracoExtension->dracoMesh.reset();
+	}
+	return true;
+}
+
 GLTF::Buffer* GLTF::Asset::packAccessors() {
 	std::map<GLTF::Constants::WebGL, std::map<int, std::vector<GLTF::Accessor*>>> accessorGroups;
 	accessorGroups[GLTF::Constants::WebGL::ARRAY_BUFFER] = std::map<int, std::vector<GLTF::Accessor*>>();
@@ -448,6 +550,10 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 
 	size_t byteLength = 0;
 	for (GLTF::Accessor* accessor : getAllAccessors()) {
+		// In glTF 2.0, bufferView is not required in accessor.
+		if (accessor->bufferView == NULL) {
+			continue;
+		}
 		GLTF::Constants::WebGL target = accessor->bufferView->target;
 		auto targetGroup = accessorGroups[target];
 		int byteStride = accessor->getByteStride();
@@ -463,6 +569,14 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 		targetGroup[byteStride] = byteStrideGroup;
 		accessorGroups[target] = targetGroup;
 		byteLength += accessor->bufferView->byteLength;
+	}
+
+	// Go through primitives and look for primitives that use Draco extension.
+	// If extension is not enabled, the vector will be empty.
+	std::vector<GLTF::BufferView*> compressedBufferViews = getAllCompressedBufferView();
+	// Reserve data for compressed data.
+	for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
+		byteLength += compressedBufferView->byteLength;
 	}
 
 	std::vector<int> byteStrides;
@@ -503,6 +617,13 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 		}
 	}
 
+	// Append compressed data to buffer. 
+	for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
+		std::memcpy(bufferData + byteOffset, compressedBufferView->buffer->data, compressedBufferView->byteLength);
+		compressedBufferView->byteOffset = byteOffset;
+		compressedBufferView->buffer = buffer;
+		byteOffset += compressedBufferView->byteLength;
+	}
 	return buffer;
 }
 
@@ -622,6 +743,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 
 	// Write meshes and build accessor and material arrays
 	std::vector<GLTF::Accessor*> accessors;
+	std::vector<GLTF::BufferView*> bufferViews;
 	std::vector<GLTF::Material*> materials;
 	std::map<std::string, GLTF::Technique*> generatedTechniques;
 	if (meshes.size() > 0) {
@@ -691,6 +813,17 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 					material->id = materials.size();
 					materials.push_back(material);
 				}
+
+				// Find bufferViews of compressed data. These bufferViews does not belong to Accessors.
+				auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+					if (dracoExtensionPtr != primitive->extensions.end()) {
+						GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)dracoExtensionPtr->second)->bufferView;
+						if (bufferView->id < 0) {
+							bufferView->id = bufferViews.size();
+							bufferViews.push_back(bufferView);
+						}
+					}
+
 				if (primitive->indices) {
 					GLTF::Accessor* indices = primitive->indices;
 					if (indices->id < 0) {
@@ -712,7 +845,6 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 		}
 		jsonWriter->EndArray();
 	}
-	meshes.clear();
 
 	// Write animations and add accessors to the accessor array
 	if (animations.size() > 0) {
@@ -762,7 +894,6 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	skins.clear();
 
 	// Write accessors and add bufferViews to the bufferView array
-	std::vector<GLTF::BufferView*> bufferViews;
 	if (accessors.size() > 0) {
 		jsonWriter->Key("accessors");
 		jsonWriter->StartArray();
@@ -780,6 +911,12 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 		}
 		jsonWriter->EndArray();
 	}
+
+	if (options->dracoCompression) {
+		this->requireExtension("KHR_draco_mesh_compression");
+	}
+
+	meshes.clear();
 	accessors.clear();
 
 	// Write materials and build technique and texture arrays

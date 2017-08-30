@@ -81,6 +81,26 @@ int main(int argc, const char **argv) {
 		->defaults(false)
 		->description("set metallicRoughnessTexture to be the same as the occlusionTexture in materials where an ambient texture is defined");
 
+	parser->define("d", &options->dracoCompression)
+		->alias("dracoCompression")
+		->defaults(false)
+		->description("compress the geometries using Draco compression extension");
+
+	parser->define("qp", &options->positionQuantizationBits)
+		->description("position quantization bits used in Draco compression extension");
+
+	parser->define("qn", &options->normalQuantizationBits)
+		->description("normal quantization bits used in Draco compression extension");
+
+	parser->define("qt", &options->texcoordQuantizationBits)
+		->description("texture coordinate quantization bits used in Draco compression extension");
+
+	parser->define("qc", &options->colorQuantizationBits)
+		->description("color quantization bits used in Draco compression extension");
+
+	parser->define("qj", &options->jointQuantizationBits)
+		->description("joint indices and weights quantization bits used in Draco compression extension");
+
 	if (parser->parse(argc, argv)) {
 		// Resolve and sanitize paths
 		path inputPath = path(options->inputPath);
@@ -154,6 +174,12 @@ int main(int argc, const char **argv) {
 
 		asset->removeUnusedNodes(options);
 		asset->removeUnusedSemantics();
+
+		if (options->dracoCompression) {
+			asset->removeUncompressedBufferViews();
+			asset->compressPrimitives(options);
+		}
+
 		GLTF::Buffer* buffer = asset->packAccessors();
 
 		// Create image bufferViews for binary glTF
