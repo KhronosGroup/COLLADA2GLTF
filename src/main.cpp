@@ -86,19 +86,19 @@ int main(int argc, const char **argv) {
 		->defaults(false)
 		->description("compress the geometries using Draco compression extension");
 
-	parser->define("qp", &options->position_quantization_bits)
+	parser->define("qp", &options->positionQuantizationBits)
 		->description("position quantization bits used in Draco compression extension");
 
-	parser->define("qn", &options->normal_quantization_bits)
+	parser->define("qn", &options->normalQuantizationBits)
 		->description("normal quantization bits used in Draco compression extension");
 
-	parser->define("qt", &options->texcoord_quantization_bits)
+	parser->define("qt", &options->texcoordQuantizationBits)
 		->description("texture coordinate quantization bits used in Draco compression extension");
 
-	parser->define("qc", &options->color_quantization_bits)
+	parser->define("qc", &options->colorQuantizationBits)
 		->description("color quantization bits used in Draco compression extension");
 
-	parser->define("qj", &options->joint_quantization_bits)
+	parser->define("qj", &options->jointQuantizationBits)
 		->description("joint indices and weights quantization bits used in Draco compression extension");
 
 	if (parser->parse(argc, argv)) {

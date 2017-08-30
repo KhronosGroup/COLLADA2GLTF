@@ -511,18 +511,18 @@ bool GLTF::Asset::compressPrimitives(GLTF::Options* options) {
 		// Compress the mesh
 		// Setup encoder options.
 		draco::Encoder encoder;
-		int pos_quantization_bits = options->position_quantization_bits;
-		int tex_coords_quantization_bits = options->texcoord_quantization_bits;
-		int normals_quantization_bits = options->normal_quantization_bits;
-		int color_quantization_bits = options->color_quantization_bits;
+		const int posQuantizationBits = options->positionQuantizationBits;
+		const int texcoordsQuantizationBits = options->texcoordQuantizationBits;
+		const int normalsQuantizationBits = options->normalQuantizationBits;
+		const int colorQuantizationBits = options->colorQuantizationBits;
 		// Used for compressing joint indices and joint weights.
-		int generic_quantization_bits = options->joint_quantization_bits;
+		const int genericQuantizationBits = options->jointQuantizationBits;
 
-		encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION, pos_quantization_bits);
-		encoder.SetAttributeQuantization(draco::GeometryAttribute::TEX_COORD, tex_coords_quantization_bits);
-		encoder.SetAttributeQuantization(draco::GeometryAttribute::NORMAL, normals_quantization_bits);
-		encoder.SetAttributeQuantization(draco::GeometryAttribute::COLOR, color_quantization_bits);
-		encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC, generic_quantization_bits);
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION, posQuantizationBits);
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::TEX_COORD, texcoordsQuantizationBits);
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::NORMAL, normalsQuantizationBits);
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::COLOR, colorQuantizationBits);
+		encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC, genericQuantizationBits);
 
 		draco::EncoderBuffer buffer;
 		const draco::Status status = encoder.EncodeMeshToBuffer(*dracoMesh, &buffer);

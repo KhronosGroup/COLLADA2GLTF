@@ -21,10 +21,10 @@ namespace GLTF {
 		std::vector<std::string> metallicRoughnessTexturePaths;
 		// For Draco compression extension.
 		bool dracoCompression = false;
-		int position_quantization_bits = 14;
-		int normal_quantization_bits = 10;
-		int texcoord_quantization_bits = 10;
-		int color_quantization_bits = 8;
-		int joint_quantization_bits = 8;
+		int positionQuantizationBits = 14;
+		int normalQuantizationBits = 10;
+		int texcoordQuantizationBits = 10;
+		int colorQuantizationBits = 8;
+		int jointQuantizationBits = 8;
 	};
 }
