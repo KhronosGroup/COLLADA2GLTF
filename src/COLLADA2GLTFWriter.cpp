@@ -24,6 +24,7 @@ void COLLADA2GLTF::Writer::finish() {
 
 bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 	float assetScale = (float)asset->getUnit().getLinearUnitMeter();
+	_assetScale = assetScale;
 	if (asset->getUpAxisType() == COLLADAFW::FileInfo::X_UP) {
 		_rootNode = new GLTF::Node();
 		_rootNode->transform = new GLTF::Node::TransformMatrix(
@@ -830,8 +831,6 @@ void packColladaColor(COLLADAFW::Color color, float* packArray) {
 	packArray[3] = (float)color.getAlpha();
 }
 
-// Re-use this instance since the values don't change
-
 GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::SamplerID samplerId) {
 	GLTF::Texture* texture = new GLTF::Texture();
 	const COLLADAFW::SamplerPointerArray& samplers = effectCommon->getSamplerPointerArray();
@@ -1013,8 +1012,8 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 		writeCamera = camera;
 	}
 	if (writeCamera != NULL) {
-		writeCamera->zfar = (float)colladaCamera->getFarClippingPlane().getValue();
-		writeCamera->znear = (float)colladaCamera->getNearClippingPlane().getValue();
+		writeCamera->zfar = (float)colladaCamera->getFarClippingPlane().getValue() * _assetScale;
+		writeCamera->znear = (float)colladaCamera->getNearClippingPlane().getValue() * _assetScale;
 		_cameraInstances[colladaCamera->getUniqueId()] = writeCamera;
 		return true;
 	}

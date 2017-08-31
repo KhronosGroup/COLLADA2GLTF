@@ -18,6 +18,7 @@ namespace COLLADA2GLTF {
 		COLLADA2GLTF::Options* _options;
 		COLLADA2GLTF::ExtrasHandler* _extrasHandler;
 		GLTF::Node* _rootNode = NULL;
+		float _assetScale = 1.0;
 		std::map<COLLADAFW::UniqueId, COLLADAFW::UniqueId> _materialEffects;
 		std::map<COLLADAFW::UniqueId, GLTF::Material*> _effectInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Camera*> _cameraInstances;
