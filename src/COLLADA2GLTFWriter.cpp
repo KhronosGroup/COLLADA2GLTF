@@ -1579,9 +1579,15 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 			}
 
 			GLTF::Accessor* weightAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weightArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
-			primitive->attributes["WEIGHTS_0"] = weightAccessor;
 			GLTF::Accessor* jointAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)jointArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
-			primitive->attributes["JOINTS_0"] = jointAccessor;
+			if (_options->version == "1.0") {
+				primitive->attributes["WEIGHT"] = weightAccessor;
+				primitive->attributes["JOINT"] = jointAccessor;
+			}
+			else {
+				primitive->attributes["WEIGHTS_0"] = weightAccessor;
+				primitive->attributes["JOINTS_0"] = jointAccessor;
+			}
 		}
 
 		_skinInstances[skinControllerId] = skin;
