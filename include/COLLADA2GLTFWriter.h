@@ -9,6 +9,8 @@
 #include "COLLADA2GLTFOptions.h"
 #include "COLLADA2GLTFExtrasHandler.h"
 
+#include "draco/compression/encode.h"
+
 namespace COLLADA2GLTF {
 	class Writer : public COLLADAFW::IWriter {
 	private:
@@ -119,5 +121,12 @@ namespace COLLADA2GLTF {
 		/** When this method is called, the writer must write the kinematics scene.
 		 @return The writer should return true, if writing succeeded, false otherwise.*/
 		virtual bool writeKinematicsScene(const COLLADAFW::KinematicsScene* kinematicsScene);
+
+		/** Add attributes of mesh to draco compression extension.*/
+		bool addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<unsigned short>& buildIndices);
+
+		/** Add joint indices and joint weights to draco compression extension.*/
+		bool addControllerDataToDracoMesh(GLTF::Primitive* primitive, unsigned short* jointArray, float* weightArray);
+
 	};
 }

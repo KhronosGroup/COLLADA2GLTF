@@ -13,6 +13,10 @@ option(test "Build all tests." OFF)
 # RapidJSON
 include_directories(dependencies/rapidjson/include)
 
+# Draco
+include_directories(dependencies/draco/src)
+add_subdirectory(dependencies/draco)
+
 # gltf
 include_directories(include)
 file(GLOB HEADERS "include/*.h")
@@ -24,6 +28,8 @@ if(MSVC)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
    target_link_libraries(${PROJECT_NAME} stdc++fs)
 endif()
+
+target_link_libraries(${PROJECT_NAME} draco)
 
 if (test)
   enable_testing()

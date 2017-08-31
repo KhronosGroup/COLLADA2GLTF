@@ -5,8 +5,11 @@
 #include <vector>
 
 #include "GLTFAnimation.h"
+#include "GLTFDracoExtension.h"
 #include "GLTFObject.h"
 #include "GLTFScene.h"
+
+#include "draco/compression/encode.h"
 
 namespace GLTF {
 	class Asset : public GLTF::Object {
@@ -45,6 +48,13 @@ namespace GLTF {
 		void removeUnusedSemantics();
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
+
+		// Functions for Draco compression extension.
+		std::vector<GLTF::BufferView*> getAllCompressedBufferView();
+		bool compressPrimitives(GLTF::Options* options);
+		void removeUncompressedBufferViews();
+		void removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic);
+
 		void requireExtension(std::string extension);
 		void useExtension(std::string extension);
 		virtual void writeJSON(void* writer, GLTF::Options* options);
