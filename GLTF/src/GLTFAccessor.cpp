@@ -250,9 +250,9 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 	if (this->bufferView) {
 		jsonWriter->Key("bufferView");
 		jsonWriter->Int(this->bufferView->id);
+		jsonWriter->Key("byteOffset");
+		jsonWriter->Int(this->byteOffset);
 	}
-	jsonWriter->Key("byteOffset");
-	jsonWriter->Int(this->byteOffset);
 	jsonWriter->Key("componentType");
 	jsonWriter->Int((int)this->componentType);
 	jsonWriter->Key("count");
