@@ -148,10 +148,10 @@ bool GLTF::Accessor::writeComponentAtIndex(int index, float* component) {
 		case GLTF::Constants::WebGL::SHORT:
 			((short*)buf)[i] = (short)component[i];
 			break;
-		case GLTF::Constants::WebGL::UNSIGNED_SHORT: 
+		case GLTF::Constants::WebGL::UNSIGNED_SHORT:
 			((unsigned short*)buf)[i] = (unsigned short)component[i];
 			break;
-		case GLTF::Constants::WebGL::FLOAT: 
+		case GLTF::Constants::WebGL::FLOAT:
 			((float*)buf)[i] = (float)component[i];
 			break;
 		case GLTF::Constants::WebGL::UNSIGNED_INT:
@@ -259,9 +259,9 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 		else {
 			jsonWriter->Int(this->bufferView->id);
 		}
+		jsonWriter->Key("byteOffset");
+		jsonWriter->Int(this->byteOffset);
 	}
-	jsonWriter->Key("byteOffset");
-	jsonWriter->Int(this->byteOffset);
 	if (options->version == "1.0") {
 		int byteStride = bufferView->byteStride;
 		if (byteStride != 0) {

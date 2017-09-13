@@ -2,10 +2,13 @@ cmake_minimum_required(VERSION 3.1.0)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(PROJECT_NAME GLTF)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(${PROJECT_NAME})
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  add_compile_options(-std=c++11 -lstdc++fs)
+  add_compile_options(-lstdc++fs)
 endif()
 
 # cmake -Dtest=ON to build with tests
