@@ -283,7 +283,13 @@ int main(int argc, const char **argv) {
 				fwrite("glTF", sizeof(char), 4, file); // magic
 
 				uint32_t* writeHeader = new uint32_t[2];
-				writeHeader[0] = 2; // version
+				// version
+				if (options->version == "1.0") {
+					writeHeader[0] = 1;
+				}
+				else {
+					writeHeader[0] = 2;
+				}
 
 				int jsonPadding = (4 - (jsonString.length() & 3)) & 3;
 				int binPadding = (4 - (buffer->byteLength & 3)) & 3;
