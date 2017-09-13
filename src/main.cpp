@@ -300,7 +300,12 @@ int main(int argc, const char **argv) {
 				fwrite(writeHeader, sizeof(uint32_t), 2, file); // GLB header
 
 				writeHeader[0] = jsonString.length() + jsonPadding; // chunkLength
-				writeHeader[1] = 0x4E4F534A; // chunkType JSON
+				if (options->version == "1.0") {
+					writeHeader[1] = 0; // 1.0 - contentFormat
+				}
+				else {
+					writeHeader[1] = 0x4E4F534A; // 2.0 - chunkType JSON
+				}
 				fwrite(writeHeader, sizeof(uint32_t), 2, file);
 				fwrite(jsonString.c_str(), sizeof(char), jsonString.length(), file);
 				for (int i = 0; i < jsonPadding; i++) {
