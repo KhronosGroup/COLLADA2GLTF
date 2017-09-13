@@ -235,7 +235,7 @@ std::vector<GLTF::Shader*> GLTF::Asset::getAllShaders() {
 		}
 		GLTF::Shader* fragmentShader = program->fragmentShader;
 		if (fragmentShader != NULL) {
-			if (uniqueShaders.find(vertexShader) == uniqueShaders.end()) {
+			if (uniqueShaders.find(fragmentShader) == uniqueShaders.end()) {
 				shaders.push_back(fragmentShader);
 				uniqueShaders.insert(fragmentShader);
 			}
