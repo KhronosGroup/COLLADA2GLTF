@@ -34,6 +34,7 @@ namespace GLTF {
 				float a30, float a31, float a32, float a33);
 
 			void premultiply(TransformMatrix* transform);
+			void postmultiply(TransformMatrix* transform);
 			void scaleUniform(float scale);
 			bool isIdentity();
 			void getTransformTRS(TransformTRS* out);
