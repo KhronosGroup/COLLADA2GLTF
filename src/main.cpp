@@ -294,9 +294,9 @@ int main(int argc, const char **argv) {
 				int jsonPadding = (4 - (jsonString.length() & 3)) & 3;
 				int binPadding = (4 - (buffer->byteLength & 3)) & 3;
 
-				writeHeader[1] = HEADER_LENGTH + (CHUNK_HEADER_LENGTH + jsonString.length() + jsonPadding); // length
+				writeHeader[1] = HEADER_LENGTH + (CHUNK_HEADER_LENGTH + jsonString.length() + jsonPadding + buffer->byteLength + binPadding); // length
 				if (options->version != "1.0") {
-					writeHeader[1] += (CHUNK_HEADER_LENGTH + buffer->byteLength + binPadding);
+					writeHeader[1] += CHUNK_HEADER_LENGTH;
 				}
 				fwrite(writeHeader, sizeof(uint32_t), 2, file); // GLB header
 
