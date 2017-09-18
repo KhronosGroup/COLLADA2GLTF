@@ -1012,6 +1012,11 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 		writeCamera = camera;
 	}
 	if (writeCamera != NULL) {
+		writeCamera->name = colladaCamera->getName();
+		if (writeCamera->name == "") {
+			writeCamera->name = colladaCamera->getOriginalId();
+		}
+		writeCamera->stringId = colladaCamera->getOriginalId();
 		writeCamera->zfar = (float)colladaCamera->getFarClippingPlane().getValue() * _assetScale;
 		writeCamera->znear = (float)colladaCamera->getNearClippingPlane().getValue() * _assetScale;
 		_cameraInstances[colladaCamera->getUniqueId()] = writeCamera;
