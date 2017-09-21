@@ -52,6 +52,10 @@ GLTF::Node::TransformTRS::TransformTRS() {
 }
 
 void GLTF::Node::TransformMatrix::premultiply(GLTF::Node::TransformMatrix* transform) {
+	premultiply(transform, this);
+}
+
+void GLTF::Node::TransformMatrix::premultiply(GLTF::Node::TransformMatrix* transform, GLTF::Node::TransformMatrix* destination) {
 	float matrix[16];
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
@@ -63,23 +67,7 @@ void GLTF::Node::TransformMatrix::premultiply(GLTF::Node::TransformMatrix* trans
 		}
 	}
 	for (int i = 0; i < 16; i++) {
-		this->matrix[i] = matrix[i];
-	}
-}
-
-void GLTF::Node::TransformMatrix::postmultiply(GLTF::Node::TransformMatrix* transform) {
-	float matrix[16];
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			float sum = 0;
-			for (int k = 0; k < 4; k++) {
-				sum += transform->matrix[i * 4 + k] * this->matrix[k * 4 + j];
-			}
-			matrix[i * 4 + j] = sum;
-		}
-	}
-	for (int i = 0; i < 16; i++) {
-		this->matrix[i] = matrix[i];
+		destination->matrix[i] = matrix[i];
 	}
 }
 
