@@ -24,7 +24,7 @@ git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
 apt-get install cmake libxml2-dev libpcre3-dev libpng-dev zlib1g-dev
 ```
 #### Windows
-Install [Visual Studio](http://code.visualstudio.com)
+Install [Visual Studio](https://www.visualstudio.com/vs/)
 
 Install [CMake](http://cmake.org/cmake/resources/software.html)
 
