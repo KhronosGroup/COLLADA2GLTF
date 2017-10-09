@@ -1434,7 +1434,7 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 	float* inverseBindMatrices = new float[16 * matrixArrayCount];
 	for (size_t i = 0; i < matrixArrayCount; i++) {
 		packColladaMatrix(matrixArray[i], inverseBindMatrix);
-		inverseBindMatrix->premultiply(bindShapeMatrix);
+		bindShapeMatrix->premultiply(inverseBindMatrix, inverseBindMatrix);
 		for (size_t j = 0; j < 16; j++) {
 			inverseBindMatrices[i * 16 + j] = inverseBindMatrix->matrix[j];
 		}
