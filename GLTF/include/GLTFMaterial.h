@@ -38,6 +38,7 @@ namespace GLTF {
 		Values* values = NULL;
 
 		Material();
+		GLTF::Material * getInstancedEffect(std::string name);
 		bool hasTexture();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};

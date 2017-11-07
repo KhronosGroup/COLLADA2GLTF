@@ -257,7 +257,9 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				GLTF::Primitive* primitive = skinnedMesh->primitives[j];
 				COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
 				COLLADAFW::UniqueId effectId = this->_materialEffects[materialId];
-				GLTF::Material* material = _effectInstances[effectId];
+
+				GLTF::Material* material = _effectInstances[effectId]->getInstancedEffect(this->_materialName[materialId]);
+
 				if (material->type == GLTF::Material::Type::MATERIAL_COMMON) {
 					GLTF::MaterialCommon* materialCommon = (GLTF::MaterialCommon*)material;
 					materialCommon->jointCount = _skinJointNodes[uniqueId].size();
@@ -319,7 +321,9 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					COLLADAFW::MaterialBinding materialBinding = materialBindings[j];
 					COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
 					COLLADAFW::UniqueId effectId = this->_materialEffects[materialId];
-					GLTF::Material* material = _effectInstances[effectId];
+
+					GLTF::Material* material = _effectInstances[effectId]->getInstancedEffect(this->_materialName[materialId]);
+
 					for (GLTF::Primitive* primitive : primitiveMaterialMapping[materialBinding.getMaterialId()]) {
 						if (primitive->material != NULL && primitive->material != material) {
 							// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
@@ -816,7 +820,11 @@ bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
 }
 
 bool COLLADA2GLTF::Writer::writeMaterial(const COLLADAFW::Material* material) {
-	this->_materialEffects[material->getUniqueId()] = material->getInstantiatedEffect();
+	auto id = material->getUniqueId();
+	this->_materialEffects[id] = material->getInstantiatedEffect();
+	this->_materialName[id] = material->getName();
+
+	// TODO - read Material setting and properly apply to effect Instance
 	return true;
 }
 

@@ -13,6 +13,13 @@ bool GLTF::Material::hasTexture() {
 	return this->values->diffuseTexture != NULL;
 }
 
+GLTF::Material * GLTF::Material::getInstancedEffect(std::string name) {
+	// TODO - apply Material parameters to the effect, not just the name
+	GLTF::Material *instancedEffect = new GLTF::Material(*this);
+	instancedEffect -> name = name;
+	return instancedEffect;
+}
+
 void GLTF::Material::Values::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (ambient != NULL || ambientTexture != NULL) {
