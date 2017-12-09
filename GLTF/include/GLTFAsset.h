@@ -45,6 +45,7 @@ namespace GLTF {
 		std::vector<GLTF::Shader*> getAllShaders();
 		std::vector<GLTF::Texture*> getAllTextures();
 		std::vector<GLTF::Image*> getAllImages();
+		void mergeAnimations();
 		void removeUnusedSemantics();
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
