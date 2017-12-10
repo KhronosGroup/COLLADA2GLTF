@@ -348,8 +348,7 @@ void GLTF::Asset::mergeAnimations() {
 
 	// Merge all animations. In the future, animations should be grouped
 	// according to COLLADA <animation_clip/> nodes.
-	for (size_t i = 0; i < animations.size(); i++) {
-		GLTF::Animation* animation = animations[i];
+	for (GLTF::Animation* animation : animations) {
 		for (GLTF::Animation::Channel* channel : animation->channels) {
 			mergedAnimation->channels.push_back(channel);
 		}
