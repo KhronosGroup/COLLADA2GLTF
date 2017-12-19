@@ -774,7 +774,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 						if (material->type == GLTF::Material::Type::MATERIAL_COMMON) {
 							GLTF::MaterialCommon* materialCommon = (GLTF::MaterialCommon*)material;
 							if (options->glsl) {
-								std::string techniqueKey = materialCommon->getTechniqueKey();
+								std::string techniqueKey = materialCommon->getTechniqueKey(options);
 								std::map<std::string, GLTF::Technique*>::iterator findTechnique = generatedTechniques.find(techniqueKey);
 								if (findTechnique != generatedTechniques.end()) {
 									material = new GLTF::Material();
@@ -784,7 +784,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 								}
 								else {
 									bool hasColor = primitive->attributes.find("COLOR_0") != primitive->attributes.end();
-									material = materialCommon->getMaterial(lights, hasColor);
+									material = materialCommon->getMaterial(lights, hasColor, options);
 									generatedTechniques[techniqueKey] = material->technique;
 								}
 							}
@@ -1022,9 +1022,12 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 					}
 				}
 			}
-
 			jsonWriter->StartObject();
-			material->writeJSON(writer, options);
+			if (options->doubleSided && !options->materialsCommon) {
+				jsonWriter->Key("doubleSided");
+				jsonWriter->Bool(true);
+			}
+ 			material->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();

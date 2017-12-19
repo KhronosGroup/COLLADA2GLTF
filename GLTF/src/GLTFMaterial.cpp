@@ -293,11 +293,11 @@ const char* GLTF::MaterialCommon::getTechniqueName() {
 	return NULL;
 }
 
-GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights) {
-	return getMaterial(lights, false);
+GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, GLTF::Options* options) {
+	return getMaterial(lights, false, options);
 }
 
-GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColor) {
+GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColor, GLTF::Options* options) {
 	GLTF::Material* material = new GLTF::Material();
 	material->values = values;
 	GLTF::Technique* technique = new GLTF::Technique();
@@ -467,7 +467,7 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialComm
 		technique->blendFuncSeparate.push_back(GLTF::Constants::WebGL::ONE);
 		technique->blendFuncSeparate.push_back(GLTF::Constants::WebGL::ONE_MINUS_SRC_ALPHA);
 	}
-	else if (doubleSided) {
+	else if (options->doubleSided) {
 		technique->enableStates.insert(GLTF::Constants::WebGL::DEPTH_TEST);
 	}
 	else {
@@ -664,7 +664,7 @@ void main(void) {\n";
 	}
 	if (hasNormals) {
 		fragmentShaderSource += "    vec3 normal = normalize(v_normal);\n";
-		if (doubleSided) {
+		if (options->doubleSided) {
 			fragmentShaderSource += "\
     if (gl_FrontFacing == false)\n\
     {\n\
@@ -755,7 +755,7 @@ void main(void) {\n";
 	return material;
 }
 
-std::string GLTF::MaterialCommon::getTechniqueKey() {
+std::string GLTF::MaterialCommon::getTechniqueKey(GLTF::Options* options) {
 	std::string id = "";
 	if (values->ambient != NULL) {
 		id += "AMBIENT;";
@@ -778,7 +778,7 @@ std::string GLTF::MaterialCommon::getTechniqueKey() {
 	if (values->transparency != NULL) {
 		id += "TRANSPARENCY;";
 	}
-	if (doubleSided) {
+	if (options->doubleSided) {
 		id += "DOUBLESIDED;";
 	}
 	if (transparent) {
@@ -865,7 +865,7 @@ void GLTF::MaterialCommon::writeJSON(void* writer, GLTF::Options* options) {
 	jsonWriter->Key("KHR_materials_common");
 	jsonWriter->StartObject();
 	jsonWriter->Key("doubleSided");
-	jsonWriter->Bool(this->doubleSided);
+	jsonWriter->Bool(options->doubleSided);
 	if (this->jointCount > 0) {
 		jsonWriter->Key("jointCount");
 		jsonWriter->Int(this->jointCount);

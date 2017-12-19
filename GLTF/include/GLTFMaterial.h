@@ -116,7 +116,6 @@ namespace GLTF {
 			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};
 
-		bool doubleSided = false;
 		int jointCount = 0;
 		bool transparent = false;
 
@@ -124,9 +123,9 @@ namespace GLTF {
 
 		MaterialCommon();
 		const char* getTechniqueName();
-		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights);
-		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColorAttribute);
-		std::string getTechniqueKey();
+		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, GLTF::Options* options);
+		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColorAttribute, GLTF::Options* options);
+		std::string getTechniqueKey(GLTF::Options* options);
 		GLTF::MaterialPBR* getMaterialPBR(bool specularGlossiness);
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};

@@ -70,6 +70,10 @@ int main(int argc, const char **argv) {
 		->defaults(false)
 		->description("output materials using the KHR_materials_common extension");
 
+	parser->define("doubleSided", &options->doubleSided)
+		->defaults(false)
+		->description("output double sided materials. When this value is true, back-face culling is disabled and double sided lighting is enabled");
+
 	parser->define("metallicRoughnessTextures", &options->metallicRoughnessTexturePaths)
 		->description("paths to images to use as the PBR metallicRoughness textures");
 

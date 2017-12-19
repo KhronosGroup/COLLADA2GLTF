@@ -16,6 +16,7 @@ namespace GLTF {
 		bool binary = false;
 		bool lockOcclusionMetallicRoughness = false;
 		bool materialsCommon = false;
+		bool doubleSided = false;
 		bool glsl = false;
 		bool specularGlossiness = false;
 		std::vector<std::string> metallicRoughnessTexturePaths;
