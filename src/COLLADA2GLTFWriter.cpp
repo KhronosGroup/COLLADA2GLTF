@@ -816,6 +816,9 @@ bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
 }
 
 bool COLLADA2GLTF::Writer::writeMaterial(const COLLADAFW::Material* material) {
+	if (this->_extrasHandler->doubleSided) {
+		this->_options->doubleSided = true;
+	}
 	this->_materialEffects[material->getUniqueId()] = material->getInstantiatedEffect();
 	return true;
 }
