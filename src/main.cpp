@@ -30,7 +30,7 @@ int main(int argc, const char **argv) {
 
 	Parser* parser = new Parser();
 	parser->name("COLLADA2GLTF")->usage("./COLLADA2GLTF input.dae output.gltf [options]");
-	
+
 	parser->define("i", &options->inputPath)
 		->alias("input")
 		->description("path of the input COLLADA file")
@@ -172,6 +172,7 @@ int main(int argc, const char **argv) {
 			return -1;
 		}
 
+		asset->mergeAnimations();
 		asset->removeUnusedNodes(options);
 		asset->removeUnusedSemantics();
 
