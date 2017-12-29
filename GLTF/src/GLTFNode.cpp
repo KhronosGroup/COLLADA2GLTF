@@ -313,15 +313,15 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->Key("skin");
 		if (options->version == "1.0") {
 			jsonWriter->String(skin->getStringId().c_str());
+			if (skin->skeleton != NULL) {
+				jsonWriter->Key("skeletons");
+				jsonWriter->StartArray();
+				jsonWriter->String(skin->skeleton->getStringId().c_str());
+				jsonWriter->EndArray();
+			}
 		}
 		else {
 			jsonWriter->Int(skin->id);
-		}
-		if (skin->skeleton != NULL) {
-			jsonWriter->Key("skeletons");
-			jsonWriter->StartArray();
-			jsonWriter->String(skin->skeleton->getStringId().c_str());
-			jsonWriter->EndArray();
 		}
 	}
 	if (camera != NULL) {

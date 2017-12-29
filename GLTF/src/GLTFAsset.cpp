@@ -1130,7 +1130,9 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 					}
 				}
 			}
-			jsonWriter->Key(material->getStringId().c_str());
+			if (options->version == "1.0") {
+				jsonWriter->Key(material->getStringId().c_str());
+			}
 			jsonWriter->StartObject();
 			material->writeJSON(writer, options);
 			jsonWriter->EndObject();

@@ -44,7 +44,7 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 		);
 		_rootNode->name = "Z_UP";
 	}
-	else if (asset->getUpAxisType() == COLLADAFW::FileInfo::Y_UP && assetScale != 1.0) {
+	else if (asset->getUpAxisType() == COLLADAFW::FileInfo::Y_UP) {
 		_rootNode = new GLTF::Node();
 		_rootNode->transform = new GLTF::Node::TransformMatrix(
 			1, 0, 0, 0,
@@ -53,9 +53,6 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 			0, 0, 0, 1
 		);
 		_rootNode->name = "Y_UP";
-	}
-	if (_rootNode != NULL && assetScale != 1.0) {
-		((GLTF::Node::TransformMatrix*)_rootNode->transform)->scaleUniform(assetScale);
 	}
 	return true;
 }
@@ -163,6 +160,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				// Any prior node transforms get flattened out onto the last node
 				COLLADABU::Math::Matrix4 matrix = COLLADABU::Math::Matrix4::IDENTITY;
 				matrix = getFlattenedTransform(nodeTransforms);
+				matrix.scaleTrans(_assetScale);
 				transform = new GLTF::Node::TransformMatrix();
 				packColladaMatrix(matrix, transform);
 				node->transform = transform;
@@ -196,6 +194,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	if (nodeTransforms.size() > 0) {
 		// If the current top level node is animated, we need to make a buffer node so the transform is not changed
 		matrix = getFlattenedTransform(nodeTransforms);
+		matrix.scaleTrans(_assetScale);
 		if (matrix != COLLADABU::Math::Matrix4::IDENTITY) {
 			if (isAnimated) {
 				GLTF::Node* bufferNode = new GLTF::Node();
@@ -638,12 +637,14 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 						semantic = entry.first;
 						int numberOfComponents = 3;
 						bool flipY = false;
+						bool position = false;
 						if (semantic.find("TEXCOORD") == 0) {
 							numberOfComponents = 2;
 							flipY = true;
 						}
 						int semanticIndex = semanticIndices[semantic][j];
 						if (semantic == "POSITION") {
+							position = true;
 							mapping.push_back(semanticIndex);
 						}
 						const COLLADAFW::MeshVertexData* vertexData = semanticData[semantic];
@@ -655,6 +656,9 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 							float value = getMeshVertexDataAtIndex(*vertexData, semanticIndex * stride + k);
 							if (flipY && k == 1) {
 								value = 1 - value;
+							}
+							if (position) {
+								// value = value * _assetScale;
 							}
 							buildAttributes[semantic].push_back(value);
 						}
@@ -1106,7 +1110,7 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 	return true;
 }
 
-void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, int index, size_t offset, float time, float* translationOut) {
+void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, int index, size_t offset, float time, float* translationOut, float assetScale) {
 	float startTime = 0;
 	float startTranslation = 0;
 	float endTime = 0;
@@ -1132,6 +1136,7 @@ void interpolateTranslation(float* base, std::vector<float> input, std::vector<f
 	double value = startTranslation;
 	if (endTime != startTime) {
 		value = startTranslation + (endTranslation - startTranslation) * (time - startTime) / (endTime - startTime);
+		value = value * assetScale;
 	}
 	translationOut[offset] = (float)value;
 }
@@ -1285,7 +1290,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 				}
 				transformMatrix->getTransformTRS(transformTRS);
 				for (int k = 0; k < 3; k++) {
-					translation[j * 3 + k] = transformTRS->translation[k];
+					translation[j * 3 + k] = transformTRS->translation[k] * _assetScale;
 				}
 				for (int k = 0; k < 4; k++) {
 					rotation[j * 4 + k] = transformTRS->rotation[k];
@@ -1300,35 +1305,35 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 				if (needsInterpolation) {
 					return false;
 				}
-				translation[j * 3] = output[index * 3];
-				translation[j * 3 + 1] = output[index * 3 + 1];
-				translation[j * 3 + 2] = output[index * 3 + 2];
+				translation[j * 3] = output[index * 3] * _assetScale;
+				translation[j * 3 + 1] = output[index * 3 + 1] * _assetScale;
+				translation[j * 3 + 2] = output[index * 3 + 2] * _assetScale;
 				break;
 			}
 			case COLLADAFW::AnimationList::POSITION_X: {
 				if (needsInterpolation) {
-					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 0, time, translation + (j * 3));
+					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 0, time, translation + (j * 3), _assetScale);
 				}
 				else {
-					translation[j * 3] = output[index];
+					translation[j * 3] = output[index] * _assetScale;
 				}
 				break;
 			}
 			case COLLADAFW::AnimationList::POSITION_Y: {
 				if (needsInterpolation) {
-					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 1, time, translation + (j * 3));
+					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 1, time, translation + (j * 3), _assetScale);
 				}
 				else {
-					translation[j * 3 + 1] = output[index];
+					translation[j * 3 + 1] = output[index] * _assetScale;
 				}
 				break;
 			}
 			case COLLADAFW::AnimationList::POSITION_Z: {
 				if (needsInterpolation) {
-					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 2, time, translation + (j * 3));
+					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 2, time, translation + (j * 3), _assetScale);
 				}
 				else {
-					translation[j * 3 + 2] = output[index];
+					translation[j * 3 + 2] = output[index] * _assetScale;
 				}
 				break;
 			}
