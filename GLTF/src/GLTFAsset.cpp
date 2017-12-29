@@ -355,6 +355,23 @@ std::vector<GLTF::BufferView*> GLTF::Asset::getAllCompressedBufferView() {
 	return compressedBufferViews;
 }
 
+void GLTF::Asset::mergeAnimations() {
+	if (animations.size() == 0) { return; }
+
+	GLTF::Animation* mergedAnimation = new GLTF::Animation();
+
+	// Merge all animations. In the future, animations should be grouped
+	// according to COLLADA <animation_clip/> nodes.
+	for (GLTF::Animation* animation : animations) {
+		for (GLTF::Animation::Channel* channel : animation->channels) {
+			mergedAnimation->channels.push_back(channel);
+		}
+	}
+
+	animations.clear();
+	animations.push_back(mergedAnimation);
+}
+
 void GLTF::Asset::removeUncompressedBufferViews() {
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
 		auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
@@ -631,7 +648,7 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 		}
 	}
 
-	// Append compressed data to buffer. 
+	// Append compressed data to buffer.
 	for (GLTF::BufferView* compressedBufferView : compressedBufferViews) {
 		std::memcpy(bufferData + byteOffset, compressedBufferView->buffer->data, compressedBufferView->byteLength);
 		compressedBufferView->byteOffset = byteOffset;
