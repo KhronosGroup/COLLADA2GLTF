@@ -57,7 +57,7 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 	return true;
 }
 
-COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation* transform) {
+COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation* transform, float assetScale) {
 	switch (transform->getTransformationType()) {
 	case COLLADAFW::Transformation::ROTATE: {
 		COLLADAFW::Rotate* rotate = (COLLADAFW::Rotate*)transform;
@@ -71,6 +71,7 @@ COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation*
 		const COLLADABU::Math::Vector3& translation = translate->getTranslation();
 		COLLADABU::Math::Matrix4 translationMatrix;
 		translationMatrix.makeTrans(translation);
+		translationMatrix.scaleTrans(assetScale);
 		return translationMatrix;
 	}
 	case COLLADAFW::Transformation::SCALE: {
@@ -82,7 +83,9 @@ COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation*
 	}
 	case COLLADAFW::Transformation::MATRIX: {
 		COLLADAFW::Matrix* transformMatrix = (COLLADAFW::Matrix*)transform;
-		return transformMatrix->getMatrix();
+		COLLADABU::Math::Matrix4 matrix = transformMatrix->getMatrix();
+		matrix.scaleTrans(assetScale);
+		return matrix;
 	}
 	case COLLADAFW::Transformation::LOOKAT: {
 		COLLADAFW::Lookat* lookAt = (COLLADAFW::Lookat*)transform;
@@ -108,15 +111,16 @@ COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation*
 			lookAtMatrix = lookAtMatrix.inverse();
 			lookAtMatrix = lookAtMatrix.transpose();
 		}
+		lookAtMatrix.scaleTrans(assetScale);
 		return lookAtMatrix;
 	}}
 	return COLLADABU::Math::Matrix4::IDENTITY;
 }
 
-COLLADABU::Math::Matrix4 getFlattenedTransform(std::vector<const COLLADAFW::Transformation*> transforms) {
+COLLADABU::Math::Matrix4 getFlattenedTransform(std::vector<const COLLADAFW::Transformation*> transforms, float assetScale) {
 	COLLADABU::Math::Matrix4 matrix = COLLADABU::Math::Matrix4::IDENTITY;
 	for (const COLLADAFW::Transformation* transform : transforms) {
-		matrix = matrix * getMatrixFromTransform(transform);
+		matrix = matrix * getMatrixFromTransform(transform, assetScale);
 	}
 	return matrix;
 }
@@ -159,8 +163,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			if (nodeTransforms.size() > 0) {
 				// Any prior node transforms get flattened out onto the last node
 				COLLADABU::Math::Matrix4 matrix = COLLADABU::Math::Matrix4::IDENTITY;
-				matrix = getFlattenedTransform(nodeTransforms);
-				matrix.scaleTrans(_assetScale);
+				matrix = getFlattenedTransform(nodeTransforms, _assetScale);
 				transform = new GLTF::Node::TransformMatrix();
 				packColladaMatrix(matrix, transform);
 				node->transform = transform;
@@ -173,7 +176,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			}
 
 			// The animated node has the current transformation
-			matrix = getMatrixFromTransform(transformation);
+			matrix = getMatrixFromTransform(transformation, _assetScale);
 			transform = new GLTF::Node::TransformMatrix();
 			packColladaMatrix(matrix, transform);
 			node->transform = transform;
@@ -193,8 +196,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	matrix = COLLADABU::Math::Matrix4::IDENTITY;
 	if (nodeTransforms.size() > 0) {
 		// If the current top level node is animated, we need to make a buffer node so the transform is not changed
-		matrix = getFlattenedTransform(nodeTransforms);
-		matrix.scaleTrans(_assetScale);
+		matrix = getFlattenedTransform(nodeTransforms, _assetScale);
 		if (matrix != COLLADABU::Math::Matrix4::IDENTITY) {
 			if (isAnimated) {
 				GLTF::Node* bufferNode = new GLTF::Node();
@@ -658,7 +660,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 								value = 1 - value;
 							}
 							if (position) {
-								// value = value * _assetScale;
+								value = value * _assetScale;
 							}
 							buildAttributes[semantic].push_back(value);
 						}
