@@ -236,7 +236,7 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->Key("alphaMode");
 		jsonWriter->String(this->alphaMode.c_str());
 
-		if (this->alphaMode == "MASK" && !isnan(this->alphaCutoff)) {
+		if (this->alphaMode == "MASK" && !std::isnan(this->alphaCutoff)) {
 			jsonWriter->Key("alphaCutoff");
 			jsonWriter->Double(this->alphaCutoff);
 		}
