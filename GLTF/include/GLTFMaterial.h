@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cmath>
 
 #include "GLTFObject.h"
 #include "GLTFTechnique.h"
