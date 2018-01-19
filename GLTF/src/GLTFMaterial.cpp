@@ -232,20 +232,17 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->EndObject();
 	}
 
-	if (!this->alphaMode.empty())
-	{
+	if (!this->alphaMode.empty()) {
 		jsonWriter->Key("alphaMode");
 		jsonWriter->String(this->alphaMode.c_str());
 
-		if (this->alphaMode == "MASK" && !isnan(this->alphaCutoff))
-		{
+		if (this->alphaMode == "MASK" && !isnan(this->alphaCutoff)) {
 			jsonWriter->Key("alphaCutoff");
 			jsonWriter->Double(this->alphaCutoff);
 		}
 	}
 
-	if (this->doubleSided)
-	{
+	if (this->doubleSided) {
 		jsonWriter->Key("doubleSided");
 		jsonWriter->Bool(true);
 	}
