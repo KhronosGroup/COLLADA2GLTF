@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cmath>
 
 #include "GLTFObject.h"
 #include "GLTFTechnique.h"
@@ -81,6 +82,14 @@ namespace GLTF {
 		float* emissiveFactor = NULL;
 		Texture* emissiveTexture = NULL;
 		SpecularGlossiness* specularGlossiness = NULL;
+
+		/** Either "OPAQUE", "BLEND" or "MASK". Default = "OPAQUE" */
+		std::string alphaMode;
+
+		/** Only when alphaMode == "MASK". Default = 0.5 */
+		float alphaCutoff = NAN;
+
+		bool doubleSided = false;
 
 		MaterialPBR();
 		void writeJSON(void* writer, GLTF::Options* options);
