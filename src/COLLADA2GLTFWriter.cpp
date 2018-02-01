@@ -306,40 +306,38 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	// Instance Geometries
 	const COLLADAFW::InstanceGeometryPointerArray& instanceGeometries = colladaNode->getInstanceGeometries();
 	size_t count = instanceGeometries.getCount();
-	if (count > 0) {
-		for (size_t i = 0; i < count; i++) {
-			COLLADAFW::InstanceGeometry* instanceGeometry = instanceGeometries[i];
-			COLLADAFW::MaterialBindingArray& materialBindings = instanceGeometry->getMaterialBindings();
-			const COLLADAFW::UniqueId& objectId = instanceGeometry->getInstanciatedObjectId();
-			std::map<int, std::set<GLTF::Primitive*>> primitiveMaterialMapping = _meshMaterialPrimitiveMapping[objectId];
-			std::map<COLLADAFW::UniqueId, GLTF::Mesh*>::iterator iter = _meshInstances.find(objectId);
-			if (iter != _meshInstances.end()) {
-				GLTF::Mesh* mesh = iter->second;
-				for (size_t j = 0; j < materialBindings.getCount(); j++) {
-					COLLADAFW::MaterialBinding materialBinding = materialBindings[j];
-					COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
-					COLLADAFW::UniqueId effectId = this->_materialEffects[materialId];
-					GLTF::Material* material = _effectInstances[effectId];
-					for (GLTF::Primitive* primitive : primitiveMaterialMapping[materialBinding.getMaterialId()]) {
-						if (primitive->material != NULL && primitive->material != material) {
-							// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
-							GLTF::Mesh* cloneMesh = new GLTF::Mesh();
-							mesh = (GLTF::Mesh*)mesh->clone(cloneMesh);
-							primitive = mesh->primitives[j];
-						}
-						primitive->material = material;
+	for (size_t i = 0; i < count; i++) {
+		COLLADAFW::InstanceGeometry* instanceGeometry = instanceGeometries[i];
+		COLLADAFW::MaterialBindingArray& materialBindings = instanceGeometry->getMaterialBindings();
+		const COLLADAFW::UniqueId& objectId = instanceGeometry->getInstanciatedObjectId();
+		std::map<int, std::set<GLTF::Primitive*>> primitiveMaterialMapping = _meshMaterialPrimitiveMapping[objectId];
+		std::map<COLLADAFW::UniqueId, GLTF::Mesh*>::iterator iter = _meshInstances.find(objectId);
+		if (iter != _meshInstances.end()) {
+			GLTF::Mesh* mesh = iter->second;
+			for (size_t j = 0; j < materialBindings.getCount(); j++) {
+				COLLADAFW::MaterialBinding materialBinding = materialBindings[j];
+				COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
+				COLLADAFW::UniqueId effectId = this->_materialEffects[materialId];
+				GLTF::Material* material = _effectInstances[effectId];
+				for (GLTF::Primitive* primitive : primitiveMaterialMapping[materialBinding.getMaterialId()]) {
+					if (primitive->material != NULL && primitive->material != material) {
+						// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
+						GLTF::Mesh* cloneMesh = new GLTF::Mesh();
+						mesh = (GLTF::Mesh*)mesh->clone(cloneMesh);
+						primitive = mesh->primitives[j];
 					}
+					primitive->material = material;
 				}
-				if (node->mesh != NULL) {
-					// Split out a new child node if this one already has a mesh
-					GLTF::Node* meshNode = new GLTF::Node();
-					meshNode->transform = new GLTF::Node::TransformMatrix();
-					meshNode->mesh = mesh;
-					node->children.push_back(meshNode);
-				}
-				else {
-					node->mesh = mesh;
-				}
+			}
+			if (node->mesh != NULL) {
+				// Split out a new child node if this one already has a mesh
+				GLTF::Node* meshNode = new GLTF::Node();
+				meshNode->transform = new GLTF::Node::TransformMatrix();
+				meshNode->mesh = mesh;
+				node->children.push_back(meshNode);
+			}
+			else {
+				node->mesh = mesh;
 			}
 		}
 	}
@@ -391,7 +389,7 @@ bool COLLADA2GLTF::Writer::writeLibraryNodes(const COLLADAFW::LibraryNodes* libr
 
 void mapAttributeIndices(const unsigned int* rootIndices, const unsigned* indices, int count, std::string semantic, std::map<std::string, GLTF::Accessor*>* attributes, std::map<std::string, std::map<int, int>>* indicesMapping) {
 	indicesMapping->emplace(semantic, std::map<int, int>());
-	for (int i = 0; i < count; i++) {
+	for (size_t i = 0; i < count; i++) {
 		unsigned int rootIndex = rootIndices[i];
 		unsigned int index = indices[i];
 		if (rootIndex != index) {
@@ -413,11 +411,11 @@ void mapAttributeIndicesArray(const unsigned int* rootIndices, const COLLADAFW::
 }
 
 GLTF::Accessor* bufferAndMapVertexData(GLTF::BufferView* bufferView, GLTF::Accessor::Type type, const COLLADAFW::MeshVertexData& vertexData, std::map<int, int> indicesMapping) {
-	int count = vertexData.getValuesCount();
+	size_t count = vertexData.getValuesCount();
 	float* floatBuffer = new float[count];
 	COLLADAFW::FloatOrDoubleArray::DataType dataType = vertexData.getType();
-	for (int i = 0; i < count; i++) {
-		int index = i;
+	for (size_t i = 0; i < count; i++) {
+		size_t index = i;
 		std::map<int, int>::iterator mappedIndex = indicesMapping.find(index);
 		if (mappedIndex != indicesMapping.end()) {
 			index = mappedIndex->second;
@@ -439,7 +437,7 @@ GLTF::Accessor* bufferAndMapVertexData(GLTF::BufferView* bufferView, GLTF::Acces
 	return accessor;
 }
 
-float getMeshVertexDataAtIndex(const COLLADAFW::MeshVertexData& data, int index) {
+float COLLADA2GLTF::Writer::getMeshVertexDataAtIndex(const COLLADAFW::MeshVertexData& data, const index_t index) {
 	COLLADAFW::FloatOrDoubleArray::DataType type = data.getType();
 	if (type == COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE) {
 		return (float)data.getDoubleValues()->getData()[index];
@@ -447,9 +445,9 @@ float getMeshVertexDataAtIndex(const COLLADAFW::MeshVertexData& data, int index)
 	return data.getFloatValues()->getData()[index];
 }
 
-std::string buildAttributeId(const COLLADAFW::MeshVertexData& data, int index, int count) {
+std::string COLLADA2GLTF::Writer::buildAttributeId(const COLLADAFW::MeshVertexData& data, const index_t index, const size_t count) {
 	std::string id;
-	for (int i = 0; i < count; i++) {
+	for (size_t i = 0; i < count; i++) {
 		id += std::to_string(getMeshVertexDataAtIndex(data, index * count + i)) + ":";
 	}
 	return id;
@@ -482,8 +480,8 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 		// Create primitives
 		for (int i = 0; i < meshPrimitivesCount; i++) {
 			std::map<std::string, std::vector<float>> buildAttributes;
-			std::map<std::string, unsigned short> attributeIndicesMapping;
-			std::vector<unsigned short> buildIndices;
+			std::map<std::string, index_t> attributeIndicesMapping;
+			std::vector<index_t> buildIndices;
 			COLLADAFW::MeshPrimitive* colladaPrimitive = meshPrimitives[i];
 			GLTF::Primitive* primitive = new GLTF::Primitive();
 
@@ -533,7 +531,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			if (primitive->mode == GLTF::Primitive::Mode::UNKNOWN) {
 				continue;
 			}
-			int count = colladaPrimitive->getPositionIndices().getCount();
+			index_t count = colladaPrimitive->getPositionIndices().getCount();
 			std::map<std::string, const unsigned int*> semanticIndices;
 			std::map<std::string, const COLLADAFW::MeshVertexData*> semanticData;
 			std::string semantic = "POSITION";
@@ -584,19 +582,19 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 					primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
 				}
 			}
-			int index = 0;
-			int face = 0;
-			int startFace = 0;
-			int totalVertexCount = 0;
-			int vertexCount = 0;
-			int faceVertexCount = colladaPrimitive->getGroupedVerticesVertexCount(face);
-			for (int j = 0; j < count; j++) {
+			index_t index = 0;
+			index_t face = 0;
+			index_t startFace = 0;
+			index_t totalVertexCount = 0;
+			index_t vertexCount = 0;
+			index_t faceVertexCount = colladaPrimitive->getGroupedVerticesVertexCount(face);
+			for (index_t j = 0; j < count; j++) {
 				std::string attributeId;
 				if (shouldTriangulate) {
 					// This approach is very efficient in terms of runtime, but there are more correct solutions that may be worth considering.
 					// Using a 3D variant of Fortune's Algorithm or something similar to compute a mesh with no overlapping triangles would be ideal.
 					if (vertexCount >= faceVertexCount) {
-						int end = buildIndices.size() - 1;
+						index_t end = buildIndices.size() - 1;
 						if (faceVertexCount > 3) {
 							// Make a triangle with the last two points and the first one
 							buildIndices.push_back(buildIndices[end - 1]);
@@ -611,7 +609,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 					}
 					else if (vertexCount >= 3) {
 						// Add the previous two points to complete the triangle
-						int end = buildIndices.size() - 1;
+						index_t end = buildIndices.size() - 1;
 						buildIndices.push_back(buildIndices[end - 1]);
 						buildIndices.push_back(buildIndices[end]);
 						totalVertexCount += 2;
@@ -619,35 +617,35 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				}
 				for (const auto& entry : semanticIndices) {
 					semantic = entry.first;
-					int numberOfComponents = 3;
+					size_t numberOfComponents = 3;
 					if (semantic.find("TEXCOORD") == 0) {
 						numberOfComponents = 2;
 					}
 					attributeId += buildAttributeId(*semanticData[semantic], semanticIndices[semantic][j], numberOfComponents);
 				}
-				std::map<std::string, unsigned short>::iterator search = attributeIndicesMapping.find(attributeId);
+				std::map<std::string, index_t>::iterator search = attributeIndicesMapping.find(attributeId);
 				if (search != attributeIndicesMapping.end()) {
 					buildIndices.push_back(search->second);
 				}
 				else {
 					for (const auto& entry : buildAttributes) {
 						semantic = entry.first;
-						int numberOfComponents = 3;
+						size_t numberOfComponents = 3;
 						bool flipY = false;
 						if (semantic.find("TEXCOORD") == 0) {
 							numberOfComponents = 2;
 							flipY = true;
 						}
-						int semanticIndex = semanticIndices[semantic][j];
+						index_t semanticIndex = semanticIndices[semantic][j];
 						if (semantic == "POSITION") {
 							mapping.push_back(semanticIndex);
 						}
 						const COLLADAFW::MeshVertexData* vertexData = semanticData[semantic];
-						int stride = numberOfComponents;
+						size_t stride = numberOfComponents;
 						if (vertexData->getNumInputInfos() > 0) {
 							stride = vertexData->getStride(0);
 						}
-						for (int k = 0; k < numberOfComponents; k++) {
+						for (size_t k = 0; k < numberOfComponents; k++) {
 							float value = getMeshVertexDataAtIndex(*vertexData, semanticIndex * stride + k);
 							if (flipY && k == 1) {
 								value = 1 - value;
@@ -664,7 +662,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			}
 			if (shouldTriangulate && faceVertexCount > 3) {
 				// Close the last polyshape
-				int end = buildIndices.size() - 1;
+				index_t end = buildIndices.size() - 1;
 				buildIndices.push_back(buildIndices[end - 1]);
 				buildIndices.push_back(buildIndices[end]);
 				buildIndices.push_back(buildIndices[startFace]);
@@ -680,7 +678,10 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			}
 
 			// Create indices accessor
-			GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
+			GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR,
+			                                             (_options->useUintIndices && index >= (1 << 16)) ? GLTF::Constants::WebGL::UNSIGNED_INT : GLTF::Constants::WebGL::UNSIGNED_SHORT,
+			                                             (unsigned char*)&buildIndices[0], buildIndices.size(),
+			                                             GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
 			primitive->indices = indices;
 			mesh->primitives.push_back(primitive);
 			// Create attribute accessors
@@ -703,7 +704,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	return true;
 }
 
-bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<unsigned short>& buildIndices) {
+bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<index_t>& buildIndices) {
 	// Add extension to primitive.
 	GLTF::DracoExtension* dracoExtension = new GLTF::DracoExtension();
 	primitive->extensions["KHR_draco_mesh_compression"] = (GLTF::Extension*)dracoExtension;
@@ -711,7 +712,7 @@ bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, 
 	// Create Draco mesh for compression.
 	std::unique_ptr<draco::Mesh> dracoMesh(new draco::Mesh());
 	// Add faces to Draco mesh.
-	const int numTriangles = buildIndices.size() / 3;
+	const size_t numTriangles = buildIndices.size() / 3;
 	dracoMesh->SetNumFaces(numTriangles);
 	for (draco::FaceIndex i(0); i < numTriangles; ++i) {
 		draco::Mesh::Face face;
@@ -727,8 +728,8 @@ bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, 
 		std::string semantic = entry.first;
 		std::vector<float> attributeData = entry.second;
 		GLTF::Accessor::Type type = semantic.find("TEXCOORD") == 0 ? GLTF::Accessor::Type::VEC2 : GLTF::Accessor::Type::VEC3;
-		const int componentCount = GLTF::Accessor::getNumberOfComponents(type);
-		const int vertexCount = attributeData.size() / componentCount;
+		const size_t componentCount = GLTF::Accessor::getNumberOfComponents(type);
+		const size_t vertexCount = attributeData.size() / componentCount;
 
 		// Create attributes for Draco mesh.
 		draco::GeometryAttribute::Type att_type = draco::GeometryAttribute::GENERIC;
@@ -743,7 +744,7 @@ bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, 
 
 		draco::PointAttribute att;
 		att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false, /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
-		int att_id = dracoMesh->AddAttribute(att, /* identity_mapping */ true, vertexCount);
+		index_t att_id = dracoMesh->AddAttribute(att, /* identity_mapping */ true, vertexCount);
 		draco::PointAttribute *att_ptr = dracoMesh->attribute(att_id);
 		// Unique id of attribute is set to attribute id initially.
 		// To note that the attribute id is not necessary to be the same as unique id after compressing the mesh, but the unqiue id will not change.
@@ -760,9 +761,9 @@ bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(GLTF::Primitive* primitive, 
 }
 
 bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primitive, unsigned short* jointArray, float* weightArray) {
-	const int vertexCount = primitive->attributes["POSITION"]->count;
+	const size_t vertexCount = primitive->attributes["POSITION"]->count;
 	const GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC4;
-	int componentCount = GLTF::Accessor::getNumberOfComponents(type);
+	size_t componentCount = GLTF::Accessor::getNumberOfComponents(type);
     
 	auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
 	if (dracoExtensionPtr == primitive->extensions.end()) {
@@ -777,7 +778,7 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
 	// Add joint indices.
 	draco::PointAttribute joint_att;
 	joint_att.Init(att_type, NULL, componentCount, draco::DT_UINT16, /* normalized */ false, /* stride */ sizeof(unsigned short) * componentCount, /* byte_offset */ 0);
-	int joint_att_id = dracoMesh->AddAttribute(joint_att, /* identity_mapping */ true, vertexCount);
+	index_t joint_att_id = dracoMesh->AddAttribute(joint_att, /* identity_mapping */ true, vertexCount);
 	// Unique id is set to attribute id initially.
 	dracoExtension->attributeToId["JOINTS_0"] = joint_att_id;
 	att_ptr = dracoMesh->attribute(joint_att_id);
@@ -790,7 +791,7 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(GLTF::Primitive* primiti
 	// Add joint weights
 	draco::PointAttribute weight_att;
 	weight_att.Init(att_type, NULL, componentCount, draco::DT_FLOAT32, /* normalized */ false, /* stride */ sizeof(float) * componentCount, /* byte_offset */ 0);
-	int weight_att_id = dracoMesh->AddAttribute(weight_att, /* identity_mapping */ true, vertexCount);
+	index_t weight_att_id = dracoMesh->AddAttribute(weight_att, /* identity_mapping */ true, vertexCount);
 	// Unique id is set to attribute id initially.
 	dracoExtension->attributeToId["WEIGHTS_0"] = weight_att_id;
 	att_ptr = dracoMesh->attribute(weight_att_id);
@@ -1062,13 +1063,13 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 		COLLADAFW::FloatOrDoubleArray inputArray = animationCurve->getInputValues();
 		COLLADAFW::FloatOrDoubleArray outputArray = animationCurve->getOutputValues();
 
-		int inputLength = inputArray.getValuesCount();
+		size_t inputLength = inputArray.getValuesCount();
 		std::vector<float> inputValues = std::vector<float>();
-		int outputLength = outputArray.getValuesCount();
+		size_t outputLength = outputArray.getValuesCount();
 		std::vector<float> outputValues = std::vector<float>();
 
 		float value;
-		for (int i = 0; i < inputLength; i++) {
+		for (size_t i = 0; i < inputLength; i++) {
 			switch (inputArray.getType()) {
 			case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE:
 				value = (float)(inputArray.getDoubleValues()->getData()[i]);
@@ -1079,7 +1080,7 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 			}
 			inputValues.push_back(value);
 		}
-		for (int i = 0; i < outputLength; i++) {
+		for (size_t i = 0; i < outputLength; i++) {
 			switch (outputArray.getType()) {
 			case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE:
 				value = (float)(outputArray.getDoubleValues()->getData()[i]);
@@ -1095,12 +1096,12 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 	return true;
 }
 
-void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, int index, size_t offset, float time, float* translationOut) {
+void COLLADA2GLTF::Writer::interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, signed_index_t index, size_t offset, float time, float* translationOut) {
 	float startTime = 0;
 	float startTranslation = 0;
 	float endTime = 0;
 	float endTranslation = 0;
-	int inputSize = input.size();
+	size_t inputSize = input.size();
 
 	if (index < 0) {
 		startTranslation = base[offset];
@@ -1109,7 +1110,7 @@ void interpolateTranslation(float* base, std::vector<float> input, std::vector<f
 		startTime = input[index];
 		startTranslation = output[index];
 	}
-	if (index + 1 >= inputSize) {
+	if ((size_t)(index + 1) >= inputSize) {
 		endTime = input.back();
 		endTranslation = output.back();
 	}
@@ -1249,13 +1250,13 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		std::vector<float> input;
 		std::vector<float> output;
 		std::tie(input, output) = animationData;
-		int index = -1;
-		int inputSize = input.size();
+		signed_index_t index = -1;
+		index_t inputSize = input.size();
 
 		for (size_t j = 0; j < times.size(); j++) {
 			float time = times[j];
 			// If true, this keyframe has no value in this animation
-			bool needsInterpolation = index + 1 >= inputSize || time != input[index + 1];
+			bool needsInterpolation = (index_t)(index + 1) >= inputSize || time != input[index + 1];
 			if (!needsInterpolation) {
 				index++;
 			}
@@ -1551,12 +1552,12 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 		std::map<GLTF::Primitive*, std::vector<int>> positionMapping = _meshPositionMapping[meshId];
 		for (const auto& primitiveEntry : positionMapping) {
 			GLTF::Primitive* primitive = primitiveEntry.first;
-			int count = primitive->attributes["POSITION"]->count;
+			size_t count = primitive->attributes["POSITION"]->count;
 			unsigned short* jointArray = new unsigned short[count * numberOfComponents];
 			float* weightArray = new float[count * numberOfComponents];
 
 			std::vector<int> mapping = primitiveEntry.second;
-			for (int i = 0; i < count; i++) {
+			for (size_t i = 0; i < count; i++) {
 				int index = mapping[i];
 				int* joint = joints[index];
 				float* weight = weights[index];

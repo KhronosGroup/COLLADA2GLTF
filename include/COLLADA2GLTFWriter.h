@@ -10,10 +10,15 @@
 #include "COLLADA2GLTFExtrasHandler.h"
 
 #include "draco/compression/encode.h"
+#include "draco/core/draco_types.h"
 
 namespace COLLADA2GLTF {
 	class Writer : public COLLADAFW::IWriter {
 	private:
+		typedef uint32_t index_t;
+		typedef int32_t signed_index_t;
+		const enum draco::DataType draco_index_t = draco::DT_UINT64;
+
 		GLTF::Asset* _asset;
 		COLLADA2GLTF::Options* _options;
 		COLLADA2GLTF::ExtrasHandler* _extrasHandler;
@@ -35,14 +40,21 @@ namespace COLLADA2GLTF {
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _skinnedMeshes;
 		std::map<COLLADAFW::UniqueId, GLTF::Image*> _images;
 		std::map<COLLADAFW::UniqueId, std::tuple<std::vector<float>, std::vector<float>>> _animationData;
+		bool _use_uint_indices = false;
 
 		bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
 		bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);
 		GLTF::Texture* fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::SamplerID samplerId);
 		GLTF::Texture* fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::Texture texture);
 
+		void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, signed_index_t index,
+		                            size_t offset, float time, float* translationOut);
+		float getMeshVertexDataAtIndex(const COLLADAFW::MeshVertexData& data, const index_t index);
+		std::string buildAttributeId(const COLLADAFW::MeshVertexData& data, const index_t index, const size_t count);
+
 	public:
 		Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* handler);
+		void setUseUintIndices(const bool use_uint_indices);
 
 		/** Deletes the entire scene.
 			 @param errorMessage A message containing informations about the error that occurred.
@@ -123,7 +135,7 @@ namespace COLLADA2GLTF {
 		virtual bool writeKinematicsScene(const COLLADAFW::KinematicsScene* kinematicsScene);
 
 		/** Add attributes of mesh to draco compression extension.*/
-		bool addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<unsigned short>& buildIndices);
+		bool addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<index_t>& buildIndices);
 
 		/** Add joint indices and joint weights to draco compression extension.*/
 		bool addControllerDataToDracoMesh(GLTF::Primitive* primitive, unsigned short* jointArray, float* weightArray);
