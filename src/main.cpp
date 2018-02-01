@@ -101,6 +101,10 @@ int main(int argc, const char **argv) {
 	parser->define("qj", &options->jointQuantizationBits)
 		->description("joint indices and weights quantization bits used in Draco compression extension");
 
+	parser->define("uint", &options->useUintIndices)
+		->defaults(false)
+		->description("use OES_element_index_uint extension to allow 32-bit vertex indices");
+
 	if (parser->parse(argc, argv)) {
 		// Resolve and sanitize paths
 		path inputPath = path(options->inputPath);

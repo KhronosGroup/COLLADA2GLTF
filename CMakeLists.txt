@@ -97,14 +97,18 @@ if(PRECOMPILED_DIR)
     ${PRECOMPILED_DIR}/pcre.lib)
 endif()
 
-# COLLADASaxFrameworkLoader/BaseUtils/Framework, GeneratedSaxParser
-include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADASaxFrameworkLoader/include)
-include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
-include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
-include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/GeneratedSaxParser/include)
-if(NOT OpenCOLLADA)
-  add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
-  set(OpenCOLLADA COLLADASaxFrameworkLoader)
+if(NOT DEFINED COLLADA_LIBRARIES AND NOT DEFINED COLLADA_FRAMEWORK_LIBRARIES)
+  # COLLADASaxFrameworkLoader/BaseUtils/Framework, GeneratedSaxParser
+  include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADASaxFrameworkLoader/include)
+  include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
+  include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
+  include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/GeneratedSaxParser/include)
+  if(NOT OpenCOLLADA)
+    add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
+    set(OpenCOLLADA COLLADASaxFrameworkLoader)
+  endif()
+else()
+  set(OpenCOLLADA ${COLLADA_LIBRARIES} ${COLLADA_FRAMEWORK_LIBRARIES})
 endif()
 
 # COLLADA2GLTF
