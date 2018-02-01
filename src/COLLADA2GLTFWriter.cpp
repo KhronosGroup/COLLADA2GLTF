@@ -678,11 +678,26 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			}
 
 			// Create indices accessor
-			GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR,
-			                                             (_options->useUintIndices && index >= (1 << 16)) ? GLTF::Constants::WebGL::UNSIGNED_INT : GLTF::Constants::WebGL::UNSIGNED_SHORT,
-			                                             (unsigned char*)&buildIndices[0], buildIndices.size(),
-			                                             GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
-			primitive->indices = indices;
+			{
+				unsigned char* outputIndices = (unsigned char*)&buildIndices[0];
+				GLTF::Constants::WebGL componentType = (_options->useUintIndices && index >= (1 << 16)) ?
+				                                        GLTF::Constants::WebGL::UNSIGNED_INT : GLTF::Constants::WebGL::UNSIGNED_SHORT;
+
+				// If necessary, build a temporary (smaller) vector of shorts
+				std::vector<unsigned int> tempBuildIndices;
+				if (componentType == GLTF::Constants::WebGL::UNSIGNED_SHORT) {
+					tempBuildIndices.reserve(buildIndices.size());
+					for(const auto& index : buildIndices) {
+						tempBuildIndices.push_back(index);
+					}
+					outputIndices = (unsigned char*)&tempBuildIndices[0];
+				}
+				GLTF::Accessor* indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR,
+				                                             componentType, outputIndices, buildIndices.size(),
+				                                             GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
+				primitive->indices = indices;
+			}
+
 			mesh->primitives.push_back(primitive);
 			// Create attribute accessors
 			for (const auto& entry : buildAttributes) {
