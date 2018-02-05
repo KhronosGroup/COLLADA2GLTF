@@ -47,11 +47,11 @@ namespace GLTF {
 	public: 
 		class Texture : public GLTF::Object {
 		public:
-			int scale = -1;
+			float scale = 1;
 			GLTF::Texture* texture = NULL;
 			int texCoord = -1;
 
-			void writeJSON(void* writer, GLTF::Options* options);
+			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};
 
 		class MetallicRoughness : public GLTF::Object {
