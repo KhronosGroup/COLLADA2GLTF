@@ -47,7 +47,7 @@ namespace GLTF {
 	public: 
 		class Texture : public GLTF::Object {
 		public:
-			int scale = -1;
+			float scale = 1;
 			GLTF::Texture* texture = NULL;
 			int texCoord = -1;
 

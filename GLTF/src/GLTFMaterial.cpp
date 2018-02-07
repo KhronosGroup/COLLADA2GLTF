@@ -102,10 +102,10 @@ void GLTF::Material::writeJSON(void* writer, GLTF::Options* options) {
 }
 
 void GLTF::MaterialPBR::Texture::writeJSON(void* writer, GLTF::Options* options) {
-	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
-	if (scale >= 0) {
+	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = static_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
+	if (scale != 1) {
 		jsonWriter->Key("scale");
-		jsonWriter->Int(scale);
+		jsonWriter->Double(scale);
 	}
 	if (texture) {
 		jsonWriter->Key("index");
