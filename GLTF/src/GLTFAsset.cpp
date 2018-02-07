@@ -1005,6 +1005,11 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 					occlusionTexture->texture->id = textures.size();
 					textures.push_back(occlusionTexture->texture);
 				}
+				GLTF::MaterialPBR::Texture* emissiveTexture = materialPBR->emissiveTexture;
+				if (emissiveTexture != NULL && emissiveTexture->texture->id < 0) {
+					emissiveTexture->texture->id = textures.size();
+					textures.push_back(emissiveTexture->texture);
+				}
 				if (options->specularGlossiness) {
 					if (!usesSpecularGlossiness) {
 						this->useExtension("KHR_materials_pbrSpecularGlossiness");
