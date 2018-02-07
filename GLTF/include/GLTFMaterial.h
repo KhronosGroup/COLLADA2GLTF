@@ -51,7 +51,7 @@ namespace GLTF {
 			GLTF::Texture* texture = NULL;
 			int texCoord = -1;
 
-			virtual void writeJSON(void* writer, GLTF::Options* options);
+			void writeJSON(void* writer, GLTF::Options* options);
 		};
 
 		class MetallicRoughness : public GLTF::Object {
