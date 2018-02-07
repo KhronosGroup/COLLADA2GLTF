@@ -296,4 +296,6 @@ void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->Key("camera");
 		jsonWriter->Int(camera->id);
 	}
+
+	GLTF::Object::writeJSON(writer, options);
 }
