@@ -684,7 +684,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				                                        GLTF::Constants::WebGL::UNSIGNED_INT : GLTF::Constants::WebGL::UNSIGNED_SHORT;
 
 				// If necessary, build a temporary (smaller) vector of shorts
-				std::vector<unsigned int> tempBuildIndices;
+				std::vector<unsigned short> tempBuildIndices;
 				if (componentType == GLTF::Constants::WebGL::UNSIGNED_SHORT) {
 					tempBuildIndices.reserve(buildIndices.size());
 					for(const auto& index : buildIndices) {
