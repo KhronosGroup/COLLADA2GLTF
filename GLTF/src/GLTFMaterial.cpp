@@ -139,10 +139,10 @@ void GLTF::Material::writeJSON(void* writer, GLTF::Options* options) {
 }
 
 void GLTF::MaterialPBR::Texture::writeJSON(void* writer, GLTF::Options* options) {
-	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
-	if (scale >= 0) {
+	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = static_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
+	if (scale != 1) {
 		jsonWriter->Key("scale");
-		jsonWriter->Int(scale);
+		jsonWriter->Double(scale);
 	}
 	if (texture) {
 		jsonWriter->Key("index");
@@ -268,6 +268,22 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->EndObject();
 		jsonWriter->EndObject();
 	}
+
+	if (!this->alphaMode.empty()) {
+		jsonWriter->Key("alphaMode");
+		jsonWriter->String(this->alphaMode.c_str());
+
+		if (this->alphaMode == "MASK" && !std::isnan(this->alphaCutoff)) {
+			jsonWriter->Key("alphaCutoff");
+			jsonWriter->Double(this->alphaCutoff);
+		}
+	}
+
+	if (this->doubleSided) {
+		jsonWriter->Key("doubleSided");
+		jsonWriter->Bool(true);
+	}
+
 	GLTF::Object::writeJSON(writer, options);
 }
 
