@@ -466,6 +466,12 @@ void GLTF::Asset::removeUnusedNodes(GLTF::Options* options) {
 		for (size_t i = 0; i < defaultScene->nodes.size(); i++) {
 			GLTF::Node* node = defaultScene->nodes[i];
 			if (isUnusedNode(node, skinNodes, isPbr)) {
+				// Nodes associated with ambient lights may be optimized out,
+				// but we should hang on to the lights so that they are 
+				// still written into the shader or common materials object.
+				if (node->light != NULL) {
+					_ambientLights.push_back(node->light);
+				}
 				defaultScene->nodes.erase(defaultScene->nodes.begin() + i);
 				i--;
 			}
@@ -479,6 +485,9 @@ void GLTF::Asset::removeUnusedNodes(GLTF::Options* options) {
 			for (size_t i = 0; i < node->children.size(); i++) {
 				GLTF::Node* child = node->children[i];
 				if (isUnusedNode(child, skinNodes, isPbr)) {
+					if (child->light != NULL) {
+						_ambientLights.push_back(child->light);
+					}
 					// this node is extraneous, remove it
 					node->children.erase(node->children.begin() + i);
 					i--;
@@ -748,7 +757,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 	std::vector<GLTF::Mesh*> meshes;
 	std::vector<GLTF::Skin*> skins;
 	std::vector<GLTF::Camera*> cameras;
-	std::vector<GLTF::MaterialCommon::Light*> lights;
+	std::vector<GLTF::MaterialCommon::Light*> lights = _ambientLights;
 	if (nodes.size() > 0) {
 		jsonWriter->Key("nodes");
 		if (options->version == "1.0") {
