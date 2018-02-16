@@ -64,6 +64,7 @@ namespace GLTF {
 		Transform* transform = NULL;
 
 		virtual std::string typeName();
+		virtual GLTF::Object* clone(GLTF::Object* clone);
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }
