@@ -1033,7 +1033,7 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 
 bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	const COLLADABU::URI imageUri = colladaImage->getImageURI();
-	path imagePath = path(_options->basePath) / imageUri.getURIString();
+	path imagePath = path(_options->basePath) / imageUri.toNativePath(COLLADABU::Utils::getSystemType());
 	GLTF::Image* image = GLTF::Image::load(imagePath);
 	image->stringId = colladaImage->getOriginalId();
 	_images[colladaImage->getUniqueId()] = image;
