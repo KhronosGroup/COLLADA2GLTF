@@ -62,7 +62,7 @@ COLLADA2GLTF[.exe] [input] [output] [options]
 | -t, --separateTextures | false | No | Output textures separately |
 | -b, --binary | false | No | Output Binary glTF |
 | -m, --materialsCommon | false | No | Output materials using the KHR_materials_common extension |
-| -v --version | | No | glTF version to output (e.g. '1.0', '2.0') |
+| -v, --version | | No | glTF version to output (e.g. '1.0', '2.0') |
 | -d, --dracoCompression | false | No | Output meshes using Draco compression extension |
 | --qp | | No | Quantization bits used for position attributes in Draco compression extension |
 | --qn | | No | Quantization bits used for normal attributes in Draco compression extension |
