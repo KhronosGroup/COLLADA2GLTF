@@ -1,104 +1,76 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png">
+  <img src="https://raw.githubusercontent.com/KhronosGroup/glTF/master/specification/figures/gltf.png"/>
 </p>
 
+# COLLADA2GLTF
 [![Build Status](https://travis-ci.org/KhronosGroup/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/COLLADA2GLTF)
 [![Build Status](https://ci.appveyor.com/api/projects/status/3xtpxjohflwd5t1p/branch/master)](https://ci.appveyor.com/project/Khronoswebmaster/collada2gltf/history)
 
 # COLLADA to glTF converter
 
-A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
+A command-line tool to convert COLLADA (`.dae`) files to [glTF 2.0](https://github.com/KhronosGroup/glTF).
 
-## Compile from source 
+## Releases
 
-### 1. Clone repository
- 
- ```
-git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
-```
+Compiled binaries for Windows and Linux can be found under [releases](https://github.com/lasalvavida/COLLADA2GLTF/releases). It is recommended to use the last versioned release
 
-### 2. Install dependencies 
+A live build of the current master branch is available as [latest](https://github.com/lasalvavida/COLLADA2GLTF/releases/tag/latest).
+These binaries are updated whenever master changes, the build succeeds, and the tests pass. These binaries are bleeding-edge and are not guaranteed to be stable.
 
-#### Debian
- ```
-apt-get install cmake libxml2-dev libpcre3-dev libpng-dev zlib1g-dev
-```
-#### Windows
-Install [Visual Studio](https://www.visualstudio.com/vs/)
+## Compile from source
 
-Install [CMake](http://cmake.org/cmake/resources/software.html)
+1. Clone repository
 
-#### OSX
-Install Xcode
+  ```bash
+  git clone --recursive https://github.com/KhronosGroup/COLLADA2GLTF.git
+  ```
+2. Compile
 
-Install dependencies with [brew](http://mxcl.github.com/homebrew/)
+  ```bash
+  cd COLLADA2GLTF
+  mkdir build
+  cd build
+  cmake .. #-Dtest=ON
+  # Linux
+  make
+  # Windows
+  ## Open the generated COLLADA2GLTF.sln in Visual Studio and build
+  ```
 
-```   
-brew install cmake pkgconfig pcre libpng
-```
+3. Run
 
-if the PNG package is not found, the workaround is to Download the the *.tar.gz install from libpng and then:
-```
-./configure
-make check
-sudo make install
-```
+  ```bash
+  COLLADA2GLTF-bin[.exe]
+  ```
 
-### 3. Compile
- ```
-cd COLLADA2GLTF
-mkdir build
-cd build
-cmake ..
-```
-#### Linux
-```
-make
-```
+4. Run tests
 
-#### Windows
-Open COLLADA2GLTF.sln with Visual Studio and build
-
-#### OSX
-Open COLLADA2GLTF.xcodeproj and build
-or if you installed xcode command line tools you can also build in the terminal: xcodebuild -target collada2gltf -configuration Release (or Debug)
-
-### 4. Run
-#### Linux
-```
-./bin/collada2gltf
-```
-#### Windows
-```
-./bin/Release/collada2gltf.exe
-```
-#### OSX
-```
-./bin/Release/collada2gltf
-```
+  ```bash
+  COLLADA2GLTF-test[.exe]
+  GLTF-test[.exe]
+  ```
 
 ## Usage
 
+```bash
+COLLADA2GLTF[.exe] [input] [output] [options]
 ```
-collada2gltf -f [file] [options]
-options:
--z -> path of configuration file [string]
--f -> path of input file, argument [string]
--o -> path of output file argument [string]
--b -> path of output bundle argument [string]
--g -> [experimental] GLSL version to output in generated shaders
--i -> invert-transparency
--d -> export pass details to be able to regenerate shaders and states
--p -> output progress
--l -> enable default lighting (if no lights in scene) [bool], default:true
--c -> compression type: available: Open3DGC [string]
--m -> compression mode: for Open3DGC can be "ascii"(default) or "binary" [string]
--v -> print version
--s -> experimental mode
--h -> help
--r -> verbose logging
--e -> embed resources (bin, shaders, available textures) in glTF file
--n -> don't combine animations with the same target
--k -> export materials and lights using KHR_materials_common extension
-```
-
+### Options
+| Flag | Default | Required | Description |
+| --- | --- | --- | --- |
+| -i, --input | | Yes :white_check_mark: | Path to the input COLLADA file |
+| -o, --output | output/${input}.gltf | No | Path to the output glTF file |
+| --basepath | Parent of input path | No | Resolve external uris using this as the reference path |
+| -s, --separate | false | No | Output separate binary buffer, shaders, and textures |
+| -t, --separateTextures | false | No | Output textures separately |
+| -b, --binary | false | No | Output Binary glTF |
+| -m, --materialsCommon | false | No | Output materials using the KHR_materials_common extension |
+| -d, --dracoCompression | false | No | Output meshes using Draco compression extension |
+| --qp | | No | Quantization bits used for position attributes in Draco compression extension |
+| --qn | | No | Quantization bits used for normal attributes in Draco compression extension |
+| --qt | | No | Quantization bits used for texcoord attributes in Draco compression extension |
+| --qc | | No | Quantization bits used for color attributes in Draco compression extension |
+| --qj | | No | Quantization bits used for joint indice and weight attributes in Draco compression extension |
+| --metallicRoughnessTextures | | No | Paths to images to use as the PBR metallicRoughness textures |
+| --specularGlossiness | false | No | output PBR materials with the KHR_materials_pbrSpecularGlossiness extension |
+| --lockOcclusionMetallicRoughness | false | No | Set `metallicRoughnessTexture` to be the same as the `occlusionTexture` in materials where an ambient texture is defined |

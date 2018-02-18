@@ -21,10 +21,6 @@ configuration:
 - Debug
 - Release
 
-cache:
-- cmake-build/dependencies -> appveyor.yml, .gitmodules
-- cmake-build/GLTF/dependencies -> appveyor.yml, .gitmodules
-
 install:
 - powershell -Command "(gc .gitmodules) -replace 'git@github.com:', 'https://github.com/' | Out-File .gitmodules" -encoding UTF8
 - git submodule update --init --recursive
@@ -32,8 +28,10 @@ install:
 before_build:
 - if not exist cmake-build mkdir cmake-build
 - cd cmake-build
-- IF "%PLATFORM%"=="Win32" cmake -G "Visual Studio 14 2015" .. -Dtest=ON
-- IF "%PLATFORM%"=="x64" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON
+- if "%PLATFORM%"=="Win32" if "%CONFIGURATION%"=="Debug" cmake -G "Visual Studio 14 2015" .. -Dtest=ON -Dprecompiled=DEBUG,X86
+- if "%PLATFORM%"=="x64" if "%CONFIGURATION%"=="Debug" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON -Dprecompiled=DEBUG,X64
+- if "%PLATFORM%"=="Win32" if "%CONFIGURATION%"=="Release" cmake -G "Visual Studio 14 2015" .. -Dtest=ON -Dprecompiled=RELEASE,X86
+- if "%PLATFORM%"=="x64" if "%CONFIGURATION%"=="Release" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON -Dprecompiled=RELEASE,X64
 
 build:
   parallel: true
@@ -47,6 +45,10 @@ after_build:
   .\*.lib
   .\*.pdb
   .\*.dll
+
+test_script:
+- "%CONFIGURATION%\\COLLADA2GLTF-test.exe"
+- "GLTF\\%CONFIGURATION%\\GLTF-test.exe"
 
 artifacts:
 - path: cmake-build/*.zip
