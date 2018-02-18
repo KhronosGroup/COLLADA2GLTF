@@ -8,14 +8,11 @@
 
 # COLLADA to glTF converter
 
-A command-line tool to convert COLLADA (`.dae`) files to [glTF 2.0](https://github.com/KhronosGroup/glTF).
+A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.com/KhronosGroup/glTF).
 
 ## Releases
 
 Compiled binaries for Windows and Linux can be found under [releases](https://github.com/lasalvavida/COLLADA2GLTF/releases). It is recommended to use the last versioned release
-
-A live build of the current master branch is available as [latest](https://github.com/lasalvavida/COLLADA2GLTF/releases/tag/latest).
-These binaries are updated whenever master changes, the build succeeds, and the tests pass. These binaries are bleeding-edge and are not guaranteed to be stable.
 
 ## Compile from source
 
@@ -65,6 +62,7 @@ COLLADA2GLTF[.exe] [input] [output] [options]
 | -t, --separateTextures | false | No | Output textures separately |
 | -b, --binary | false | No | Output Binary glTF |
 | -m, --materialsCommon | false | No | Output materials using the KHR_materials_common extension |
+| -v --version | | No | glTF version to output (e.g. '1.0', '2.0') |
 | -d, --dracoCompression | false | No | Output meshes using Draco compression extension |
 | --qp | | No | Quantization bits used for position attributes in Draco compression extension |
 | --qn | | No | Quantization bits used for normal attributes in Draco compression extension |
