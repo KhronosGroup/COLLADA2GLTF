@@ -13,6 +13,8 @@
 
 namespace GLTF {
 	class Asset : public GLTF::Object {
+	private:
+		std::vector<GLTF::MaterialCommon::Light*> _ambientLights;
 	public:
 		class Metadata : public GLTF::Object {
 		public:

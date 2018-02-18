@@ -16,6 +16,7 @@ namespace GLTF {
 		Image(std::string uri, unsigned char* data, size_t byteLength, std::string fileExtension);
 		static GLTF::Image* load(path path);
 		std::pair<int, int> getDimensions();
+		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }
