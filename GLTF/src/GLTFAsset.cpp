@@ -789,7 +789,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 								}
 							}
 							else {
-								GLTF::MaterialPBR* materialPbr = materialCommon->getMaterialPBR(options->specularGlossiness);
+								GLTF::MaterialPBR* materialPbr = materialCommon->getMaterialPBR(options);
 								if (options->lockOcclusionMetallicRoughness && materialPbr->occlusionTexture != NULL) {
 									GLTF::MaterialPBR::Texture* metallicRoughnessTexture = new GLTF::MaterialPBR::Texture();
 									metallicRoughnessTexture->texture = materialPbr->occlusionTexture->texture;
@@ -1023,11 +1023,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 				}
 			}
 			jsonWriter->StartObject();
-			if (options->doubleSided && !options->materialsCommon) {
-				jsonWriter->Key("doubleSided");
-				jsonWriter->Bool(true);
-			}
- 			material->writeJSON(writer, options);
+			material->writeJSON(writer, options);
 			jsonWriter->EndObject();
 		}
 		jsonWriter->EndArray();

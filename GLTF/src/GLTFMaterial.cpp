@@ -231,6 +231,10 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->EndObject();
 		jsonWriter->EndObject();
 	}
+	if (options->doubleSided || this->doubleSided) {
+		jsonWriter->Key("doubleSided");
+		jsonWriter->Bool(true);
+	}
 	GLTF::Object::writeJSON(writer, options);
 }
 
@@ -467,7 +471,7 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialComm
 		technique->blendFuncSeparate.push_back(GLTF::Constants::WebGL::ONE);
 		technique->blendFuncSeparate.push_back(GLTF::Constants::WebGL::ONE_MINUS_SRC_ALPHA);
 	}
-	else if (options->doubleSided) {
+	else if (doubleSided || options->doubleSided) {
 		technique->enableStates.insert(GLTF::Constants::WebGL::DEPTH_TEST);
 	}
 	else {
@@ -664,7 +668,7 @@ void main(void) {\n";
 	}
 	if (hasNormals) {
 		fragmentShaderSource += "    vec3 normal = normalize(v_normal);\n";
-		if (options->doubleSided) {
+		if (doubleSided || options->doubleSided) {
 			fragmentShaderSource += "\
     if (gl_FrontFacing == false)\n\
     {\n\
@@ -778,7 +782,7 @@ std::string GLTF::MaterialCommon::getTechniqueKey(GLTF::Options* options) {
 	if (values->transparency != NULL) {
 		id += "TRANSPARENCY;";
 	}
-	if (options->doubleSided) {
+	if (doubleSided || options->doubleSided) {
 		id += "DOUBLESIDED;";
 	}
 	if (transparent) {
@@ -796,12 +800,12 @@ GLTF::MaterialPBR::MaterialPBR() {
 	this->specularGlossiness = new GLTF::MaterialPBR::SpecularGlossiness();
 }
 
-GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness) {
+GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) {
 	GLTF::MaterialPBR* material = new GLTF::MaterialPBR();
 	material->metallicRoughness->metallicFactor = 0;
 	if (values->diffuse) {
 		material->metallicRoughness->baseColorFactor = values->diffuse;
-		if (specularGlossiness) {
+		if (options->specularGlossiness) {
 			material->specularGlossiness->diffuseFactor = values->diffuse;
 		}
 	}
@@ -809,7 +813,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness)
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
 		texture->texture = values->diffuseTexture;
 		material->metallicRoughness->baseColorTexture = texture;
-		if (specularGlossiness) {
+		if (options->specularGlossiness) {
 			material->specularGlossiness->diffuseTexture = texture;
 		}
 	}
@@ -830,7 +834,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness)
 		material->occlusionTexture = texture;
 	}
 
-	if (specularGlossiness) {
+	if (options->specularGlossiness) {
 		if (values->specular) {
 			material->specularGlossiness->specularFactor = values->specular;
 		}
@@ -854,6 +858,10 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness)
 		texture->texture = values->bumpTexture;
 		material->normalTexture = texture;
 	}
+
+	if (options->doubleSided || doubleSided) {
+		material->doubleSided = true;
+	}
 	material->name = name;
 	return material;
 }
@@ -864,8 +872,10 @@ void GLTF::MaterialCommon::writeJSON(void* writer, GLTF::Options* options) {
 	jsonWriter->StartObject();
 	jsonWriter->Key("KHR_materials_common");
 	jsonWriter->StartObject();
-	jsonWriter->Key("doubleSided");
-	jsonWriter->Bool(options->doubleSided);
+	if (options->doubleSided || this->doubleSided) {
+		jsonWriter->Key("doubleSided");
+		jsonWriter->Bool(true);
+	}
 	if (this->jointCount > 0) {
 		jsonWriter->Key("jointCount");
 		jsonWriter->Int(this->jointCount);

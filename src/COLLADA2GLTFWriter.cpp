@@ -816,9 +816,6 @@ bool COLLADA2GLTF::Writer::writeGeometry(const COLLADAFW::Geometry* geometry) {
 }
 
 bool COLLADA2GLTF::Writer::writeMaterial(const COLLADAFW::Material* material) {
-	if (this->_extrasHandler->doubleSided) {
-		this->_options->doubleSided = true;
-	}
 	this->_materialEffects[material->getUniqueId()] = material->getInstantiatedEffect();
 	return true;
 }
@@ -940,6 +937,11 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 		if (_extrasHandler->bumpTexture != NULL) {
 			material->values->bumpTexture = fromColladaTexture(effectCommon, _extrasHandler->bumpTexture->samplerId);
 			_extrasHandler->bumpTexture = NULL;
+		}
+
+		bool doubleSided = _extrasHandler->doubleSided.find(effect->getUniqueId()) != _extrasHandler->doubleSided.end();
+		if (doubleSided) {
+			material->doubleSided = true;
 		}
 
 		this->_effectInstances[effect->getUniqueId()] = material;

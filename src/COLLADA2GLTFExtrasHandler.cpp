@@ -66,7 +66,7 @@ bool COLLADA2GLTF::ExtrasHandler::textData(const COLLADASaxFWL::ParserChar* text
 	if (_inDoubleSided) {
 		std::string flag = std::string(text, textLength);
 		if (flag == "1") {
-			doubleSided = true;
+			doubleSided.insert(_currentId);
 		}
 	}
 	return true;

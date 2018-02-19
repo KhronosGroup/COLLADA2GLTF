@@ -26,7 +26,7 @@ namespace COLLADA2GLTF {
 	public:
 		std::set<COLLADAFW::UniqueId> lockAmbientDiffuse;
 		COLLADAFW::TextureAttributes* bumpTexture = NULL;
-		bool doubleSided = false;
+		std::set<COLLADAFW::UniqueId> doubleSided;
 		ExtrasHandler(COLLADASaxFWL::Loader* loader) : _loader(loader) {};
 	};
 }
