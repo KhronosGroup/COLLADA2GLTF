@@ -3,6 +3,10 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+std::string GLTF::Camera::typeName() {
+	return "camera";
+}
+
 void GLTF::Camera::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 

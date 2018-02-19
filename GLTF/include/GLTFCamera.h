@@ -14,6 +14,7 @@ namespace GLTF {
 	  float zfar;
 	  float znear;
 
+	  virtual std::string typeName();
 	  virtual void writeJSON(void* writer, GLTF::Options* options);
   };
 

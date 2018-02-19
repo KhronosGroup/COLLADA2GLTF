@@ -20,6 +20,7 @@ namespace GLTF {
 			GLTF::Constants::WebGL target
 		);
 
+		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 };

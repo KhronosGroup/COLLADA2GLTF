@@ -3,6 +3,10 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+std::string GLTF::Mesh::typeName() {
+	return "mesh";
+}
+
 GLTF::Object* GLTF::Mesh::clone(GLTF::Object* clone) {
 	GLTF::Mesh* mesh = dynamic_cast<GLTF::Mesh*>(clone);
 	if (mesh != NULL) {

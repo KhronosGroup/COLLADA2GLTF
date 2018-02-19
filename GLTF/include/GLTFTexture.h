@@ -11,6 +11,7 @@ namespace GLTF {
 		GLTF::Sampler* sampler = NULL;
 		GLTF::Image* source = NULL;
 		
+		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

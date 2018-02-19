@@ -63,6 +63,7 @@ namespace GLTF {
 		bool equals(GLTF::Accessor* accessor);
 		const char* getTypeName();
 
+		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 };

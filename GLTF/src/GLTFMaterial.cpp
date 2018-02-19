@@ -13,76 +13,108 @@ bool GLTF::Material::hasTexture() {
 	return this->values->diffuseTexture != NULL;
 }
 
+std::string GLTF::Material::typeName() {
+	return "material";
+}
+
 void GLTF::Material::Values::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (ambient != NULL || ambientTexture != NULL) {
 		jsonWriter->Key("ambient");
-		jsonWriter->StartArray();
-		if (ambientTexture != NULL) {
-			jsonWriter->Int(ambientTexture->id);
+		if (ambientTexture != NULL && options->version == "1.0") {
+			jsonWriter->String(ambientTexture->getStringId().c_str());
 		}
 		else {
-			for (int i = 0; i < 4; i++) {
-				jsonWriter->Double(ambient[i]);
+			jsonWriter->StartArray();
+			if (ambientTexture != NULL) {
+				jsonWriter->Int(ambientTexture->id);
 			}
+			else {
+				for (int i = 0; i < 4; i++) {
+					jsonWriter->Double(ambient[i]);
+				}
+			}
+			jsonWriter->EndArray();
 		}
-		jsonWriter->EndArray();
 	}
 
 	if (diffuse != NULL || diffuseTexture != NULL) {
 		jsonWriter->Key("diffuse");
-		jsonWriter->StartArray();
-		if (diffuseTexture != NULL) {
-			jsonWriter->Int(diffuseTexture->id);
+		if (diffuseTexture != NULL && options->version == "1.0") {
+			jsonWriter->String(diffuseTexture->getStringId().c_str());
 		}
 		else {
-			for (int i = 0; i < 4; i++) {
-				jsonWriter->Double(diffuse[i]);
+			jsonWriter->StartArray();
+			if (diffuseTexture != NULL) {
+				jsonWriter->Int(diffuseTexture->id);
 			}
+			else {
+				for (int i = 0; i < 4; i++) {
+					jsonWriter->Double(diffuse[i]);
+				}
+			}
+			jsonWriter->EndArray();
 		}
-		jsonWriter->EndArray();
 	}
 
 	if (emission != NULL || emissionTexture != NULL) {
 		jsonWriter->Key("emission");
-		jsonWriter->StartArray();
-		if (emissionTexture != NULL) {
-			jsonWriter->Int(emissionTexture->id);
+		if (emissionTexture != NULL && options->version == "1.0") {
+			jsonWriter->String(emissionTexture->getStringId().c_str());
 		}
 		else {
-			for (int i = 0; i < 4; i++) {
-				jsonWriter->Double(emission[i]);
+			jsonWriter->StartArray();
+			if (emissionTexture != NULL) {
+				jsonWriter->Int(emissionTexture->id);
 			}
+			else {
+				for (int i = 0; i < 4; i++) {
+					jsonWriter->Double(emission[i]);
+				}
+			}
+			jsonWriter->EndArray();
 		}
-		jsonWriter->EndArray();
 	}
 
 	if (specular != NULL || specularTexture != NULL) {
 		jsonWriter->Key("specular");
-		jsonWriter->StartArray();
-		if (specularTexture != NULL) {
-			jsonWriter->Int(specularTexture->id);
+		if (specularTexture != NULL && options->version == "1.0") {
+			jsonWriter->String(specularTexture->getStringId().c_str());
 		}
 		else {
-			for (int i = 0; i < 4; i++) {
-				jsonWriter->Double(specular[i]);
+			jsonWriter->StartArray();
+			if (specularTexture != NULL) {
+				jsonWriter->Int(specularTexture->id);
 			}
+			else {
+				for (int i = 0; i < 4; i++) {
+					jsonWriter->Double(specular[i]);
+				}
+			}
+			jsonWriter->EndArray();
 		}
-		jsonWriter->EndArray();
 	}
 
 	if (shininess != NULL) {
 		jsonWriter->Key("shininess");
-		jsonWriter->StartArray();
+		if (options->version != "1.0") {
+			jsonWriter->StartArray();
+		}
 		jsonWriter->Double(this->shininess[0]);
-		jsonWriter->EndArray();
+		if (options->version != "1.0") {
+			jsonWriter->EndArray();
+		}
 	}
 
 	if (transparency != NULL) {
 		jsonWriter->Key("transparency");
-		jsonWriter->StartArray();
+		if (options->version != "1.0") {
+			jsonWriter->StartArray();
+		}
 		jsonWriter->Double(this->transparency[0]);
-		jsonWriter->EndArray();
+		if (options->version != "1.0") {
+			jsonWriter->EndArray();
+		}
 	}
 }
 
@@ -96,16 +128,21 @@ void GLTF::Material::writeJSON(void* writer, GLTF::Options* options) {
 	}
 	if (this->technique) {
 		jsonWriter->Key("technique");
-		jsonWriter->Int(this->technique->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(technique->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(technique->id);
+		}
 	}
 	GLTF::Object::writeJSON(writer, options);
 }
 
 void GLTF::MaterialPBR::Texture::writeJSON(void* writer, GLTF::Options* options) {
-	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
-	if (scale >= 0) {
+	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = static_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
+	if (scale != 1) {
 		jsonWriter->Key("scale");
-		jsonWriter->Int(scale);
+		jsonWriter->Double(scale);
 	}
 	if (texture) {
 		jsonWriter->Key("index");
@@ -231,11 +268,27 @@ void GLTF::MaterialPBR::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->EndObject();
 		jsonWriter->EndObject();
 	}
+
+	if (!this->alphaMode.empty()) {
+		jsonWriter->Key("alphaMode");
+		jsonWriter->String(this->alphaMode.c_str());
+
+		if (this->alphaMode == "MASK" && !std::isnan(this->alphaCutoff)) {
+			jsonWriter->Key("alphaCutoff");
+			jsonWriter->Double(this->alphaCutoff);
+		}
+	}
+
 	if (options->doubleSided || this->doubleSided) {
 		jsonWriter->Key("doubleSided");
 		jsonWriter->Bool(true);
 	}
+
 	GLTF::Object::writeJSON(writer, options);
+}
+
+std::string GLTF::MaterialCommon::Light::typeName() {
+	return "light";
 }
 
 void GLTF::MaterialCommon::Light::writeJSON(void* writer, GLTF::Options* options) {
@@ -304,6 +357,8 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialComm
 GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColor, GLTF::Options* options) {
 	GLTF::Material* material = new GLTF::Material();
 	material->values = values;
+	material->name = name;
+	material->stringId = stringId;
 	GLTF::Technique* technique = new GLTF::Technique();
 	material->technique = technique;
 	GLTF::Program* program = new GLTF::Program();
@@ -414,6 +469,7 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialComm
 				std::string transformName = name + "Transform";
 				GLTF::Technique::Parameter* nodeTransform = new GLTF::Technique::Parameter("MODELVIEW", GLTF::Constants::WebGL::FLOAT_MAT4);
 				nodeTransform->node = node->id;
+				nodeTransform->nodeString = node->getStringId();
 				technique->parameters[transformName] = nodeTransform;
 				technique->uniforms["u_" + transformName] = transformName;
 				vertexShaderSource += "uniform mat4 u_" + transformName + ";\n";

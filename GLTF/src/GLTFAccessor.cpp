@@ -148,10 +148,10 @@ bool GLTF::Accessor::writeComponentAtIndex(int index, float* component) {
 		case GLTF::Constants::WebGL::SHORT:
 			((short*)buf)[i] = (short)component[i];
 			break;
-		case GLTF::Constants::WebGL::UNSIGNED_SHORT: 
+		case GLTF::Constants::WebGL::UNSIGNED_SHORT:
 			((unsigned short*)buf)[i] = (unsigned short)component[i];
 			break;
-		case GLTF::Constants::WebGL::FLOAT: 
+		case GLTF::Constants::WebGL::FLOAT:
 			((float*)buf)[i] = (float)component[i];
 			break;
 		case GLTF::Constants::WebGL::UNSIGNED_INT:
@@ -245,13 +245,29 @@ bool GLTF::Accessor::equals(GLTF::Accessor* accessor) {
 	return true;
 }
 
+std::string GLTF::Accessor::typeName() {
+	return "accessor";
+}
+
 void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (this->bufferView) {
 		jsonWriter->Key("bufferView");
-		jsonWriter->Int(this->bufferView->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(this->bufferView->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(this->bufferView->id);
+		}
 		jsonWriter->Key("byteOffset");
 		jsonWriter->Int(this->byteOffset);
+	}
+	if (options->version == "1.0") {
+		int byteStride = bufferView->byteStride;
+		if (byteStride != 0) {
+			jsonWriter->Key("byteStride");
+			jsonWriter->Int(bufferView->byteStride);
+		}
 	}
 	jsonWriter->Key("componentType");
 	jsonWriter->Int((int)this->componentType);
