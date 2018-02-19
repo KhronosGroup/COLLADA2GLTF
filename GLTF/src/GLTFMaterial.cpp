@@ -879,7 +879,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(bool specularGlossiness)
 	}
 	if (values->emissionTexture) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
-		texture->texture = values->diffuseTexture;
+		texture->texture = values->emissionTexture;
 		material->emissiveTexture = texture;
 		material->emissiveFactor = new float[3]{ 1.0, 1.0, 1.0 };
 	}
