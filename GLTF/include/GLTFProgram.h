@@ -14,6 +14,7 @@ namespace GLTF {
 		GLTF::Shader* fragmentShader = NULL;
 		GLTF::Shader* vertexShader = NULL;
 
+		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }

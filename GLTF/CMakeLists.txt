@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0)
-set_property(GLOBAL PROPERTY USE_FOLDERS TRUE)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(PROJECT_NAME GLTF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,7 +22,7 @@ include_directories(dependencies/draco/src)
 add_subdirectory(dependencies/draco)
 get_property(draco_targets DIRECTORY dependencies/draco PROPERTY BUILDSYSTEM_TARGETS)
 foreach(draco_target IN LISTS draco_targets)
-	set_target_properties(${draco_target} PROPERTIES FOLDER "draco")
+	set_property(TARGET ${draco_target} PROPERTY FOLDER "draco")
 endforeach()
 
 # gltf

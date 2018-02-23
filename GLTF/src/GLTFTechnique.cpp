@@ -3,6 +3,10 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+std::string GLTF::Technique::typeName() {
+	return "technique";
+}
+
 void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
@@ -25,9 +29,17 @@ void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->Key("semantic");
 			jsonWriter->String(semantic.c_str());
 		}
-		if (parameterValue->node >= 0) {
-			jsonWriter->Key("node");
-			jsonWriter->Int(parameterValue->node);
+		if (options->version == "1.0") {
+			if (parameterValue->nodeString != "") {
+				jsonWriter->Key("node");
+				jsonWriter->String(parameterValue->nodeString.c_str());
+			}
+		}
+		else {
+			if (parameterValue->node >= 0) {
+				jsonWriter->Key("node");
+				jsonWriter->Int(parameterValue->node);
+			}
 		}
 		if (parameterValue->value != NULL) {
 			jsonWriter->Key("value");
@@ -49,7 +61,12 @@ void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
 
 	if (program != NULL) {
 		jsonWriter->Key("program");
-		jsonWriter->Int(program->id);
+		if (options->version == "1.0") {
+			jsonWriter->String(program->getStringId().c_str());
+		}
+		else {
+			jsonWriter->Int(program->id);
+		}
 	}
 
 	if (enableStates.size() > 0 || depthMask != NULL || blendEquationSeparate.size() > 0 || blendFuncSeparate.size() > 0) {

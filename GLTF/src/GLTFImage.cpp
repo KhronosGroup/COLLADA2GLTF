@@ -97,6 +97,10 @@ std::pair<int, int> GLTF::Image::getDimensions() {
 	return std::pair<int, int>(width, height);
 }
 
+std::string GLTF::Image::typeName() {
+	return "image";
+}
+
 void GLTF::Image::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
@@ -107,10 +111,28 @@ void GLTF::Image::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->String(embeddedUri.c_str());
 		}
 		else {
-			jsonWriter->Key("bufferView");
-			jsonWriter->Int(bufferView->id);
-			jsonWriter->Key("mimeType");
-			jsonWriter->String(mimeType.c_str());
+			if (options->version == "1.0") {
+				jsonWriter->Key("extensions");
+				jsonWriter->StartObject();
+				jsonWriter->Key("KHR_binary_glTF");
+				jsonWriter->StartObject();
+				jsonWriter->Key("bufferView");
+				jsonWriter->String(bufferView->getStringId().c_str());
+				jsonWriter->Key("mimeType");
+				jsonWriter->String(mimeType.c_str());
+				jsonWriter->Key("width");
+				jsonWriter->Int(getDimensions().first);
+				jsonWriter->Key("height");
+				jsonWriter->Int(getDimensions().second);
+				jsonWriter->EndObject();
+				jsonWriter->EndObject();
+			}
+			else {
+				jsonWriter->Key("bufferView");
+				jsonWriter->Int(bufferView->id);
+				jsonWriter->Key("mimeType");
+				jsonWriter->String(mimeType.c_str());
+			}
 		}
 	}
 	else {

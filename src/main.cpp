@@ -70,6 +70,10 @@ int main(int argc, const char **argv) {
 		->defaults(false)
 		->description("output materials using the KHR_materials_common extension");
 
+	parser->define("v", &options->version)
+		->alias("version")
+		->description("glTF version to output (e.g. '1.0', '2.0')");
+
 	parser->define("metallicRoughnessTextures", &options->metallicRoughnessTexturePaths)
 		->description("paths to images to use as the PBR metallicRoughness textures");
 
@@ -140,6 +144,10 @@ int main(int argc, const char **argv) {
 			options->embeddedTextures = false;
 		}
 
+		if (options->version == "1.0" && !options->materialsCommon) {
+			options->glsl = true;
+		}
+
 		if (options->glsl && options->materialsCommon) {
 			std::cout << "ERROR: Cannot export with both glsl and materialsCommon enabled" << std::endl;
 			return -1;
@@ -182,6 +190,9 @@ int main(int argc, const char **argv) {
 		}
 
 		GLTF::Buffer* buffer = asset->packAccessors();
+		if (options->binary && options->version == "1.0") {
+			buffer->stringId = "binary_glTF";
+		}
 
 		// Create image bufferViews for binary glTF
 		if (options->binary && options->embeddedTextures) {
@@ -273,27 +284,40 @@ int main(int argc, const char **argv) {
 				fwrite("glTF", sizeof(char), 4, file); // magic
 
 				uint32_t* writeHeader = new uint32_t[2];
-				writeHeader[0] = 2; // version
+				// version
+				if (options->version == "1.0") {
+					writeHeader[0] = 1;
+				}
+				else {
+					writeHeader[0] = 2;
+				}
 
 				int jsonPadding = (4 - (jsonString.length() & 3)) & 3;
 				int binPadding = (4 - (buffer->byteLength & 3)) & 3;
 
-				writeHeader[1] = HEADER_LENGTH +
-					(CHUNK_HEADER_LENGTH + jsonString.length() + jsonPadding) +
-					(CHUNK_HEADER_LENGTH + buffer->byteLength + binPadding); // length
+				writeHeader[1] = HEADER_LENGTH + (CHUNK_HEADER_LENGTH + jsonString.length() + jsonPadding + buffer->byteLength + binPadding); // length
+				if (options->version != "1.0") {
+					writeHeader[1] += CHUNK_HEADER_LENGTH;
+				}
 				fwrite(writeHeader, sizeof(uint32_t), 2, file); // GLB header
 
-				writeHeader[0] = jsonString.length() + jsonPadding; // chunkLength
-				writeHeader[1] = 0x4E4F534A; // chunkType JSON
+				writeHeader[0] = jsonString.length() + jsonPadding; // 2.0 - chunkLength / 1.0 - contentLength
+				if (options->version == "1.0") {
+					writeHeader[1] = 0; // 1.0 - contentFormat
+				}
+				else {
+					writeHeader[1] = 0x4E4F534A; // 2.0 - chunkType JSON
+				}
 				fwrite(writeHeader, sizeof(uint32_t), 2, file);
 				fwrite(jsonString.c_str(), sizeof(char), jsonString.length(), file);
 				for (int i = 0; i < jsonPadding; i++) {
 					fwrite(" ", sizeof(char), 1, file);
 				}
-
-				writeHeader[0] = buffer->byteLength + binPadding; // chunkLength
-				writeHeader[1] = 0x004E4942; // chunkType BIN
-				fwrite(writeHeader, sizeof(uint32_t), 2, file);
+				if (options->version != "1.0") {
+					writeHeader[0] = buffer->byteLength + binPadding; // chunkLength
+					writeHeader[1] = 0x004E4942; // chunkType BIN
+					fwrite(writeHeader, sizeof(uint32_t), 2, file);
+				}
 				fwrite(buffer->data, sizeof(unsigned char), buffer->byteLength, file);
 				for (int i = 0; i < binPadding; i++) {
 					fwrite("\0", sizeof(char), 1, file);

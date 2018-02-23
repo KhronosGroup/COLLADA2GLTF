@@ -18,6 +18,7 @@ namespace GLTF {
 		bool materialsCommon = false;
 		bool glsl = false;
 		bool specularGlossiness = false;
+		std::string version = "2.0";
 		std::vector<std::string> metallicRoughnessTexturePaths;
 		// For Draco compression extension.
 		bool dracoCompression = false;

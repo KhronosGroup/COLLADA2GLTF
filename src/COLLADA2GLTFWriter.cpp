@@ -24,6 +24,7 @@ void COLLADA2GLTF::Writer::finish() {
 
 bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 	float assetScale = (float)asset->getUnit().getLinearUnitMeter();
+	_assetScale = assetScale;
 	if (asset->getUpAxisType() == COLLADAFW::FileInfo::X_UP) {
 		_rootNode = new GLTF::Node();
 		_rootNode->transform = new GLTF::Node::TransformMatrix(
@@ -43,7 +44,7 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 		);
 		_rootNode->name = "Z_UP";
 	}
-	else if (asset->getUpAxisType() == COLLADAFW::FileInfo::Y_UP && assetScale != 1.0) {
+	else if (asset->getUpAxisType() == COLLADAFW::FileInfo::Y_UP) {
 		_rootNode = new GLTF::Node();
 		_rootNode->transform = new GLTF::Node::TransformMatrix(
 			1, 0, 0, 0,
@@ -53,13 +54,10 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 		);
 		_rootNode->name = "Y_UP";
 	}
-	if (_rootNode != NULL && assetScale != 1.0) {
-		((GLTF::Node::TransformMatrix*)_rootNode->transform)->scaleUniform(assetScale);
-	}
 	return true;
 }
 
-COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation* transform) {
+COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation* transform, float assetScale) {
 	switch (transform->getTransformationType()) {
 	case COLLADAFW::Transformation::ROTATE: {
 		COLLADAFW::Rotate* rotate = (COLLADAFW::Rotate*)transform;
@@ -73,6 +71,7 @@ COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation*
 		const COLLADABU::Math::Vector3& translation = translate->getTranslation();
 		COLLADABU::Math::Matrix4 translationMatrix;
 		translationMatrix.makeTrans(translation);
+		translationMatrix.scaleTrans(assetScale);
 		return translationMatrix;
 	}
 	case COLLADAFW::Transformation::SCALE: {
@@ -84,7 +83,9 @@ COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation*
 	}
 	case COLLADAFW::Transformation::MATRIX: {
 		COLLADAFW::Matrix* transformMatrix = (COLLADAFW::Matrix*)transform;
-		return transformMatrix->getMatrix();
+		COLLADABU::Math::Matrix4 matrix = transformMatrix->getMatrix();
+		matrix.scaleTrans(assetScale);
+		return matrix;
 	}
 	case COLLADAFW::Transformation::LOOKAT: {
 		COLLADAFW::Lookat* lookAt = (COLLADAFW::Lookat*)transform;
@@ -110,15 +111,16 @@ COLLADABU::Math::Matrix4 getMatrixFromTransform(const COLLADAFW::Transformation*
 			lookAtMatrix = lookAtMatrix.inverse();
 			lookAtMatrix = lookAtMatrix.transpose();
 		}
+		lookAtMatrix.scaleTrans(assetScale);
 		return lookAtMatrix;
 	}}
 	return COLLADABU::Math::Matrix4::IDENTITY;
 }
 
-COLLADABU::Math::Matrix4 getFlattenedTransform(std::vector<const COLLADAFW::Transformation*> transforms) {
+COLLADABU::Math::Matrix4 getFlattenedTransform(std::vector<const COLLADAFW::Transformation*> transforms, float assetScale) {
 	COLLADABU::Math::Matrix4 matrix = COLLADABU::Math::Matrix4::IDENTITY;
 	for (const COLLADAFW::Transformation* transform : transforms) {
-		matrix = matrix * getMatrixFromTransform(transform);
+		matrix = matrix * getMatrixFromTransform(transform, assetScale);
 	}
 	return matrix;
 }
@@ -144,10 +146,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	group->push_back(node);
 	const COLLADAFW::UniqueId& colladaNodeId = colladaNode->getUniqueId();
 	std::string id = colladaNode->getOriginalId();
-	node->name = colladaNode->getName();
-	if (node->name == "") {
-		node->name = id;
-	}
 	COLLADAFW::TransformationPointerArray transformations = colladaNode->getTransformations();
 
 	std::vector<const COLLADAFW::Transformation*> nodeTransforms;
@@ -165,7 +163,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			if (nodeTransforms.size() > 0) {
 				// Any prior node transforms get flattened out onto the last node
 				COLLADABU::Math::Matrix4 matrix = COLLADABU::Math::Matrix4::IDENTITY;
-				matrix = getFlattenedTransform(nodeTransforms);
+				matrix = getFlattenedTransform(nodeTransforms, _assetScale);
 				transform = new GLTF::Node::TransformMatrix();
 				packColladaMatrix(matrix, transform);
 				node->transform = transform;
@@ -178,7 +176,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			}
 
 			// The animated node has the current transformation
-			matrix = getMatrixFromTransform(transformation);
+			matrix = getMatrixFromTransform(transformation, _assetScale);
 			transform = new GLTF::Node::TransformMatrix();
 			packColladaMatrix(matrix, transform);
 			node->transform = transform;
@@ -186,7 +184,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			_animatedNodes[animationListId] = node;
 			if (transformation->getTransformationType() == COLLADAFW::Transformation::ROTATE) {
 				COLLADAFW::Rotate* rotate = (COLLADAFW::Rotate*)transformation;
-				_originalRotationAngles[animationListId] = rotate->getRotationAngle();
+				_originalRotationAngles[animationListId] = (float)rotate->getRotationAngle();
 			}
 			isAnimated = true;
 		}
@@ -198,7 +196,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	matrix = COLLADABU::Math::Matrix4::IDENTITY;
 	if (nodeTransforms.size() > 0) {
 		// If the current top level node is animated, we need to make a buffer node so the transform is not changed
-		matrix = getFlattenedTransform(nodeTransforms);
+		matrix = getFlattenedTransform(nodeTransforms, _assetScale);
 		if (matrix != COLLADABU::Math::Matrix4::IDENTITY) {
 			if (isAnimated) {
 				GLTF::Node* bufferNode = new GLTF::Node();
@@ -207,6 +205,12 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 			}
 		}
 	}
+	node->name = colladaNode->getName();
+	if (node->name == "") {
+		node->name = id;
+	}
+	node->jointName = colladaNode->getSid();
+	node->stringId = id;
 	transform = new GLTF::Node::TransformMatrix();
 	packColladaMatrix(matrix, transform);
 	if (node->transform == NULL) {
@@ -469,6 +473,7 @@ std::string buildAttributeId(const COLLADAFW::MeshVertexData& data, int index, i
 bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	GLTF::Mesh* mesh = new GLTF::Mesh();
 	mesh->name = colladaMesh->getName();
+	mesh->stringId = colladaMesh->getOriginalId();
 	if (mesh->name == "") {
 		mesh->name = colladaMesh->getOriginalId();
 	}
@@ -634,12 +639,14 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 						semantic = entry.first;
 						int numberOfComponents = 3;
 						bool flipY = false;
+						bool position = false;
 						if (semantic.find("TEXCOORD") == 0) {
 							numberOfComponents = 2;
 							flipY = true;
 						}
 						int semanticIndex = semanticIndices[semantic][j];
 						if (semantic == "POSITION") {
+							position = true;
 							mapping.push_back(semanticIndex);
 						}
 						const COLLADAFW::MeshVertexData* vertexData = semanticData[semantic];
@@ -651,6 +658,9 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 							float value = getMeshVertexDataAtIndex(*vertexData, semanticIndex * stride + k);
 							if (flipY && k == 1) {
 								value = 1 - value;
+							}
+							if (position) {
+								value = value * _assetScale;
 							}
 							buildAttributes[semantic].push_back(value);
 						}
@@ -827,8 +837,6 @@ void packColladaColor(COLLADAFW::Color color, float* packArray) {
 	packArray[3] = (float)color.getAlpha();
 }
 
-// Re-use this instance since the values don't change
-
 GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::SamplerID samplerId) {
 	GLTF::Texture* texture = new GLTF::Texture();
 	const COLLADAFW::SamplerPointerArray& samplers = effectCommon->getSamplerPointerArray();
@@ -848,6 +856,7 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 
 	if (commonEffects.getCount() > 0) {
 		GLTF::MaterialCommon* material = new GLTF::MaterialCommon();
+		material->stringId = effect->getOriginalId();
 		material->name = effect->getName();
 		if (material->name == "") {
 			material->name = effect->getOriginalId();
@@ -1009,8 +1018,13 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 		writeCamera = camera;
 	}
 	if (writeCamera != NULL) {
-		writeCamera->zfar = (float)colladaCamera->getFarClippingPlane().getValue();
-		writeCamera->znear = (float)colladaCamera->getNearClippingPlane().getValue();
+		writeCamera->name = colladaCamera->getName();
+		if (writeCamera->name == "") {
+			writeCamera->name = colladaCamera->getOriginalId();
+		}
+		writeCamera->stringId = colladaCamera->getOriginalId();
+		writeCamera->zfar = (float)colladaCamera->getFarClippingPlane().getValue() * _assetScale;
+		writeCamera->znear = (float)colladaCamera->getNearClippingPlane().getValue() * _assetScale;
 		_cameraInstances[colladaCamera->getUniqueId()] = writeCamera;
 		return true;
 	}
@@ -1020,12 +1034,15 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	const COLLADABU::URI imageUri = colladaImage->getImageURI();
 	path imagePath = path(_options->basePath) / imageUri.toNativePath(COLLADABU::Utils::getSystemType());
-	_images[colladaImage->getUniqueId()] = GLTF::Image::load(imagePath);
+	GLTF::Image* image = GLTF::Image::load(imagePath);
+	image->stringId = colladaImage->getOriginalId();
+	_images[colladaImage->getUniqueId()] = image;
 	return true;
 }
 
 bool COLLADA2GLTF::Writer::writeLight(const COLLADAFW::Light* colladaLight) {
 	GLTF::MaterialCommon::Light* light = new GLTF::MaterialCommon::Light();
+	light->stringId = colladaLight->getOriginalId();
 	switch (colladaLight->getLightType()) {
 	case COLLADAFW::Light::AMBIENT_LIGHT:
 		light->type = GLTF::MaterialCommon::Light::Type::AMBIENT;
@@ -1095,7 +1112,7 @@ bool COLLADA2GLTF::Writer::writeAnimation(const COLLADAFW::Animation* animation)
 	return true;
 }
 
-void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, int index, size_t offset, float time, float* translationOut) {
+void interpolateTranslation(float* base, std::vector<float> input, std::vector<float> output, int index, size_t offset, float time, float* translationOut, float assetScale) {
 	float startTime = 0;
 	float startTranslation = 0;
 	float endTime = 0;
@@ -1121,6 +1138,7 @@ void interpolateTranslation(float* base, std::vector<float> input, std::vector<f
 	double value = startTranslation;
 	if (endTime != startTime) {
 		value = startTranslation + (endTranslation - startTranslation) * (time - startTime) / (endTime - startTime);
+		value = value * assetScale;
 	}
 	translationOut[offset] = (float)value;
 }
@@ -1274,7 +1292,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 				}
 				transformMatrix->getTransformTRS(transformTRS);
 				for (int k = 0; k < 3; k++) {
-					translation[j * 3 + k] = transformTRS->translation[k];
+					translation[j * 3 + k] = transformTRS->translation[k] * _assetScale;
 				}
 				for (int k = 0; k < 4; k++) {
 					rotation[j * 4 + k] = transformTRS->rotation[k];
@@ -1289,35 +1307,35 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 				if (needsInterpolation) {
 					return false;
 				}
-				translation[j * 3] = output[index * 3];
-				translation[j * 3 + 1] = output[index * 3 + 1];
-				translation[j * 3 + 2] = output[index * 3 + 2];
+				translation[j * 3] = output[index * 3] * _assetScale;
+				translation[j * 3 + 1] = output[index * 3 + 1] * _assetScale;
+				translation[j * 3 + 2] = output[index * 3 + 2] * _assetScale;
 				break;
 			}
 			case COLLADAFW::AnimationList::POSITION_X: {
 				if (needsInterpolation) {
-					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 0, time, translation + (j * 3));
+					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 0, time, translation + (j * 3), _assetScale);
 				}
 				else {
-					translation[j * 3] = output[index];
+					translation[j * 3] = output[index] * _assetScale;
 				}
 				break;
 			}
 			case COLLADAFW::AnimationList::POSITION_Y: {
 				if (needsInterpolation) {
-					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 1, time, translation + (j * 3));
+					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 1, time, translation + (j * 3), _assetScale);
 				}
 				else {
-					translation[j * 3 + 1] = output[index];
+					translation[j * 3 + 1] = output[index] * _assetScale;
 				}
 				break;
 			}
 			case COLLADAFW::AnimationList::POSITION_Z: {
 				if (needsInterpolation) {
-					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 2, time, translation + (j * 3));
+					interpolateTranslation(nodeTransformTRS->translation, input, output, index, 2, time, translation + (j * 3), _assetScale);
 				}
 				else {
-					translation[j * 3 + 2] = output[index];
+					translation[j * 3 + 2] = output[index] * _assetScale;
 				}
 				break;
 			}
@@ -1382,7 +1400,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		sampler->input = inputAccessor;
 		sampler->output = outputAccessor;
 		target->node = node;
-		target->path = GLTF::Animation::Channel::Target::Path::TRANSLATION;
+		target->path = GLTF::Animation::Path::TRANSLATION;
 		channel->target = target;
 		channel->sampler = sampler;
 		animation->channels.push_back(channel);
@@ -1395,7 +1413,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		sampler->input = inputAccessor;
 		sampler->output = outputAccessor;
 		target->node = node;
-		target->path = GLTF::Animation::Channel::Target::Path::ROTATION;
+		target->path = GLTF::Animation::Path::ROTATION;
 		channel->target = target;
 		channel->sampler = sampler;
 		animation->channels.push_back(channel);
@@ -1408,7 +1426,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		sampler->input = inputAccessor;
 		sampler->output = outputAccessor;
 		target->node = node;
-		target->path = GLTF::Animation::Channel::Target::Path::SCALE;
+		target->path = GLTF::Animation::Path::SCALE;
 		channel->target = target;
 		channel->sampler = sampler;
 		animation->channels.push_back(channel);
@@ -1420,6 +1438,7 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControllerData* skinControllerData) {
 	GLTF::Skin* skin = new GLTF::Skin();
 	COLLADAFW::UniqueId uniqueId = skinControllerData->getUniqueId();
+	skin->stringId = skinControllerData->getOriginalId();
 	skin->name = skinControllerData->getName();
 	if (skin->name == "") {
 		skin->name = skinControllerData->getOriginalId();
@@ -1572,9 +1591,15 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 			}
 
 			GLTF::Accessor* weightAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weightArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
-			primitive->attributes["WEIGHTS_0"] = weightAccessor;
 			GLTF::Accessor* jointAccessor = new GLTF::Accessor(type, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)jointArray, count, GLTF::Constants::WebGL::ARRAY_BUFFER);
-			primitive->attributes["JOINTS_0"] = jointAccessor;
+			if (_options->version == "1.0") {
+				primitive->attributes["WEIGHT"] = weightAccessor;
+				primitive->attributes["JOINT"] = jointAccessor;
+			}
+			else {
+				primitive->attributes["WEIGHTS_0"] = weightAccessor;
+				primitive->attributes["JOINTS_0"] = jointAccessor;
+			}
 		}
 
 		_skinInstances[skinControllerId] = skin;

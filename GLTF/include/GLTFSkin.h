@@ -14,6 +14,7 @@ namespace GLTF {
 		Node* skeleton = NULL;
 		std::vector<Node*> joints;
 
+		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};
 }
