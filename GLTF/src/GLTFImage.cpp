@@ -23,6 +23,13 @@ GLTF::Image::Image(std::string uri, unsigned char* data, size_t byteLength, std:
 	}
 }
 
+GLTF::Image::~Image()
+{
+	auto it = std::find_if(_imageCache.begin(), _imageCache.end(), [this](auto pair) { return pair.second == this; });
+	if (it != _imageCache.end())
+		_imageCache.erase(it);
+}
+
 GLTF::Image* GLTF::Image::load(path imagePath) {
 	std::string fileString = imagePath.string();
 	std::map<std::string, GLTF::Image*>::iterator imageCacheIt = _imageCache.find(fileString);
