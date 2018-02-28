@@ -23,6 +23,8 @@ namespace COLLADA2GLTF {
 		std::map<COLLADAFW::UniqueId, GLTF::Material*> _effectInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Camera*> _cameraInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _meshInstances;
+		std::map<COLLADAFW::UniqueId, GLTF::Node*> _nodeInstances;
+		std::map<COLLADAFW::UniqueId, std::vector<GLTF::Node*>> _nodeInstanceTargets;
 		std::map<COLLADAFW::UniqueId, std::map<int, std::set<GLTF::Primitive*>>> _meshMaterialPrimitiveMapping;
 		std::map<COLLADAFW::UniqueId, GLTF::MaterialCommon::Light*> _lightInstances;
 		std::map<COLLADAFW::UniqueId, std::map<GLTF::Primitive*, std::vector<int>>> _meshPositionMapping;
