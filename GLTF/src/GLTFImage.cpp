@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <algorithm>
 
 #include "Base64.h"
 #include "GLTFImage.h"
@@ -7,7 +8,8 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-std::map<std::string, GLTF::Image*> _imageCache;
+typedef std::map<std::string, GLTF::Image*> ImageCache;
+ImageCache _imageCache;
 
 GLTF::Image::Image(std::string uri) : uri(uri) {}
 
@@ -21,6 +23,15 @@ GLTF::Image::Image(std::string uri, unsigned char* data, size_t byteLength, std:
 	else {
 		mimeType = "image/" + fileExtension;
 	}
+}
+
+GLTF::Image::~Image()
+{
+	const ImageCache::iterator it = std::find_if(_imageCache.begin(), _imageCache.end(), 
+		[this](std::pair<ImageCache::key_type, ImageCache::mapped_type> pair) { return pair.second == this; });
+
+	if (it != _imageCache.end())
+		_imageCache.erase(it);
 }
 
 GLTF::Image* GLTF::Image::load(path imagePath) {
