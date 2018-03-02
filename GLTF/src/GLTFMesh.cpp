@@ -18,6 +18,7 @@ GLTF::Object* GLTF::Mesh::clone(GLTF::Object* clone) {
 			}
 		}
 	}
+	GLTF::Object::clone(clone);
 	return mesh;
 }
 

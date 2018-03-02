@@ -226,6 +226,25 @@ std::string GLTF::Node::typeName() {
 	return "node";
 }
 
+GLTF::Object* GLTF::Node::clone(GLTF::Object* clone) {
+	GLTF::Node* node = dynamic_cast<GLTF::Node*>(clone);
+	if (node != NULL) {
+		node->camera = camera;
+		for (GLTF::Node* child : children) {
+			GLTF::Node* cloneChild = new GLTF::Node();
+			child->clone(cloneChild);
+			node->children.push_back(cloneChild);
+		}
+		node->skin = skin;
+		node->jointName = jointName;
+		node->mesh = mesh;
+		node->light = light;
+		node->transform = transform;
+	}
+	GLTF::Object::clone(clone);
+	return node;
+}
+
 void GLTF::Node::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	

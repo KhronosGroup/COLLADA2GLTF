@@ -348,6 +348,41 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 		}
 	}
 	_nodes[id] = node;
+	_nodeInstances[colladaNodeId] = node;
+
+	// Instance Nodes
+	const COLLADAFW::InstanceNodePointerArray& instanceNodes = colladaNode->getInstanceNodes();
+	size_t nodeCount = instanceNodes.getCount();
+	for (size_t i = 0; i < nodeCount; i++) {
+		COLLADAFW::InstanceNode* instanceNode = instanceNodes[i];
+		const COLLADAFW::UniqueId& instanceNodeId = instanceNode->getInstanciatedObjectId();
+		std::map<COLLADAFW::UniqueId, GLTF::Node*>::iterator iter = _nodeInstances.find(instanceNodeId);
+		if (iter != _nodeInstances.end()) {
+			// Resolve the instance
+			GLTF::Node* cloneNode = new GLTF::Node();
+			iter->second->clone(cloneNode);
+			node->children.push_back(cloneNode);
+		}
+		else {
+			// We haven't seen this node yet, add a target
+			std::map<COLLADAFW::UniqueId, std::vector<GLTF::Node*>>::iterator iter = _nodeInstanceTargets.find(instanceNodeId);
+			if (iter == _nodeInstanceTargets.end()) {
+				_nodeInstanceTargets[instanceNodeId] = std::vector<GLTF::Node*>();
+			}
+			_nodeInstanceTargets[instanceNodeId].push_back(node);
+		}
+	}
+
+	// Resolve instance nodes that we've seen for this node
+	std::map<COLLADAFW::UniqueId, std::vector<GLTF::Node*>>::iterator findNodeInstanceTargets = _nodeInstanceTargets.find(colladaNodeId);
+	if (findNodeInstanceTargets != _nodeInstanceTargets.end()) {
+		std::vector<GLTF::Node*> instanceTargets = findNodeInstanceTargets->second;
+		for (GLTF::Node* instanceTarget : instanceTargets) {
+			GLTF::Node* cloneNode = new GLTF::Node();
+			node->clone(cloneNode);
+			instanceTarget->children.push_back(cloneNode);
+		}
+	}
 
 	// Recurse child nodes
 	const COLLADAFW::NodePointerArray& childNodes = colladaNode->getChildNodes();
@@ -964,6 +999,14 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 			camera->xmag = 1.0;
 			camera->ymag = 1.0;
 			break;
+		case COLLADAFW::Camera::ASPECTRATIO_AND_X:
+			// fall through to single X if aspect ratio is zero
+			if (colladaCamera->getAspectRatio().getValue() != 0) {
+				x = (float)colladaCamera->getXMag().getValue();
+				camera->xmag = x;
+				camera->ymag = x / (float)colladaCamera->getAspectRatio().getValue();
+				break;
+			}
 		case COLLADAFW::Camera::SINGLE_X:
 			camera->xmag = (float)colladaCamera->getXMag().getValue();
 			camera->ymag = 1.0;
@@ -975,11 +1018,6 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 		case COLLADAFW::Camera::X_AND_Y:
 			camera->xmag = (float)colladaCamera->getXMag().getValue();
 			camera->ymag = (float)colladaCamera->getYMag().getValue();
-			break;
-		case COLLADAFW::Camera::ASPECTRATIO_AND_X:
-			x = (float)colladaCamera->getXMag().getValue();
-			camera->xmag = x;
-			camera->ymag = x / (float)colladaCamera->getAspectRatio().getValue();
 			break;
 		case COLLADAFW::Camera::ASPECTRATIO_AND_Y:
 			y = (float)colladaCamera->getYMag().getValue();
