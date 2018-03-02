@@ -9,9 +9,11 @@
 
 std::map<std::string, GLTF::Image*> _imageCache;
 
-GLTF::Image::Image(std::string uri) : uri(uri) {}
+GLTF::Image::Image(std::string uri, std::string cacheKey) : uri(uri), cacheKey(cacheKey) {}
 
-GLTF::Image::Image(std::string uri, unsigned char* data, size_t byteLength, std::string fileExtension) : uri(uri), data(data), byteLength(byteLength) {
+GLTF::Image::Image(std::string uri) : Image(uri, "") {}
+
+GLTF::Image::Image(std::string uri, std::string cacheKey, unsigned char* data, size_t byteLength, std::string fileExtension) : uri(uri), data(data), byteLength(byteLength), cacheKey(cacheKey) {
 	std::string dataSubstring((char*)data, 9);
 	if (dataSubstring.substr(1, 8) == "PNG\r\n\x1a\n") {
 		mimeType = "image/png";
@@ -21,6 +23,14 @@ GLTF::Image::Image(std::string uri, unsigned char* data, size_t byteLength, std:
 	}
 	else {
 		mimeType = "image/" + fileExtension;
+	}
+}
+
+GLTF::Image::Image(std::string uri, unsigned char* data, size_t byteLength, std::string fileExtension) : Image(uri, "", data, byteLength, fileExtension) {}
+
+GLTF::Image::~Image() {
+	if (!cacheKey.empty()) {
+		_imageCache.erase(cacheKey);
 	}
 }
 
@@ -35,7 +45,7 @@ GLTF::Image* GLTF::Image::load(path imagePath) {
 	FILE* file = fopen(fileString.c_str(), "rb");
 	if (file == NULL) {
 		std::cout << "WARNING: Image uri: " << fileString << " could not be resolved " << std::endl;
-		image = new GLTF::Image(imagePath.filename().string());
+		image = new GLTF::Image(imagePath.filename().string(), fileString);
 	}
 	else {
 		fseek(file, 0, SEEK_END);
@@ -45,7 +55,7 @@ GLTF::Image* GLTF::Image::load(path imagePath) {
 		unsigned char* buffer = (unsigned char*)malloc(size);
 		int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
 		fclose(file);
-		image = new GLTF::Image(imagePath.filename().string(), buffer, bytesRead, fileExtension);
+		image = new GLTF::Image(imagePath.filename().string(), fileString, buffer, bytesRead, fileExtension);
 	}
 	_imageCache[fileString] = image;
 	return image;
