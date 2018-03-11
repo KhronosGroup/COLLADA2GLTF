@@ -21,10 +21,20 @@ namespace GLTF {
 			TRIANGLE_STRIP = 5,
 			TRIANGLE_FAN = 6,
 		};
+
+		class Target {
+		public:
+			std::map<std::string, GLTF::Accessor*> attributes;
+
+			Target* clone(GLTF::Object* clone);
+			void writeJSON(void* writer, GLTF::Options* options);
+		};
+
 		std::map<std::string, GLTF::Accessor*> attributes;
 		GLTF::Accessor* indices = NULL;
 		GLTF::Material* material = NULL;
 		Mode mode = Mode::UNKNOWN;
+		std::vector<Target*> targets;
 
 		virtual GLTF::Object* clone(GLTF::Object* clone);
 		virtual void writeJSON(void* writer, GLTF::Options* options);
