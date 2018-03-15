@@ -12,7 +12,7 @@ Change Log
 * Export UNSIGNED_INT indices for large primitives [#123](https://github.com/KhronosGroup/COLLADA2GLTF/issues/123)
 * Fixed issues with mesh instancing [#135](https://github.com/KhronosGroup/COLLADA2GLTF/issues/135)
 
-### v2.0.0 - 2017-05-26
+### v2.0.0 - 2017-08-27
 
 ##### Highlights :sparkler:
 * Rewrite of legacy converter for exporting glTF 2.0 [#3](https://github.com/KhronosGroup/COLLADA2GLTF/issues/3)
