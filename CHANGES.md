@@ -1,7 +1,9 @@
 Change Log
 ==========
 
-### v2.1.0 - Next Release
+### Next Release
+
+### v2.1.0 - 2018-03-15
 
 ##### Additions :tada:
 * Add support for exporting glTF 1.0 [#69](https://github.com/KhronosGroup/COLLADA2GLTF/issues/69)
