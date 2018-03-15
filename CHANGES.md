@@ -12,5 +12,5 @@ Change Log
 
 ### v2.0.0 - 2017-05-26
 
-##### Additions :tada:
+##### Highlights :sparkler:
 * Rewrite of legacy converter for exporting glTF 2.0 [#3](https://github.com/KhronosGroup/COLLADA2GLTF/issues/3)
