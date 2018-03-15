@@ -27,7 +27,7 @@ namespace COLLADA2GLTF {
 		std::map<COLLADAFW::UniqueId, std::vector<GLTF::Node*>> _nodeInstanceTargets;
 		std::map<COLLADAFW::UniqueId, std::map<int, std::set<GLTF::Primitive*>>> _meshMaterialPrimitiveMapping;
 		std::map<COLLADAFW::UniqueId, GLTF::MaterialCommon::Light*> _lightInstances;
-		std::map<COLLADAFW::UniqueId, std::map<GLTF::Primitive*, std::vector<int>>> _meshPositionMapping;
+		std::map<COLLADAFW::UniqueId, std::map<GLTF::Primitive*, std::vector<unsigned int>>> _meshPositionMapping;
 		std::map<COLLADAFW::UniqueId, GLTF::Skin*> _skinInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Node*> _animatedNodes;
 		std::map<COLLADAFW::UniqueId, float> _originalRotationAngles;
@@ -126,7 +126,7 @@ namespace COLLADA2GLTF {
 		virtual bool writeKinematicsScene(const COLLADAFW::KinematicsScene* kinematicsScene);
 
 		/** Add attributes of mesh to draco compression extension.*/
-		bool addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<unsigned short>& buildIndices);
+		bool addAttributesToDracoMesh(GLTF::Primitive* primitive, const std::map<std::string, std::vector<float>>& buildAttributes, const std::vector<unsigned int>& buildIndices);
 
 		/** Add joint indices and joint weights to draco compression extension.*/
 		bool addControllerDataToDracoMesh(GLTF::Primitive* primitive, unsigned short* jointArray, float* weightArray);
