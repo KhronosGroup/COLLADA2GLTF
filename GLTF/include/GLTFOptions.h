@@ -16,6 +16,7 @@ namespace GLTF {
 		bool binary = false;
 		bool lockOcclusionMetallicRoughness = false;
 		bool materialsCommon = false;
+		bool doubleSided = false;
 		bool glsl = false;
 		bool specularGlossiness = false;
 		std::string version = "2.0";

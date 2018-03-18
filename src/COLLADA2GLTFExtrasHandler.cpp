@@ -36,6 +36,9 @@ bool COLLADA2GLTF::ExtrasHandler::elementBegin(const COLLADASaxFWL::ParserChar* 
 			attributeKey = attributes[index++];
 		}
 	}
+	else if (name == "double_sided") {
+		_inDoubleSided = true;
+	}
 	return true;
 }
 
@@ -43,6 +46,9 @@ bool COLLADA2GLTF::ExtrasHandler::elementEnd(const COLLADASaxFWL::ParserChar* el
 	std::string name = std::string(elementName);
 	if (name == "bump") {
 		_inBump = false;
+	}
+	else if (name == "double_sided") {
+		_inDoubleSided = false;
 	}
 	return true; 
 }
@@ -53,5 +59,15 @@ bool COLLADA2GLTF::ExtrasHandler::parseElement(
 	const COLLADAFW::UniqueId& uniqueId,
 	COLLADAFW::Object* object) {
 	_currentId = uniqueId;
+	return true;
+}
+
+bool COLLADA2GLTF::ExtrasHandler::textData(const COLLADASaxFWL::ParserChar* text, size_t textLength) {
+	if (_inDoubleSided) {
+		std::string flag = std::string(text, textLength);
+		if (flag == "1") {
+			doubleSided.insert(_currentId);
+		}
+	}
 	return true;
 }

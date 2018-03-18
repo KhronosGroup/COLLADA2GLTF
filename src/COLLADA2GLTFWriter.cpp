@@ -994,6 +994,11 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			_extrasHandler->bumpTexture = NULL;
 		}
 
+		bool doubleSided = _extrasHandler->doubleSided.find(effect->getUniqueId()) != _extrasHandler->doubleSided.end();
+		if (doubleSided) {
+			material->doubleSided = true;
+		}
+
 		this->_effectInstances[effect->getUniqueId()] = material;
 	}
 
