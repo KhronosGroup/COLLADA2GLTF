@@ -72,7 +72,7 @@ int main(int argc, const char **argv) {
 
 	parser->define("doubleSided", &options->doubleSided)
 		->defaults(false)
-		->description("output double sided materials. When this value is true, back-face culling is disabled and double sided lighting is enabled");
+		->description("Force all materials to be double sided. When this value is true, back-face culling is disabled and double sided lighting is enabled");
 
 	parser->define("v", &options->version)
 		->alias("version")
