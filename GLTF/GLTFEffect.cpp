@@ -50,6 +50,7 @@ namespace GLTF
         this->setName(source->getName());
         this->setValues(source->getValues());
         this->setLightingModel(source->getLightingModel());
+        this->setKhrMaterialsCommonValues(source->getKhrMaterialsCommonValues());
         this->_texcoordToSemantics = effect._texcoordToSemantics;
         this->_profile = effect._profile;
     }
