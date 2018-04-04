@@ -7,7 +7,7 @@ Change Log
 * Add support for exporting double sided materials [#133](https://github.com/KhronosGroup/COLLADA2GLTF/pull/133)
 
 ##### Fixes :wrench:
-* Fixes issue where incorrect mime types were being generated [#162](https://github.com/KhronosGroup/COLLADA2GLTF/pull/164)
+* Fixed issue where incorrect mime types were being generated [#162](https://github.com/KhronosGroup/COLLADA2GLTF/pull/164)
 
 ### v2.1.0 - 2018-03-15
 
