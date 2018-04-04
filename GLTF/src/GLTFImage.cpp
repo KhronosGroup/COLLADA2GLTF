@@ -14,8 +14,8 @@ GLTF::Image::Image(std::string uri, std::string cacheKey) : uri(uri), cacheKey(c
 GLTF::Image::Image(std::string uri) : Image(uri, "") {}
 
 GLTF::Image::Image(std::string uri, std::string cacheKey, unsigned char* data, size_t byteLength, std::string fileExtension) : uri(uri), data(data), byteLength(byteLength), cacheKey(cacheKey) {
-	std::string dataSubstring((char*)data, 9);
-	if (dataSubstring.substr(1, 8) == "PNG\r\n\x1a\n") {
+	std::string dataSubstring((char*)data, 8);
+	if (dataSubstring.substr(1, 7) == "PNG\r\n\x1a\n") {
 		mimeType = "image/png";
 	}
 	else if (data[0] == 255 && data[1] == 216) {
@@ -41,6 +41,7 @@ GLTF::Image* GLTF::Image::load(path imagePath) {
 		return imageCacheIt->second;
 	}
 	std::string fileExtension = imagePath.extension().string();
+	fileExtension.erase(0, 1);
 	GLTF::Image* image = NULL;
 	FILE* file = fopen(fileString.c_str(), "rb");
 	if (file == NULL) {
