@@ -11,6 +11,8 @@ std::string pathString(GLTF::Animation::Path path) {
 		return "rotation";
 	case GLTF::Animation::Path::SCALE:
 		return "scale";
+	case GLTF::Animation::Path::WEIGHTS:
+		return "weights";
 	}
 	return "unknown";
 }

@@ -73,10 +73,10 @@ std::vector<GLTF::Accessor*> GLTF::Asset::getAllAccessors() {
 	}
 
 	for (GLTF::Primitive* primitive : getAllPrimitives()) {
-		for (const auto attribute : primitive->attributes) {
-			if (uniqueAccessors.find(attribute.second) == uniqueAccessors.end()) {
-				accessors.push_back(attribute.second);
-				uniqueAccessors.insert(attribute.second);
+		for (auto* accessor: getAllPrimitiveAccessors(primitive)) {
+			if (uniqueAccessors.find(accessor) == uniqueAccessors.end()) {
+				accessors.push_back(accessor);
+				uniqueAccessors.insert(accessor);
 			}
 		}
 		GLTF::Accessor* indicesAccessor = primitive->indices;
@@ -339,6 +339,22 @@ std::vector<GLTF::Image*> GLTF::Asset::getAllImages() {
 	return images;
 }
 
+std::vector<GLTF::Accessor*> GLTF::Asset::getAllPrimitiveAccessors(GLTF::Primitive* primitive) const
+{
+	std::vector<GLTF::Accessor*> accessors;
+
+	for (const auto& attribute : primitive->attributes) {
+		accessors.emplace_back(attribute.second);
+	}
+	for (const auto* target: primitive->targets) {
+		for (const auto& attribute : target->attributes) {
+			accessors.emplace_back(attribute.second);
+		}
+	}
+
+	return move(accessors);
+}
+
 std::vector<GLTF::BufferView*> GLTF::Asset::getAllCompressedBufferView() {
 	std::vector<GLTF::BufferView*> compressedBufferViews;
 	std::set<GLTF::BufferView*> uniqueCompressedBufferViews;
@@ -377,10 +393,10 @@ void GLTF::Asset::removeUncompressedBufferViews() {
 		auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
 		if (dracoExtensionPtr != primitive->extensions.end()) {
 			// Currently assume all attributes are compressed in Draco extension.
-			for (const auto attribute : primitive->attributes) {
-				if (attribute.second->bufferView) {
-					delete attribute.second->bufferView;
-					attribute.second->bufferView = NULL;
+			for (const auto accessor: getAllPrimitiveAccessors(primitive)) {
+				if (accessor->bufferView) {
+					delete accessor->bufferView;
+					accessor->bufferView = NULL;
 				}
 			}
 			GLTF::Accessor* indicesAccessor = primitive->indices;
@@ -927,11 +943,10 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 						accessors.push_back(indices);
 					}
 				}
-				for (auto const& primitiveAttribute : primitive->attributes) {
-					GLTF::Accessor* attribute = primitiveAttribute.second;
-					if (attribute->id < 0) {
-						attribute->id = accessors.size();
-						accessors.push_back(attribute);
+				for (auto* accessor: getAllPrimitiveAccessors(primitive)) {
+					if (accessor->id < 0) {
+						accessor->id = accessors.size();
+						accessors.push_back(accessor);
 					}
 				}
 			}

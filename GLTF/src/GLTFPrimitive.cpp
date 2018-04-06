@@ -13,13 +13,17 @@ GLTF::Object* GLTF::Primitive::clone(GLTF::Object* clone) {
 		primitive->indices = this->indices;
 		primitive->material = this->material;
 		primitive->mode = this->mode;
+		primitive->targets = std::vector<Target*>();
+		for (auto* target : this->targets) {
+			primitive->targets.push_back(target);
+		}
 	}
-	GLTF::Object::clone(clone);
+	Object::clone(clone);
 	return primitive;
 }
 
-void GLTF::Primitive::writeJSON(void* writer, GLTF::Options* options) {
-	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+void GLTF::Primitive::writeJSON(void* writer, Options* options) {
+	auto* jsonWriter = static_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
 	jsonWriter->Key("attributes");
 	jsonWriter->StartObject();
 	for (const auto& attribute : this->attributes) {
@@ -42,7 +46,7 @@ void GLTF::Primitive::writeJSON(void* writer, GLTF::Options* options) {
 		}
 	}
 	jsonWriter->Key("mode");
-	jsonWriter->Int((int)this->mode);
+	jsonWriter->Int(static_cast<int>(this->mode));
 	if (this->material) {
 		jsonWriter->Key("material");
 		if (options->version == "1.0") {
@@ -52,5 +56,34 @@ void GLTF::Primitive::writeJSON(void* writer, GLTF::Options* options) {
 			jsonWriter->Int(material->id);
 		}
 	}
-	GLTF::Object::writeJSON(writer, options);
+	if (!this->targets.empty()) {
+		jsonWriter->Key("targets");
+		jsonWriter->StartArray();
+		for (auto* target : this->targets) {
+			target->writeJSON(writer, options);
+		}
+		jsonWriter->EndArray();
+	}
+	Object::writeJSON(writer, options);
+}
+
+GLTF::Primitive::Target* GLTF::Primitive::Target::clone(Object* clone) {
+	Target* target = dynamic_cast<Target*>(clone);
+	if (target != nullptr) {
+		target->attributes = std::map<std::string, Accessor*>();
+		for (const auto& attribute : this->attributes) {
+			target->attributes.insert(attribute);
+		}
+	}
+	return target;
+}
+
+void GLTF::Primitive::Target::writeJSON(void* writer, Options* options) {
+	auto* jsonWriter = static_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
+	jsonWriter->StartObject();
+	for (const auto& attribute : this->attributes) {
+		jsonWriter->Key(attribute.first.c_str());
+		jsonWriter->Int(attribute.second->id);
+	}
+	jsonWriter->EndObject();
 }

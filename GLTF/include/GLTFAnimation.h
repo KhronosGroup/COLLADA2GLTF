@@ -15,6 +15,7 @@ namespace GLTF {
 		TRANSLATION,
 		ROTATION,
 		SCALE,
+		WEIGHTS
 	};
 
 	class Sampler : public GLTF::Object {
