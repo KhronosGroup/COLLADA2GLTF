@@ -255,7 +255,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				node->mesh = skinnedMesh;
 			}
 
-			const COLLADAFW::MaterialBindingArray &materialBindings = instanceController->getMaterialBindings();
+			const COLLADAFW::MaterialBindingArray& materialBindings = instanceController->getMaterialBindings();
 			for (size_t j = 0; j < materialBindings.getCount(); j++) {
 				COLLADAFW::MaterialBinding materialBinding = materialBindings[j];
 				GLTF::Primitive* primitive = skinnedMesh->primitives[j];
@@ -266,7 +266,6 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					GLTF::MaterialCommon* materialCommon = (GLTF::MaterialCommon*)material;
 					materialCommon->jointCount = _skinJointNodes[uniqueId].size();
 				}
-				primitive->material = material;
 			}
 
 			for (const COLLADABU::URI& skeletonURI : instanceController->skeletons()) {
@@ -324,6 +323,29 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					COLLADAFW::UniqueId materialId = materialBinding.getReferencedMaterial();
 					COLLADAFW::UniqueId effectId = this->_materialEffects[materialId];
 					GLTF::Material* material = _effectInstances[effectId];
+					// Assign maps
+					const COLLADAFW::TextureCoordinateBindingArray& texCoordBindings = materialBinding.getTextureCoordinateBindingArray();
+					for (size_t k = 0; k < texCoordBindings.getCount(); k++) {
+						COLLADAFW::TextureCoordinateBinding texCoordBinding = texCoordBindings[k];
+						std::map<COLLADAFW::TextureMapId, GLTF::Texture*>::iterator findTextureMapId = _textureIdMapping.find(
+							texCoordBinding.getTextureMapId());
+						if (findTextureMapId != _textureIdMapping.end()) {
+							GLTF::Texture* texture = findTextureMapId->second;
+							GLTF::MaterialCommon* materialCommon = (GLTF::MaterialCommon*)material;
+							if (materialCommon->values->ambientTexture == texture) {
+								materialCommon->values->ambientTexCoord = texCoordBinding.getSetIndex();
+							}
+							else if (materialCommon->values->diffuseTexture == texture) {
+								materialCommon->values->diffuseTexCoord = texCoordBinding.getSetIndex();
+							}
+							else if (materialCommon->values->emissionTexture == texture) {
+								materialCommon->values->emissionTexCoord = texCoordBinding.getSetIndex();
+							}
+							else if (materialCommon->values->specularTexture == texture) {
+								materialCommon->values->specularTexCoord = texCoordBinding.getSetIndex();
+							}
+						}
+					}
 					for (GLTF::Primitive* primitive : primitiveMaterialMapping[materialBinding.getMaterialId()]) {
 						if (primitive->material != NULL && primitive->material != material) {
 							// This mesh primitive has a different material from a previous instance, clone the mesh and primitives
@@ -931,6 +953,7 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			COLLADAFW::ColorOrTexture ambient = effectCommon->getAmbient();
 			if (ambient.isTexture()) {
 				material->values->ambientTexture = fromColladaTexture(effectCommon, ambient.getTexture());
+				_textureIdMapping[ambient.getTexture().getTextureMapId()] = material->values->ambientTexture;
 			}
 			else if (ambient.isColor()) {
 				material->values->ambient = new float[4];
@@ -941,6 +964,7 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 		COLLADAFW::ColorOrTexture diffuse = effectCommon->getDiffuse();
 		if (diffuse.isTexture()) {
 			material->values->diffuseTexture = fromColladaTexture(effectCommon, diffuse.getTexture());
+			_textureIdMapping[diffuse.getTexture().getTextureMapId()] = material->values->diffuseTexture;
 			if (lockAmbientDiffuse) {
 				material->values->ambientTexture = material->values->diffuseTexture;
 			}
@@ -956,6 +980,7 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 		COLLADAFW::ColorOrTexture emission = effectCommon->getEmission();
 		if (emission.isTexture()) {
 			material->values->emissionTexture = fromColladaTexture(effectCommon, emission.getTexture());
+			_textureIdMapping[emission.getTexture().getTextureMapId()] = material->values->emissionTexture;
 		}
 		else if (emission.isColor()) {
 			material->values->emission = new float[4];
@@ -965,6 +990,7 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 		COLLADAFW::ColorOrTexture specular = effectCommon->getSpecular();
 		if (specular.isTexture()) {
 			material->values->specularTexture = fromColladaTexture(effectCommon, specular.getTexture());
+			_textureIdMapping[specular.getTexture().getTextureMapId()] = material->values->specularTexture;
 		}
 		else if (specular.isColor()) {
 			material->values->specular = new float[4];

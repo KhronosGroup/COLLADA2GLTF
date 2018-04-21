@@ -38,6 +38,7 @@ namespace COLLADA2GLTF {
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _skinnedMeshes;
 		std::map<COLLADAFW::UniqueId, GLTF::Image*> _images;
 		std::map<COLLADAFW::UniqueId, std::tuple<std::vector<float>, std::vector<float>>> _animationData;
+		std::map<COLLADAFW::TextureMapId, GLTF::Texture*> _textureIdMapping;
 
 		bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
 		bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);

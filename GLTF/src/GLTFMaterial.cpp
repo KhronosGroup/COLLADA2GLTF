@@ -867,6 +867,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 	}
 	if (values->diffuseTexture) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
+		texture->texCoord = values->diffuseTexCoord;
 		texture->texture = values->diffuseTexture;
 		material->metallicRoughness->baseColorTexture = texture;
 		if (options->specularGlossiness) {
@@ -879,6 +880,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 	}
 	if (values->emissionTexture) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
+		texture->texCoord = values->emissionTexCoord;
 		texture->texture = values->emissionTexture;
 		material->emissiveTexture = texture;
 		material->emissiveFactor = new float[3]{ 1.0, 1.0, 1.0 };
@@ -886,6 +888,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 
 	if (values->ambientTexture) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
+		texture->texCoord = values->ambientTexCoord;
 		texture->texture = values->ambientTexture;
 		material->occlusionTexture = texture;
 	}
@@ -896,6 +899,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 		}
 		if (values->specularTexture) {
 			GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
+			texture->texCoord = values->specularTexCoord;
 			texture->texture = values->specularTexture;
 			material->specularGlossiness->specularGlossinessTexture = texture;
 		}

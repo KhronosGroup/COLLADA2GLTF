@@ -21,12 +21,16 @@ namespace GLTF {
 		public:
 			float* ambient = NULL;
 			GLTF::Texture* ambientTexture = NULL;
+			int ambientTexCoord = -1;
 			float* diffuse = NULL;
 			GLTF::Texture* diffuseTexture = NULL;
+			int diffuseTexCoord = -1;
 			float* emission = NULL;
 			GLTF::Texture* emissionTexture = NULL;
+			int emissionTexCoord = -1;
 			float* specular = NULL;
 			GLTF::Texture* specularTexture = NULL;
+			int specularTexCoord = -1;
 			float* shininess = NULL;
 			float* transparency = NULL;
 			GLTF::Texture* bumpTexture = NULL;
