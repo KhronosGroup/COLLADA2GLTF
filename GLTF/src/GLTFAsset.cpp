@@ -274,6 +274,12 @@ std::vector<GLTF::Texture*> GLTF::Asset::getAllTextures() {
 					uniqueTextures.insert(values->specularTexture);
 				}
 			}
+			if (values->bumpTexture != NULL) {
+				if (uniqueTextures.find(values->bumpTexture) == uniqueTextures.end()) {
+					textures.push_back(values->bumpTexture);
+					uniqueTextures.insert(values->bumpTexture);
+				}
+			}
 		}
 		else if (material->type == GLTF::Material::PBR_METALLIC_ROUGHNESS) {
 			GLTF::MaterialPBR* materialPBR = (GLTF::MaterialPBR*)material;
@@ -419,7 +425,8 @@ void GLTF::Asset::removeUnusedSemantics() {
 				if (semantic.find("TEXCOORD") != std::string::npos) {
 					std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
 					if (semantic == "TEXCOORD_0") {
-						if (values->ambientTexture == NULL && values->diffuseTexture == NULL && values->emissionTexture == NULL && values->specularTexture == NULL) {
+						if (values->ambientTexture == NULL && values->diffuseTexture == NULL && values->emissionTexture == NULL && 
+								values->specularTexture == NULL && values->bumpTexture == NULL) {
 							std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
 							primitive->attributes.erase(removeTexcoord);
 							removeAttributeFromDracoExtension(primitive, semantic);
