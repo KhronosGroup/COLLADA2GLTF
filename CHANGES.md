@@ -6,6 +6,7 @@ Change Log
 ##### Fixes :wrench:
 * Upgrade to Draco 1.2.5 [#179](https://github.com/KhronosGroup/COLLADA2GLTF/pull/179)
 * Fix issue with exporting normal maps [#182](https://github.com/KhronosGroup/COLLADA2GLTF/pull/182)
+* Fix issue with COLLADA textures with no backing image [#183](https://github.com/KhronosGroup/COLLADA2GLTF/pull/183)
 
 ### v2.1.1 - 2018-04-04
 
