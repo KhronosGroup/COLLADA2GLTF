@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+### v2.1.2 - 2018-04-22
+
+##### Fixes :wrench:
+* Upgrade to Draco 1.2.5 [#179](https://github.com/KhronosGroup/COLLADA2GLTF/pull/179)
+
 ### v2.1.1 - 2018-04-04
 
 ##### Additions :tada:
