@@ -883,10 +883,15 @@ void packColladaColor(COLLADAFW::Color color, float* packArray) {
 }
 
 GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::SamplerID samplerId) {
-	GLTF::Texture* texture = new GLTF::Texture();
 	const COLLADAFW::SamplerPointerArray& samplers = effectCommon->getSamplerPointerArray();
 	COLLADAFW::Sampler* colladaSampler = (COLLADAFW::Sampler*)samplers[samplerId];
-	GLTF::Image* image = _images[colladaSampler->getSourceImage()];
+	std::map<COLLADAFW::UniqueId, GLTF::Image*>::iterator findImage = _images.find(colladaSampler->getSourceImage());
+	if (findImage == _images.end()) {
+		return NULL;
+	}
+	GLTF::Texture* texture = new GLTF::Texture();
+	GLTF::Image* image = findImage->second;
+
 	texture->source = image;
 	texture->sampler = _asset->globalSampler;
 	return texture;
