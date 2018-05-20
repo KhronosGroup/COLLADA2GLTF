@@ -1625,7 +1625,7 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 			maxweight = *weights[0];
 			minweight = *weights[0];
 		}
-		for (size_t i = 0; i < weights.size(); i++) {
+		for (size_t i = 1; i < weights.size(); i++) {
 			maxweight = std::max(maxweight, *weights[i]);
 			minweight = std::min(minweight, *weights[i]);
 		}
