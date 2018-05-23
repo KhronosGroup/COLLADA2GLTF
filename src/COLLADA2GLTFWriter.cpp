@@ -1620,6 +1620,19 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 		std::tie(type, joints, weights) = _skinData[skinControllerDataId];
 		int numberOfComponents = GLTF::Accessor::getNumberOfComponents(type);
 
+		for (size_t i = 0; i < weights.size(); i++) {
+        		float weightSum = 0;
+        		float* weight = weights[i];
+        		for (size_t j = 0; j < numberOfComponents; j++) {
+            			weightSum = weightSum + std::abs(weight[j]);
+        		}
+        		if (weightSum > 0) {
+            			for (size_t j = 0; j < numberOfComponents; j++) {
+                			weight[j] = weight[j] / weightSum;
+            			}
+        		}
+    		}
+
 		COLLADAFW::UniqueId meshId = skinController->getSource();
 		GLTF::Mesh* mesh = _meshInstances[meshId];
 
