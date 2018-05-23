@@ -1,5 +1,9 @@
 Change Log
 ==========
+### Next Release
+
+##### Fixes :wrench:
+* Bone weights are normalized, resolving some rendering issues using logarithmic depth buffers [#187](https://github.com/KhronosGroup/COLLADA2GLTF/pull/187)
 
 ### v2.1.2 - 2018-04-22
 
