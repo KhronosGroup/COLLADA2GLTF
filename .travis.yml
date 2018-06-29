@@ -4,13 +4,10 @@ os:
 language: cpp
 compiler: g++
 git:
-  submodules: false
+  submodules: true
 cache:
 - build/dependencies
 - build/GLTF/dependencies
-before_install:
-- sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
-- git submodule update --init --recursive
 install:
 - if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX="g++-5" CC="gcc-5"; fi
 addons:
