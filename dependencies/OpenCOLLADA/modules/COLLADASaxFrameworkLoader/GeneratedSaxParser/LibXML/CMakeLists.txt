@@ -16,6 +16,7 @@ add_definitions(
 
 if(APPLE)
   add_definitions(-Dmacintosh)
+  include_directories(${PROJECT_PATH}/macos/src)
 endif()
 
 set(SYS_SOURCES)
