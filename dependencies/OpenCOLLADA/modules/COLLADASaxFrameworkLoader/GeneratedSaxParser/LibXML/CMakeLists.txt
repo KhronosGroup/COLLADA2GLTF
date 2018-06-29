@@ -12,8 +12,11 @@ add_definitions(
   -DLIBXML_REGEXP_ENABLED
   -DLIBXML_SCHEMAS_ENABLED
   -DLIBXML_XPATH_ENABLED
-  -DHAVE_MALLOC_H=0
 )
+
+if(APPLE)
+  add_definitions(-Dmacintosh)
+endif()
 
 set(SYS_SOURCES)
 set(SYS_HEADERS)
