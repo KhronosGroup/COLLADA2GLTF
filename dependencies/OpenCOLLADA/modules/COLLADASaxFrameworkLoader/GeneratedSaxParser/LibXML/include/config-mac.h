@@ -185,5 +185,3 @@
 
 #include <libxml/xmlversion.h>
 #include <sys/types.h>
-#include <extra/stricmp.h>
-#include <extra/strdup.h>
