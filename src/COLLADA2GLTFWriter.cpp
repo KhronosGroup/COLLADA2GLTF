@@ -1,10 +1,6 @@
 #include "COLLADA2GLTFWriter.h"
 
-#include <experimental/filesystem>
-
 #include "Base64.h"
-
-using namespace std::experimental::filesystem;
 
 const double PI = 3.14159;
 
@@ -1091,8 +1087,8 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 
 bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	const COLLADABU::URI imageUri = colladaImage->getImageURI();
-	path imagePath = path(_options->basePath) / imageUri.toNativePath(COLLADABU::Utils::getSystemType());
-	GLTF::Image* image = GLTF::Image::load(imagePath);
+	COLLADABU::URI resolvedPath = COLLADABU::URI(_options->basePath + imageUri.originalStr());
+	GLTF::Image* image = GLTF::Image::load(resolvedPath.toNativePath(COLLADABU::Utils::getSystemType()));
 	image->stringId = colladaImage->getOriginalId();
 	_images[colladaImage->getUniqueId()] = image;
 	return true;
