@@ -34,31 +34,44 @@ GLTF::Image::~Image() {
 	}
 }
 
-GLTF::Image* GLTF::Image::load(path imagePath) {
-	std::string fileString = imagePath.string();
-	std::map<std::string, GLTF::Image*>::iterator imageCacheIt = _imageCache.find(fileString);
+GLTF::Image* GLTF::Image::load(std::string imagePath) {
+	std::map<std::string, GLTF::Image*>::iterator imageCacheIt = _imageCache.find(imagePath);
 	if (imageCacheIt != _imageCache.end()) {
 		return imageCacheIt->second;
 	}
-	std::string fileExtension = imagePath.extension().string();
-	fileExtension.erase(0, 1);
+
+	size_t fileExtensionStart = imagePath.find_last_of(".");
+	std::string fileExtension = "";
+	if (fileExtensionStart != std::string::npos) {
+		fileExtension = imagePath.substr(fileExtensionStart + 1);
+	}
+
+	size_t lastSlash = imagePath.find_last_of("/");
+	std::string fileName = imagePath;
+	if (lastSlash == std::string::npos) {
+		lastSlash = imagePath.find_last_of("\\");
+	}
+	if (lastSlash != std::string::npos) {
+		fileName = imagePath.substr(lastSlash + 1);
+	}
+
 	GLTF::Image* image = NULL;
-	FILE* file = fopen(fileString.c_str(), "rb");
+	FILE* file = fopen(imagePath.c_str(), "rb");
 	if (file == NULL) {
-		std::cout << "WARNING: Image uri: " << fileString << " could not be resolved " << std::endl;
-		image = new GLTF::Image(imagePath.filename().string(), fileString);
+		std::cout << "WARNING: Image uri: " << imagePath << " could not be resolved " << std::endl;
+		image = new GLTF::Image(fileName, imagePath);
 	}
 	else {
 		fseek(file, 0, SEEK_END);
 		long int size = ftell(file);
 		fclose(file);
-		file = fopen(fileString.c_str(), "rb");
+		file = fopen(imagePath.c_str(), "rb");
 		unsigned char* buffer = (unsigned char*)malloc(size);
 		int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
 		fclose(file);
-		image = new GLTF::Image(imagePath.filename().string(), fileString, buffer, bytesRead, fileExtension);
+		image = new GLTF::Image(fileName, imagePath, buffer, bytesRead, fileExtension);
 	}
-	_imageCache[fileString] = image;
+	_imageCache[imagePath] = image;
 	return image;
 }
 

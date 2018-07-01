@@ -7,15 +7,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include(ExternalProject)
 
 project(${PROJECT_NAME})
-if(MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  add_compile_options(-lstdc++fs)
-endif()
 
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
@@ -112,26 +103,17 @@ include_directories(include)
 file(GLOB LIB_HEADERS "include/*.h")
 set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp src/COLLADA2GLTFExtrasHandler.cpp)
 add_library(${PROJECT_NAME} ${LIB_HEADERS} ${LIB_SOURCES})
-if(MSVC)
-   target_link_libraries(${PROJECT_NAME} GLTF ${OpenCOLLADA})
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-   target_link_libraries(${PROJECT_NAME} GLTF ${OpenCOLLADA} stdc++fs)
-endif()
+ target_link_libraries(${PROJECT_NAME} GLTF ${OpenCOLLADA})
 
 # ahoy
 include_directories(dependencies/ahoy/include)
 add_subdirectory(dependencies/ahoy)
 
 add_executable(${PROJECT_NAME}-bin src/main.cpp)
-if(MSVC)
-   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy)
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-   target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy stdc++fs)
-endif()
-
-target_link_libraries(${PROJECT_NAME}-bin draco)
+target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy draco)
 
 if(TEST_ENABLED)
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   enable_testing()
 
   # gtest
