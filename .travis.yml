@@ -9,7 +9,8 @@ cache:
 - build/dependencies
 - build/GLTF/dependencies
 install:
-- if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX="g++-5" CC="gcc-5"; fi
+- if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX="g++-5" CC="gcc-5" PERM_FLAGS="/u+x; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PERM_FLAGS="+111"; fi
 addons:
   apt:
     sources:
@@ -25,7 +26,7 @@ after_success:
 - if [ ! -z "$TRAVIS_TAG" ]; then
     export RELEASE=`echo "$TRAVIS_TAG"| awk -F"-" '{print $1}'`;
     export RELEASE_FILE=COLLADA2GLTF-$RELEASE-$TRAVIS_OS_NAME.zip;
-    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm /u+x | zip -@ -j $RELEASE_FILE;
+    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm "$PERM_FLAGS" | zip -@ -j $RELEASE_FILE;
   fi;
 deploy:
   provider: releases
