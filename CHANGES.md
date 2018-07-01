@@ -1,6 +1,6 @@
 Change Log
 ==========
-### Next Release
+### v2.1.3 - 2018-07-01
 
 ##### Additions :tada:
 * Enable OS X builds in CI [#191](https://github.com/KhronosGroup/COLLADA2GLTF/pull/191)
