@@ -4,6 +4,7 @@ Change Log
 
 ##### Fixes :wrench:
 * Bone weights are normalized, resolving some rendering issues using logarithmic depth buffers [#187](https://github.com/KhronosGroup/COLLADA2GLTF/pull/187)
+* Enable OS X builds in CI [#191](https://github.com/KhronosGroup/COLLADA2GLTF/pull/191)
 
 ### v2.1.2 - 2018-04-22
 
