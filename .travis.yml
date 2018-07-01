@@ -9,7 +9,7 @@ cache:
 - build/dependencies
 - build/GLTF/dependencies
 install:
-- if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX="g++-5" CC="gcc-5" PERM_FLAGS="/u+x; fi
+- if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX="g++-5" CC="gcc-5" PERM_FLAGS="/u+x"; fi
 - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PERM_FLAGS="+111"; fi
 addons:
   apt:
