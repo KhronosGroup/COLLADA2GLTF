@@ -7,9 +7,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(${PROJECT_NAME})
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  add_compile_options(-lstdc++fs)
-endif()
 
 # cmake -Dtest=ON to build with tests
 option(test "Build all tests." OFF)
@@ -31,12 +28,6 @@ file(GLOB HEADERS "include/*.h")
 file(GLOB SOURCES "src/*.cpp")
 
 add_library(GLTF ${HEADERS} ${SOURCES})
-if(MSVC)
-   target_link_libraries(${PROJECT_NAME})
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-   target_link_libraries(${PROJECT_NAME} stdc++fs)
-endif()
-
 target_link_libraries(${PROJECT_NAME} draco)
 
 if (test)

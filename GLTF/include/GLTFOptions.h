@@ -2,9 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <experimental/filesystem>
-
-using namespace std::experimental::filesystem;
 
 namespace GLTF {
 	class Options {
