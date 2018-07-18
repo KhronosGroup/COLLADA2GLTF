@@ -19,8 +19,6 @@ platform:
 
 cache:
 - cmake-build
-- dependencies -> .gitmodules
-- GLTF/dependencies -> .gitmodules
 
 configuration:
 - Debug
