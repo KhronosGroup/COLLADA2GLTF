@@ -17,6 +17,9 @@ platform:
 - Win32
 - x64
 
+cache:
+- cmake-build
+
 configuration:
 - Debug
 - Release
@@ -28,10 +31,10 @@ install:
 before_build:
 - if not exist cmake-build mkdir cmake-build
 - cd cmake-build
-- if "%PLATFORM%"=="Win32" if "%CONFIGURATION%"=="Debug" cmake -G "Visual Studio 14 2015" .. -Dtest=ON -Dprecompiled=DEBUG,X86
-- if "%PLATFORM%"=="x64" if "%CONFIGURATION%"=="Debug" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON -Dprecompiled=DEBUG,X64
-- if "%PLATFORM%"=="Win32" if "%CONFIGURATION%"=="Release" cmake -G "Visual Studio 14 2015" .. -Dtest=ON -Dprecompiled=RELEASE,X86
-- if "%PLATFORM%"=="x64" if "%CONFIGURATION%"=="Release" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON -Dprecompiled=RELEASE,X64
+- if "%PLATFORM%"=="Win32" if "%CONFIGURATION%"=="Debug" cmake -G "Visual Studio 14 2015" .. -Dtest=ON
+- if "%PLATFORM%"=="x64" if "%CONFIGURATION%"=="Debug" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON
+- if "%PLATFORM%"=="Win32" if "%CONFIGURATION%"=="Release" cmake -G "Visual Studio 14 2015" .. -Dtest=ON
+- if "%PLATFORM%"=="x64" if "%CONFIGURATION%"=="Release" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON
 
 build:
   parallel: true

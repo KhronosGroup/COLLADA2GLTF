@@ -13,10 +13,8 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
-#include <experimental/filesystem>
 
 using namespace ahoy;
-using namespace std::experimental::filesystem;
 
 const int HEADER_LENGTH = 12;
 const int CHUNK_HEADER_LENGTH = 8;
@@ -111,32 +109,35 @@ int main(int argc, const char **argv) {
 
 	if (parser->parse(argc, argv)) {
 		// Resolve and sanitize paths
-		path inputPath = path(options->inputPath);
-		options->inputPath = inputPath.string();
-		options->name = inputPath.stem().string();
+		COLLADABU::URI inputPathURI = COLLADABU::URI(options->inputPath);
+		std::string inputPathDir;
+		std::string inputPathBaseName;
+		std::string inputPathExtension;
+		inputPathURI.pathComponents(inputPathDir, inputPathBaseName, inputPathExtension);
 
-		path outputPath;
+		options->name = inputPathBaseName;
+
+		COLLADABU::URI outputPathURI;
 		if (options->outputPath == "") {
-			outputPath = inputPath.parent_path() / "output" / inputPath.stem();
-			outputPath += ".gltf";
+			outputPathURI = COLLADABU::URI(inputPathDir + "output/" + inputPathBaseName + ".gltf");
+			options->outputPath = outputPathURI.toNativePath(COLLADABU::Utils::getSystemType());
 		}
-		else {
-			outputPath = path(options->outputPath);
-		}
-		if (options->binary && outputPath.extension() != "glb") {
-			outputPath = outputPath.parent_path() / outputPath.stem();
-			outputPath += ".glb";
-		}
-		options->outputPath = outputPath.string();
+		outputPathURI = COLLADABU::URI(options->outputPath);
+		std::string outputPathDir;
+		std::string outputPathBaseName;
+		std::string outputPathExtension;
+		outputPathURI.pathComponents(outputPathDir, outputPathBaseName, outputPathExtension);
 
-		path basePath;
+		if (options->binary && outputPathExtension != "glb") {
+			outputPathURI = COLLADABU::URI(outputPathDir + outputPathBaseName + ".glb");
+			options->outputPath = outputPathURI.toNativePath(COLLADABU::Utils::getSystemType());
+		}
+
 		if (options->basePath == "") {
-			basePath = inputPath.parent_path();
+			options->basePath = inputPathDir;
+		} else {
+			options->basePath = COLLADABU::URI(options->basePath).toNativePath(COLLADABU::Utils::getSystemType());
 		}
-		else {
-			basePath = path(options->basePath);
-		}
-		options->basePath = basePath.string();
 
 		// Export flags
 		if (separate != 0) {
@@ -166,9 +167,8 @@ int main(int argc, const char **argv) {
 		}
 
 		// Create the output directory if it does not exist
-		path outputDirectory = outputPath.parent_path();
-		if (!std::experimental::filesystem::exists(outputDirectory)) {
-			std::experimental::filesystem::create_directories(outputDirectory);
+		if (!COLLADABU::Utils::directoryExists(outputPathDir)) {
+			COLLADABU::Utils::createDirectoryRecursive(outputPathDir);
 		}
 
 		std::cout << "Converting " << options->inputPath << " -> " << options->outputPath << std::endl;
@@ -226,40 +226,43 @@ int main(int argc, const char **argv) {
 
 		if (!options->embeddedTextures) {
 			for (GLTF::Image* image : asset->getAllImages()) {
-				path uri = outputDirectory / image->uri;
-				FILE* file = fopen(uri.generic_string().c_str(), "wb");
+				COLLADABU::URI imageURI = COLLADABU::URI(outputPathDir + image->uri);
+				std::string imageString = imageURI.toNativePath(COLLADABU::Utils::getSystemType());
+				FILE* file = fopen(imageString.c_str(), "wb");
 				if (file != NULL) {
 					fwrite(image->data, sizeof(unsigned char), image->byteLength, file);
 					fclose(file);
 				}
 				else {
-					std::cout << "ERROR: Couldn't write image to path '" << uri << "'" << std::endl;
+					std::cout << "ERROR: Couldn't write image to path '" << imageString << "'" << std::endl;
 				}
 			}
 		}
 
 		if (!options->embeddedBuffers) {
-			path uri = outputDirectory / buffer->uri;
-			FILE* file = fopen(uri.generic_string().c_str(), "wb");
+			COLLADABU::URI bufferURI = COLLADABU::URI(outputPathDir + buffer->uri);
+			std::string bufferString = bufferURI.toNativePath(COLLADABU::Utils::getSystemType());
+			FILE* file = fopen(bufferString.c_str(), "wb");
 			if (file != NULL) {
 				fwrite(buffer->data, sizeof(unsigned char), buffer->byteLength, file);
 				fclose(file);
 			}
 			else {
-				std::cout << "ERROR: Couldn't write buffer to path '" << uri << "'" << std::endl;
+				std::cout << "ERROR: Couldn't write buffer to path '" << bufferString << "'" << std::endl;
 			}
 		}
 
 		if (!options->embeddedShaders) {
 			for (GLTF::Shader* shader : asset->getAllShaders()) {
-				path uri = outputDirectory / shader->uri;
-				FILE* file = fopen(uri.generic_string().c_str(), "wb");
+				COLLADABU::URI shaderURI = COLLADABU::URI(outputPathDir + shader->uri);
+				std::string shaderString = shaderURI.toNativePath(COLLADABU::Utils::getSystemType());
+				FILE* file = fopen(shaderString.c_str(), "wb");
 				if (file != NULL) {
 					fwrite(shader->source.c_str(), sizeof(unsigned char), shader->source.length(), file);
 					fclose(file);
 				}
 				else {
-					std::cout << "ERROR: Couldn't write shader to path '" << uri << "'" << std::endl;
+					std::cout << "ERROR: Couldn't write shader to path '" << shaderString << "'" << std::endl;
 				}
 			}
 		}
@@ -283,7 +286,7 @@ int main(int argc, const char **argv) {
 			}
 		}
 		else {
-			FILE* file = fopen(outputPath.generic_string().c_str(), "wb");
+			FILE* file = fopen(options->outputPath.c_str(), "wb");
 			if (file != NULL) {
 				fwrite("glTF", sizeof(char), 4, file); // magic
 
@@ -330,7 +333,7 @@ int main(int argc, const char **argv) {
 				fclose(file);
 			}
 			else {
-				std::cout << "ERROR couldn't write binary glTF to path '" << outputPath << "'" << std::endl;
+				std::cout << "ERROR couldn't write binary glTF to path '" << options->outputPath << "'" << std::endl;
 			}
 		}
 

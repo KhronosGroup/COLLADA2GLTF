@@ -1,5 +1,19 @@
 Change Log
 ==========
+### v2.1.3 - 2018-07-01
+
+##### Additions :tada:
+* Enable OS X builds in CI [#191](https://github.com/KhronosGroup/COLLADA2GLTF/pull/191)
+
+##### Fixes :wrench:
+* Bone weights are normalized, resolving some rendering issues using logarithmic depth buffers [#187](https://github.com/KhronosGroup/COLLADA2GLTF/pull/187)
+
+### v2.1.2 - 2018-04-22
+
+##### Fixes :wrench:
+* Upgrade to Draco 1.2.5 [#179](https://github.com/KhronosGroup/COLLADA2GLTF/pull/179)
+* Fix issue with exporting normal maps [#182](https://github.com/KhronosGroup/COLLADA2GLTF/pull/182)
+* Fix issue with COLLADA textures with no backing image [#183](https://github.com/KhronosGroup/COLLADA2GLTF/pull/183)
 
 ### v2.1.1 - 2018-04-04
 

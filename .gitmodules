@@ -3,7 +3,7 @@
 	url = https://github.com/KhronosGroup/OpenCOLLADA.git
 [submodule "dependencies/rapidjson"]
 	path = GLTF/dependencies/rapidjson
-	url = https://github.com/miloyip/rapidjson
+	url = https://github.com/miloyip/rapidjson.git
 [submodule "GLTF/dependencies/googletest"]
 	path = GLTF/dependencies/googletest
 	url = https://github.com/google/googletest.git
@@ -12,4 +12,4 @@
 	url = https://github.com/lasalvavida/ahoy.git
 [submodule "dependencies/draco"]
 	path = GLTF/dependencies/draco
-	url = https://github.com/google/draco
+	url = https://github.com/google/draco.git

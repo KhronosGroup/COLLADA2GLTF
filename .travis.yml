@@ -1,15 +1,15 @@
+os:
+  - linux
+  - osx
 language: cpp
 compiler: g++
 git:
-  submodules: false
+  submodules: true
 cache:
-- build/dependencies
-- build/GLTF/dependencies
-before_install:
-- sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
-- git submodule update --init --recursive
+- build
 install:
-- if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
+- if [ "$CXX" = "g++" ] && [ "$TRAVIS_OS_NAME" == "linux" ]; then export CXX="g++-5" CC="gcc-5" PERM_FLAGS="/u+x"; fi
+- if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PERM_FLAGS="+111"; fi
 addons:
   apt:
     sources:
@@ -24,8 +24,8 @@ script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
 after_success:
 - if [ ! -z "$TRAVIS_TAG" ]; then
     export RELEASE=`echo "$TRAVIS_TAG"| awk -F"-" '{print $1}'`;
-    export RELEASE_FILE=COLLADA2GLTF-$RELEASE-linux.zip;
-    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm /u+x | zip -@ -j $RELEASE_FILE;
+    export RELEASE_FILE=COLLADA2GLTF-$RELEASE-$TRAVIS_OS_NAME.zip;
+    find . -path ./CMakeFiles -prune -o -iname \*.a -o -perm "$PERM_FLAGS" | zip -@ -j $RELEASE_FILE;
   fi;
 deploy:
   provider: releases

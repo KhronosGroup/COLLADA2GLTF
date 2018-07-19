@@ -1,10 +1,6 @@
 #include "COLLADA2GLTFWriter.h"
 
-#include <experimental/filesystem>
-
 #include "Base64.h"
-
-using namespace std::experimental::filesystem;
 
 const double PI = 3.14159;
 
@@ -756,7 +752,6 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			}
 			else {
 				// Leave as UNSIGNED_INT
-				std::cout << index << std::endl;
 				indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_INT, (unsigned char*)&buildIndices[0], buildIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
 			}
 			primitive->indices = indices;
@@ -906,10 +901,15 @@ void packColladaColor(COLLADAFW::Color color, float* packArray) {
 }
 
 GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(const COLLADAFW::EffectCommon* effectCommon, COLLADAFW::SamplerID samplerId) {
-	GLTF::Texture* texture = new GLTF::Texture();
 	const COLLADAFW::SamplerPointerArray& samplers = effectCommon->getSamplerPointerArray();
 	COLLADAFW::Sampler* colladaSampler = (COLLADAFW::Sampler*)samplers[samplerId];
-	GLTF::Image* image = _images[colladaSampler->getSourceImage()];
+	std::map<COLLADAFW::UniqueId, GLTF::Image*>::iterator findImage = _images.find(colladaSampler->getSourceImage());
+	if (findImage == _images.end()) {
+		return NULL;
+	}
+	GLTF::Texture* texture = new GLTF::Texture();
+	GLTF::Image* image = findImage->second;
+
 	texture->source = image;
 	texture->sampler = _asset->globalSampler;
 	return texture;
@@ -1113,8 +1113,8 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
 
 bool COLLADA2GLTF::Writer::writeImage(const COLLADAFW::Image* colladaImage) {
 	const COLLADABU::URI imageUri = colladaImage->getImageURI();
-	path imagePath = path(_options->basePath) / imageUri.toNativePath(COLLADABU::Utils::getSystemType());
-	GLTF::Image* image = GLTF::Image::load(imagePath);
+	COLLADABU::URI resolvedPath = COLLADABU::URI(_options->basePath + imageUri.originalStr());
+	GLTF::Image* image = GLTF::Image::load(resolvedPath.toNativePath(COLLADABU::Utils::getSystemType()));
 	image->stringId = colladaImage->getOriginalId();
 	_images[colladaImage->getUniqueId()] = image;
 	return true;
@@ -1641,6 +1641,19 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 		std::vector<float*> weights;
 		std::tie(type, joints, weights) = _skinData[skinControllerDataId];
 		int numberOfComponents = GLTF::Accessor::getNumberOfComponents(type);
+
+		for (size_t i = 0; i < weights.size(); i++) {
+        		float weightSum = 0;
+        		float* weight = weights[i];
+        		for (size_t j = 0; j < numberOfComponents; j++) {
+            			weightSum = weightSum + std::abs(weight[j]);
+        		}
+        		if (weightSum > 0) {
+            			for (size_t j = 0; j < numberOfComponents; j++) {
+                			weight[j] = weight[j] / weightSum;
+            			}
+        		}
+    		}
 
 		COLLADAFW::UniqueId meshId = skinController->getSource();
 		GLTF::Mesh* mesh = _meshInstances[meshId];

@@ -14,6 +14,11 @@ add_definitions(
   -DLIBXML_XPATH_ENABLED
 )
 
+if(APPLE)
+  add_definitions(-Dmacintosh)
+  include_directories(include)
+endif()
+
 set(SYS_SOURCES)
 set(SYS_HEADERS)
 # if(MSVC)
