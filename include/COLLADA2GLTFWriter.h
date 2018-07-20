@@ -28,6 +28,7 @@ namespace COLLADA2GLTF {
 		std::map<COLLADAFW::UniqueId, std::map<int, std::set<GLTF::Primitive*>>> _meshMaterialPrimitiveMapping;
 		std::map<COLLADAFW::UniqueId, GLTF::MaterialCommon::Light*> _lightInstances;
 		std::map<COLLADAFW::UniqueId, std::map<GLTF::Primitive*, std::vector<unsigned int>>> _meshPositionMapping;
+		std::map<GLTF::Mesh*, std::map<unsigned int, unsigned int>> _meshTexCoordSetMapping;
 		std::map<COLLADAFW::UniqueId, GLTF::Skin*> _skinInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Node*> _animatedNodes;
 		std::map<COLLADAFW::UniqueId, float> _originalRotationAngles;
@@ -38,7 +39,7 @@ namespace COLLADA2GLTF {
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _skinnedMeshes;
 		std::map<COLLADAFW::UniqueId, GLTF::Image*> _images;
 		std::map<COLLADAFW::UniqueId, std::tuple<std::vector<float>, std::vector<float>>> _animationData;
-		std::map<COLLADAFW::TextureMapId, GLTF::Texture*> _textureIdMapping;
+		std::map<COLLADAFW::UniqueId, std::map<std::string, GLTF::Texture*>> _effectTextureMapping;
 
 		bool writeNodeToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::Node* node);
 		bool writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes);

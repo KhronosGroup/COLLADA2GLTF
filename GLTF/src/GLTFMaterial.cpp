@@ -148,7 +148,7 @@ void GLTF::MaterialPBR::Texture::writeJSON(void* writer, GLTF::Options* options)
 		jsonWriter->Key("index");
 		jsonWriter->Int(texture->id);
 	}
-	if (texCoord >= 0) {
+	if (texCoord > 0) {
 		jsonWriter->Key("texCoord");
 		jsonWriter->Int(texCoord);
 	}

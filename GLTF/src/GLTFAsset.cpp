@@ -415,29 +415,90 @@ void GLTF::Asset::removeUncompressedBufferViews() {
 }
 
 void GLTF::Asset::removeUnusedSemantics() {
-	for (GLTF::Primitive* primitive : getAllPrimitives()) {
+	// Remove unused TEXCOORD semantics
+	std::map<GLTF::Material*, std::vector<GLTF::Primitive*>> materialMappings;
+	std::vector<GLTF::Primitive*> primitives = getAllPrimitives();
+	for (GLTF::Primitive* primitive : primitives) {
 		GLTF::Material* material = primitive->material;
 		if (material != NULL) {
 			GLTF::Material::Values* values = material->values;
 			std::map<std::string, GLTF::Accessor*> attributes = primitive->attributes;
+			std::vector<std::string> semantics;
 			for (const auto attribute : attributes) {
 				std::string semantic = attribute.first;
 				if (semantic.find("TEXCOORD") != std::string::npos) {
-					std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
-					if (semantic == "TEXCOORD_0") {
-						if (values->ambientTexture == NULL && values->diffuseTexture == NULL && values->emissionTexture == NULL && 
-								values->specularTexture == NULL && values->bumpTexture == NULL) {
-							std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
-							primitive->attributes.erase(removeTexcoord);
-							removeAttributeFromDracoExtension(primitive, semantic);
-						}
-					}
-					else {
-						// Right now we don't support multiple sets of texture coordinates
-						primitive->attributes.erase(removeTexcoord);
-						removeAttributeFromDracoExtension(primitive, semantic);
-					}
+					semantics.push_back(semantic);
 				}
+			}
+			for (const std::string semantic : semantics) {
+				std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
+				size_t index = std::stoi(semantic.substr(semantic.find_last_of('_') + 1));
+				if ((values->ambientTexture == NULL || values->ambientTexCoord != index) &&
+						(values->diffuseTexture == NULL || values->diffuseTexCoord != index) &&
+						(values->emissionTexture == NULL || values->emissionTexCoord != index) &&
+						(values->specularTexture == NULL || values->specularTexCoord != index) &&
+						(values->bumpTexture == NULL)) {
+					auto findMaterialMapping = materialMappings.find(material);
+					if (findMaterialMapping == materialMappings.end()) {
+						materialMappings[material] = std::vector<GLTF::Primitive*>();
+					}
+					materialMappings[material].push_back(primitive);
+
+					std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
+					primitive->attributes.erase(removeTexcoord);
+					// TODO: This will need to be adjusted for multiple maps
+					removeAttributeFromDracoExtension(primitive, semantic);
+				}
+			}
+		}
+	}
+	// Remove holes, i.e. if we removed TEXCOORD_0, change TEXCOORD_1 -> TEXCOORD_0
+	for (const auto materialMapping : materialMappings) {
+		std::map<size_t, size_t> indexMapping;
+		for (GLTF::Primitive* primitive : materialMapping.second) {
+			std::map<std::string, GLTF::Accessor*> rebuildAttributes;
+			std::vector<GLTF::Accessor*> texcoordAccessors;
+			size_t index;
+			for (const auto attribute : primitive->attributes) {
+				std::string semantic = attribute.first;
+				if (semantic.find("TEXCOORD") != std::string::npos) {
+					index = std::stoi(semantic.substr(semantic.find_last_of('_') + 1));
+					while (index >= texcoordAccessors.size()) {
+						texcoordAccessors.push_back(NULL);
+					}
+					texcoordAccessors[index] = attribute.second;
+				} else {
+					rebuildAttributes[semantic] = attribute.second;
+				}
+			}
+			index = 0;
+			for (size_t i = 0; i < texcoordAccessors.size(); i++) {
+				GLTF::Accessor* texcoordAccessor = texcoordAccessors[i];
+				if (texcoordAccessor != NULL) {
+					indexMapping[i] = index;
+					rebuildAttributes["TEXCOORD_" + std::to_string(index)] = texcoordAccessor;
+					index++;
+				}
+			}
+			primitive->attributes = rebuildAttributes;
+		}
+		// Fix material texcoord references
+		GLTF::Material* material = materialMapping.first;
+		GLTF::Material::Values* values = material->values;
+		for (const auto indexMap : indexMapping) {
+			size_t from = indexMap.first;
+			size_t to = indexMap.second;
+			if (values->ambientTexCoord == from) {
+				values->ambientTexCoord = to;
+			}
+			if (values->diffuseTexCoord == from) {
+				values->diffuseTexCoord = to;
+			}
+			if (values->emissionTexCoord == from) {
+				values->emissionTexCoord = to;
+			}
+			if (values->specularTexCoord == from) {
+				values->specularTexCoord = to;
 			}
 		}
 	}
