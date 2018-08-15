@@ -1,5 +1,10 @@
 Change Log
 ==========
+### Next Release
+
+#### Fixes :wrench:
+* Fixed issue with relative path resolution on Windows [#200](https://github.com/KhronosGroup/COLLADA2GLTF/issues/200)
+
 ### v2.1.3 - 2018-07-01
 
 ##### Additions :tada:
