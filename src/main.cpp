@@ -109,34 +109,39 @@ int main(int argc, const char **argv) {
 
 	if (parser->parse(argc, argv)) {
 		// Resolve and sanitize paths
-		COLLADABU::URI inputPathURI = COLLADABU::URI(options->inputPath);
+		COLLADABU::URI inputPathURI = COLLADABU::URI::nativePathToUri(options->inputPath);
 		std::string inputPathDir;
 		std::string inputPathBaseName;
 		std::string inputPathExtension;
 		inputPathURI.pathComponents(inputPathDir, inputPathBaseName, inputPathExtension);
+		COLLADABU::URI inputPathDirURI = COLLADABU::URI::nativePathToUri(inputPathDir);
+		inputPathDir = inputPathDirURI.toNativePath(COLLADABU::Utils::getSystemType());
 
 		options->name = inputPathBaseName;
 
 		COLLADABU::URI outputPathURI;
 		if (options->outputPath == "") {
-			outputPathURI = COLLADABU::URI(inputPathDir + "output/" + inputPathBaseName + ".gltf");
+			outputPathURI = COLLADABU::URI::nativePathToUri(inputPathDir + "output/" + inputPathBaseName + ".gltf");
 			options->outputPath = outputPathURI.toNativePath(COLLADABU::Utils::getSystemType());
 		}
-		outputPathURI = COLLADABU::URI(options->outputPath);
+		outputPathURI = COLLADABU::URI::nativePathToUri(options->outputPath);
 		std::string outputPathDir;
 		std::string outputPathBaseName;
 		std::string outputPathExtension;
 		outputPathURI.pathComponents(outputPathDir, outputPathBaseName, outputPathExtension);
+		COLLADABU::URI outputPathDirURI = COLLADABU::URI::nativePathToUri(outputPathDir);
+		outputPathDir = outputPathDirURI.toNativePath(COLLADABU::Utils::getSystemType());
 
 		if (options->binary && outputPathExtension != "glb") {
-			outputPathURI = COLLADABU::URI(outputPathDir + outputPathBaseName + ".glb");
+			outputPathURI = COLLADABU::URI::nativePathToUri(outputPathDir + outputPathBaseName + ".glb");
 			options->outputPath = outputPathURI.toNativePath(COLLADABU::Utils::getSystemType());
 		}
 
 		if (options->basePath == "") {
 			options->basePath = inputPathDir;
 		} else {
-			options->basePath = COLLADABU::URI(options->basePath).toNativePath(COLLADABU::Utils::getSystemType());
+			COLLADABU::URI basePathURI = COLLADABU::URI::nativePathToUri(options->basePath);
+			options->basePath = basePathURI.toNativePath(COLLADABU::Utils::getSystemType());
 		}
 
 		// Export flags
@@ -167,8 +172,9 @@ int main(int argc, const char **argv) {
 		}
 
 		// Create the output directory if it does not exist
+
 		if (!COLLADABU::Utils::directoryExists(outputPathDir)) {
-			COLLADABU::Utils::createDirectoryRecursive(outputPathDir);
+			COLLADABU::Utils::createDirectoryIfNeeded(outputPathDir);
 		}
 
 		std::cout << "Converting " << options->inputPath << " -> " << options->outputPath << std::endl;
@@ -226,7 +232,7 @@ int main(int argc, const char **argv) {
 
 		if (!options->embeddedTextures) {
 			for (GLTF::Image* image : asset->getAllImages()) {
-				COLLADABU::URI imageURI = COLLADABU::URI(outputPathDir + image->uri);
+				COLLADABU::URI imageURI = COLLADABU::URI::nativePathToUri(outputPathDir + image->uri);
 				std::string imageString = imageURI.toNativePath(COLLADABU::Utils::getSystemType());
 				FILE* file = fopen(imageString.c_str(), "wb");
 				if (file != NULL) {
@@ -240,7 +246,7 @@ int main(int argc, const char **argv) {
 		}
 
 		if (!options->embeddedBuffers) {
-			COLLADABU::URI bufferURI = COLLADABU::URI(outputPathDir + buffer->uri);
+			COLLADABU::URI bufferURI = COLLADABU::URI::nativePathToUri(outputPathDir + buffer->uri);
 			std::string bufferString = bufferURI.toNativePath(COLLADABU::Utils::getSystemType());
 			FILE* file = fopen(bufferString.c_str(), "wb");
 			if (file != NULL) {
@@ -254,7 +260,7 @@ int main(int argc, const char **argv) {
 
 		if (!options->embeddedShaders) {
 			for (GLTF::Shader* shader : asset->getAllShaders()) {
-				COLLADABU::URI shaderURI = COLLADABU::URI(outputPathDir + shader->uri);
+				COLLADABU::URI shaderURI = COLLADABU::URI::nativePathToUri(outputPathDir + shader->uri);
 				std::string shaderString = shaderURI.toNativePath(COLLADABU::Utils::getSystemType());
 				FILE* file = fopen(shaderString.c_str(), "wb");
 				if (file != NULL) {
