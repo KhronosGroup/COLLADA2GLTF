@@ -4,6 +4,8 @@ Change Log
 
 #### Fixes :wrench:
 * Fixed issue with relative path resolution on Windows [#200](https://github.com/KhronosGroup/COLLADA2GLTF/issues/200)
+* Updated to OpenCOLLADA 1.6.63
+  * Resolves issue where image elements declared in profile_COMMON are not written [#129](https://github.com/KhronosGroup/COLLADA2GLTF/issues/129) and [#114](https://github.com/KhronosGroup/COLLADA2GLTF/issues/114)
 
 ### v2.1.3 - 2018-07-01
 
