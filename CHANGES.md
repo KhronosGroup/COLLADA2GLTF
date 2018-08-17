@@ -1,5 +1,13 @@
 Change Log
 ==========
+### Next Release
+
+#### Fixes :wrench:
+* Fixed issue with relative path resolution on Windows [#200](https://github.com/KhronosGroup/COLLADA2GLTF/issues/200)
+* Updated to OpenCOLLADA 1.6.63
+  * Resolves issue where image elements declared in profile_COMMON are not written [#129](https://github.com/KhronosGroup/COLLADA2GLTF/issues/129) and [#114](https://github.com/KhronosGroup/COLLADA2GLTF/issues/114)
+* Remove Windows debug builds from CI - as per [Microsoft](https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-6.0/aa260978(v=vs.60)#a-list-of-redistributable-files), they are not to be redistributed
+
 ### v2.1.3 - 2018-07-01
 
 ##### Additions :tada:
