@@ -2,7 +2,10 @@ Change Log
 ==========
 ### Next Release
 
-#### Fixes :wrench:
+##### Additions :tada:
+* Added support for multiple maps [#169](https://github.com/KhronosGroup/COLLADA2GLTF/issues/169)
+
+##### Fixes :wrench:
 * Fixed issue with relative path resolution on Windows [#200](https://github.com/KhronosGroup/COLLADA2GLTF/issues/200)
 * Updated to OpenCOLLADA 1.6.63
   * Resolves issue where image elements declared in profile_COMMON are not written [#129](https://github.com/KhronosGroup/COLLADA2GLTF/issues/129) and [#114](https://github.com/KhronosGroup/COLLADA2GLTF/issues/114)
