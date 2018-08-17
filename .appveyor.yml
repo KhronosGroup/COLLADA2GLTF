@@ -5,10 +5,6 @@ matrix:
   fast_finish: true
   allow_failures:
   - platform: x86
-    configuration: Debug
-  - platform: x64
-    configuration: Debug
-  - platform: x86
     configuration: Release
   - platform: x64
     configuration: Release
@@ -21,7 +17,6 @@ cache:
 - cmake-build
 
 configuration:
-- Debug
 - Release
 
 install:
@@ -31,8 +26,6 @@ install:
 before_build:
 - if not exist cmake-build mkdir cmake-build
 - cd cmake-build
-- if "%PLATFORM%"=="Win32" if "%CONFIGURATION%"=="Debug" cmake -G "Visual Studio 14 2015" .. -Dtest=ON
-- if "%PLATFORM%"=="x64" if "%CONFIGURATION%"=="Debug" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON
 - if "%PLATFORM%"=="Win32" if "%CONFIGURATION%"=="Release" cmake -G "Visual Studio 14 2015" .. -Dtest=ON
 - if "%PLATFORM%"=="x64" if "%CONFIGURATION%"=="Release" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON
 
