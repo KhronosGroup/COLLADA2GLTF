@@ -54,7 +54,7 @@ namespace GLTF {
 			TransformMatrix* getTransformMatrix();
 		};
 
-		GLTF::Camera* camera;
+		GLTF::Camera* camera = NULL;
 		std::vector<GLTF::Node*> children;
 		GLTF::Skin* skin = NULL;
 		std::string jointName;
