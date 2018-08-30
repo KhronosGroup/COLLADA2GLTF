@@ -1,6 +1,6 @@
 Change Log
 ==========
-### Next Release
+### v2.1.4 - 2018-08-29
 
 ##### Additions :tada:
 * Added support for multiple maps [#169](https://github.com/KhronosGroup/COLLADA2GLTF/issues/169)
