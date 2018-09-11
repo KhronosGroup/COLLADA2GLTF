@@ -1,5 +1,10 @@
 Change Log
 ==========
+### Next Release
+
+##### Additions :tada:
+* Added support for morph targets [#166](https://github.com/KhronosGroup/COLLADA2GLTF/issues/166)
+
 ### v2.1.4 - 2018-08-29
 
 ##### Additions :tada:

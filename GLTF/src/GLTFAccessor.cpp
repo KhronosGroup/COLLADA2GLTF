@@ -64,6 +64,14 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 	this->bufferView = bufferView;
 }
 
+GLTF::Accessor::Accessor(GLTF::Accessor* accessor) : Accessor(
+		accessor->type,
+		accessor->componentType,
+		&(accessor->bufferView->buffer->data[accessor->byteOffset + accessor->bufferView->byteOffset]),
+		accessor->count,
+		accessor->bufferView->target) {
+}
+
 bool GLTF::Accessor::computeMinMax() {
 	int numberOfComponents = this->getNumberOfComponents();
 	int count = this->count;
