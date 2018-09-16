@@ -1779,8 +1779,8 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 						GLTF::Accessor* baseAccessor = baseAttributeEntry.second;
 						GLTF::Accessor* targetAccessor = new GLTF::Accessor(findAttribute->second);
 						size_t numComponents = baseAccessor->getNumberOfComponents();
-						float baseComponent[numComponents];
-						float targetComponent[numComponents];
+						float* baseComponent = new float[numComponents];
+						float* targetComponent = new float[numComponents];
 						for (size_t j = 0; j < baseAccessor->count && j < targetAccessor->count; j++) {
 							baseAccessor->getComponentAtIndex(j, baseComponent);
 							targetAccessor->getComponentAtIndex(j, targetComponent);
