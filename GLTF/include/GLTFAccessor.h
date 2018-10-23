@@ -51,6 +51,8 @@ namespace GLTF {
 			GLTF::BufferView* bufferView
 		);
 
+		Accessor(GLTF::Accessor* accessor);
+
 		static int getComponentByteLength(GLTF::Constants::WebGL componentType);
 		static int getNumberOfComponents(GLTF::Accessor::Type type);
 

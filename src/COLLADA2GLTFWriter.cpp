@@ -360,6 +360,9 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 				else {
 					node->mesh = mesh;
 				}
+				if (mesh->weights.size() > 0) {
+					_animatedNodes[_meshMorphTargets[objectId]] = node;
+				}
 			}
 		}
 	}
@@ -1247,13 +1250,17 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 	const COLLADAFW::AnimationList::AnimationBindings& bindings = animationList->getAnimationBindings();
 	COLLADAFW::UniqueId animationListId = animationList->getUniqueId();
 	GLTF::Node* node = _animatedNodes[animationList->getUniqueId()];
+
 	float originalRotationAngle = NAN;
 	std::map<COLLADAFW::UniqueId, float>::iterator iter = _originalRotationAngles.find(animationListId);
 	if (iter != _originalRotationAngles.end()) {
 		originalRotationAngle = iter->second;
 	}
 
-	GLTF::Node::Transform* nodeTransform = node->transform;
+	GLTF::Node::Transform* nodeTransform = NULL;
+	if (node != NULL) {
+		nodeTransform = node->transform;
+	}
 	GLTF::Node::TransformTRS* nodeTransformTRS = NULL;
 	std::set<float> timeSet = std::set<float>();
 	GLTF::Node::TransformMatrix* transformMatrix = NULL;
@@ -1261,8 +1268,9 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 	float* translation = NULL;
 	float* rotation = NULL;
 	float* scale = NULL;
+	float* weights = NULL;
 
-	if (nodeTransform) {
+	if (nodeTransform != NULL) {
 		if (nodeTransform->type == GLTF::Node::Transform::MATRIX) {
 			nodeTransformTRS = ((GLTF::Node::TransformMatrix*)nodeTransform)->getTransformTRS();
 		}
@@ -1276,6 +1284,8 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 	bool hasTranslation = false;
 	bool hasRotation = false;
 	bool hasScale = false;
+	bool hasMorph = false;
+	size_t numWeights = 0;
 	for (size_t i = 0; i < bindings.getCount(); i++) {
 		const COLLADAFW::AnimationList::AnimationBinding& binding = bindings[i];
 		std::tuple<std::vector<float>, std::vector<float>> animationData = _animationData[binding.animation];
@@ -1319,8 +1329,14 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		case COLLADAFW::AnimationList::ANGLE: {
 			hasRotation = true;
 			break;
+		}
+		case COLLADAFW::AnimationList::ARRAY_ELEMENT_1D: {
+			hasMorph = true;
+			numWeights = node->mesh->weights.size();
+			break;
 		}}
 	}
+
 	// Map the set back to a vector and sort
 	std::vector<float> times(timeSet.begin(), timeSet.end());
 	std::sort(times.begin(), times.end());
@@ -1336,15 +1352,18 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 			translation[i * 3 + 2] = nodeTransformTRS->translation[2];
 		}
 	}
+	float* lastRotation = new float[4];
 	if (hasRotation) {
 		rotation = new float[times.size() * 4];
+		for (size_t j = 0; j < 4; j++) {
+			lastRotation[j] = nodeTransformTRS->rotation[j];
+		}
 	}
 	if (hasScale) {
 		scale = new float[times.size() * 3];
 	}
-	float* lastRotation = new float[4];
-	for (size_t j = 0; j < 4; j++) {
-		lastRotation[j] = nodeTransformTRS->rotation[j];
+	if (hasMorph) {
+		weights = new float[times.size() * numWeights];
 	}
 	for (size_t i = 0; i < bindings.getCount(); i++) {
 		const COLLADAFW::AnimationList::AnimationBinding& binding = bindings[i];
@@ -1454,6 +1473,12 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 				rotation[j * 4 + 3] = (float)quaternion.w;
 				minimizeRotationDistance = true;
 				break;
+			}
+			case COLLADAFW::AnimationList::ARRAY_ELEMENT_1D: {
+				if (needsInterpolation) {
+					return false;
+				}
+				weights[j * numWeights + binding.firstIndex] = output[j];
 			}}
 			// Sometimes when we decompose quaternions and then regenerate them, they flip chirality; this minimize the distance between quaternions to keep animations smooth
 			if (minimizeRotationDistance) {
@@ -1512,6 +1537,19 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		sampler->output = outputAccessor;
 		target->node = node;
 		target->path = GLTF::Animation::Path::SCALE;
+		channel->target = target;
+		channel->sampler = sampler;
+		animation->channels.push_back(channel);
+	}
+	if (hasMorph) {
+		GLTF::Animation::Channel* channel = new GLTF::Animation::Channel();
+		GLTF::Animation::Channel::Target* target = new GLTF::Animation::Channel::Target();
+		GLTF::Animation::Sampler* sampler = new GLTF::Animation::Sampler();
+		GLTF::Accessor* outputAccessor = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::FLOAT, (unsigned char*)weights, times.size() * numWeights, (GLTF::Constants::WebGL) - 1);
+		sampler->input = inputAccessor;
+		sampler->output = outputAccessor;
+		target->node = node;
+		target->path = GLTF::Animation::Path::WEIGHTS;
 		channel->target = target;
 		channel->sampler = sampler;
 		animation->channels.push_back(channel);
@@ -1702,6 +1740,64 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 
 		_skinInstances[skinControllerId] = skin;
 		_skinnedMeshes[skinControllerId] = mesh;
+	}
+	else if (controller->getControllerType() == COLLADAFW::Controller::CONTROLLER_TYPE_MORPH) {
+		COLLADAFW::MorphController* morphController = (COLLADAFW::MorphController*)controller;
+		COLLADAFW::UniqueIdArray& morphTargets = morphController->getMorphTargets();
+		COLLADAFW::FloatOrDoubleArray& morphWeights = morphController->getMorphWeights();
+
+		COLLADAFW::UniqueId meshId = morphController->getSource();
+		GLTF::Mesh* mesh = _meshInstances[meshId];
+
+		for (size_t i = 0; i < morphWeights.getValuesCount(); i++) {
+			float weightValue;
+			if (morphWeights.getType() == COLLADAFW::FloatOrDoubleArray::DATA_TYPE_FLOAT) {
+				weightValue = morphWeights.getFloatValues()->getData()[i];
+			} else if (morphWeights.getType() == COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE) {
+				weightValue = (float)morphWeights.getDoubleValues()->getData()[i];
+			}
+			mesh->weights.push_back(weightValue);
+		}
+
+		const COLLADAFW::UniqueId& animationListId = morphWeights.getAnimationList();
+		if (animationListId.isValid()) {
+			_meshMorphTargets[meshId] = animationListId;
+		}
+
+		for (size_t i = 0; i < morphTargets.getCount(); i++) {
+			COLLADAFW::UniqueId targetId = morphTargets[i];
+			GLTF::Mesh* meshTarget = _meshInstances[targetId];
+			if (mesh->primitives.size() > 0 && meshTarget->primitives.size() > 0) {
+				// These attributes need to be re-written as displacements relative to the base primitive
+				std::map<std::string, GLTF::Accessor*> baseAttributes = mesh->primitives[0]->attributes;
+				std::map<std::string, GLTF::Accessor*> targetAttributes = meshTarget->primitives[0]->attributes;
+				std::map<std::string, GLTF::Accessor*> buildAttributes;
+				for (const auto& baseAttributeEntry : baseAttributes) {
+					std::string attribute = baseAttributeEntry.first;
+					auto findAttribute = targetAttributes.find(attribute);
+					if (findAttribute != targetAttributes.end()) {
+						GLTF::Accessor* baseAccessor = baseAttributeEntry.second;
+						GLTF::Accessor* targetAccessor = new GLTF::Accessor(findAttribute->second);
+						size_t numComponents = baseAccessor->getNumberOfComponents();
+						float* baseComponent = new float[numComponents];
+						float* targetComponent = new float[numComponents];
+						for (size_t j = 0; j < baseAccessor->count && j < targetAccessor->count; j++) {
+							baseAccessor->getComponentAtIndex(j, baseComponent);
+							targetAccessor->getComponentAtIndex(j, targetComponent);
+							for (size_t k = 0; k < numComponents; k++) {
+								targetComponent[k] = targetComponent[k] - baseComponent[k]; 
+							}
+							targetAccessor->writeComponentAtIndex(j, targetComponent);
+						}
+						targetAccessor->computeMinMax();
+						buildAttributes[attribute] = targetAccessor;
+					}
+				}
+				GLTF::Primitive::Target* target = new GLTF::Primitive::Target();
+				target->attributes = buildAttributes;
+				mesh->primitives[0]->targets.push_back(target);
+			}
+		}
 	}
 	return true;
 }

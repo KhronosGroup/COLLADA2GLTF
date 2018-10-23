@@ -240,8 +240,8 @@ GLTF::Object* GLTF::Node::clone(GLTF::Object* clone) {
 		node->mesh = mesh;
 		node->light = light;
 		node->transform = transform;
+		GLTF::Object::clone(clone);
 	}
-	GLTF::Object::clone(clone);
 	return node;
 }
 
