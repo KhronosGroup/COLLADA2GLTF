@@ -12,7 +12,7 @@ A command-line tool to convert COLLADA (`.dae`) files to [glTF](https://github.c
 
 ## Releases
 
-Compiled binaries for Windows and Linux can be found under [releases](https://github.com/KhronosGroup/COLLADA2GLTF/releases). It is recommended to use the last versioned release
+Compiled binaries for Windows, MacOS, and Linux can be found under [releases](https://github.com/KhronosGroup/COLLADA2GLTF/releases). It is recommended to use the last versioned release
 
 ## Compile from source
 
