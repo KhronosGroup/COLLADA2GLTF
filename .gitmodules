@@ -13,3 +13,6 @@
 [submodule "dependencies/draco"]
 	path = GLTF/dependencies/draco
 	url = https://github.com/google/draco.git
+[submodule "dependencies/earcut.hpp"]
+	path = dependencies/earcut.hpp
+	url = https://github.com/mapbox/earcut.hpp.git

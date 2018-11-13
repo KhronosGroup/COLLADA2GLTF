@@ -1,6 +1,6 @@
 #include "COLLADA2GLTFWriter.h"
-
 #include "Base64.h"
+#include <mapbox/earcut.hpp>
 
 const double PI = 3.14159;
 
@@ -347,6 +347,9 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 							mesh = (GLTF::Mesh*)mesh->clone(cloneMesh);
 							primitive = mesh->primitives[j];
 						}
+						if (_meshIsDoubleSided[objectId]) {
+							material->doubleSided = true;
+						}
 						primitive->material = material;
 					}
 				}
@@ -540,6 +543,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 	size_t meshPrimitivesCount = meshPrimitives.getCount();
 	if (meshPrimitivesCount > 0) {
 		// Create primitives
+		bool triangulated = false;
 		for (size_t i = 0; i < meshPrimitivesCount; i++) {
 			std::map<std::string, std::vector<float>> buildAttributes;
 			std::map<std::string, unsigned int> attributeIndicesMapping;
@@ -569,8 +573,6 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			case COLLADAFW::MeshPrimitive::LINE_STRIPS:
 				primitive->mode = GLTF::Primitive::Mode::LINE_STRIP;
 				break;
-			// Having POLYLIST and POLYGONS map to TRIANGLES produces good output for cases where the polygons are already triangles,
-			// but in other cases, we may need to triangulate
 			case COLLADAFW::MeshPrimitive::POLYLIST:
 			case COLLADAFW::MeshPrimitive::POLYGONS:
 				shouldTriangulate = true;
@@ -598,8 +600,85 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			std::map<std::string, const COLLADAFW::MeshVertexData*> semanticData;
 			std::string semantic = "POSITION";
 			buildAttributes[semantic] = std::vector<float>();
-			semanticIndices[semantic] = colladaPrimitive->getPositionIndices().getData();
-			semanticData[semantic] = &colladaMesh->getPositions();
+			
+			const COLLADAFW::MeshVertexData* positions = &colladaMesh->getPositions();
+			unsigned int* positionIndices = colladaPrimitive->getPositionIndices().getData();
+			// Use earcut to create triangle indices from polygons/polylists
+			std::vector<unsigned int> triangulatedVertexMapping;
+			if (shouldTriangulate) {
+				// Earcut is strictly for 2D polygons - this is fine, COLLADA polygons
+				// and polylists must exist in a single plane anyway, but we still have
+				// to project the 3D points onto a 2D plane.
+				//
+				// For simplicity, compute an affinity and just project onto the X, Y,
+				// or Z plane. In other words, drop the coordinate with the smallest
+				// range.
+				std::vector<unsigned int> triangulatedIndices;
+				size_t face = 0;
+				size_t totalVertices = 0;
+				while (totalVertices < count) {
+					int faceVertexCount = colladaPrimitive->getGroupedVerticesVertexCount(face);
+					face++;
+
+					// Compute the bounds of the polygon
+					float xMin = std::numeric_limits<float>::max();
+					float xMax = -std::numeric_limits<float>::max();
+					float yMin = xMin;
+					float yMax = xMax;
+					float zMin = yMin;
+					float zMax = yMax;
+					for (size_t vertex = 0; vertex < faceVertexCount; vertex++) {
+						unsigned int index = positionIndices[totalVertices + vertex];
+						float x = getMeshVertexDataAtIndex(*positions, index * 3);
+						float y = getMeshVertexDataAtIndex(*positions, index * 3 + 1);
+						float z = getMeshVertexDataAtIndex(*positions, index * 3 + 2);
+					}
+					float xRange = xMax - xMin;
+					float yRange = yMax - yMin;
+					float zRange = zMax - zMin;
+
+					// Create projected polygon + triangulate
+					std::vector<std::array<float, 2>> polygon;
+					std::map<unsigned int, unsigned int> indexMapping;
+					std::map<unsigned int, unsigned int> vertexIndexMapping;
+					unsigned int localIndex = 0;
+					for (size_t vertex = 0; vertex < faceVertexCount; vertex++) {
+						unsigned int index = positionIndices[totalVertices + vertex];
+						indexMapping[localIndex] = index;
+						vertexIndexMapping[localIndex] = totalVertices + vertex;
+						localIndex++;
+						float x = getMeshVertexDataAtIndex(*positions, index * 3);
+						float y = getMeshVertexDataAtIndex(*positions, index * 3 + 1);
+						float z = getMeshVertexDataAtIndex(*positions, index * 3 + 2);
+						if (xRange < yRange && xRange < zRange) {
+							polygon.push_back({y, z});
+						} else if (yRange < zRange) {
+							polygon.push_back({x, z});
+						} else {
+							polygon.push_back({x, y});
+						}
+					}
+
+					std::vector<std::vector<std::array<float, 2>>> shape;
+					shape.push_back(polygon);
+					std::vector<unsigned int> indices = mapbox::earcut<unsigned int>(shape);
+					// Map local earcut indices back to primitive position indices
+					for (size_t j = 0; j < indices.size(); j++) {
+						unsigned int index = indices[j];
+						unsigned int vertex = vertexIndexMapping[index];
+						triangulatedVertexMapping.push_back(vertex);
+						indices[j] = indexMapping[index];
+					}
+					totalVertices += faceVertexCount;
+					triangulatedIndices.insert(triangulatedIndices.end(), indices.begin(), indices.end());
+				}
+				count = triangulatedIndices.size();
+				positionIndices = new unsigned int[count];
+				std::copy(triangulatedIndices.begin(), triangulatedIndices.end(), positionIndices);
+				triangulated = true;
+			}
+			semanticIndices[semantic] = positionIndices;
+			semanticData[semantic] = positions;
 			primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
 			if (colladaPrimitive->hasNormalIndices()) {
 				semantic = "NORMAL";
@@ -647,45 +726,19 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 			}
 
 			unsigned int index = 0;
-			unsigned int face = 0;
-			unsigned int startFace = 0;
-			unsigned int totalVertexCount = 0;
-			unsigned int vertexCount = 0;
-			unsigned int faceVertexCount = colladaPrimitive->getGroupedVerticesVertexCount(face);
-			for (int j = 0; j < count; j++) {
+			for (size_t j = 0; j < count; j++) {
 				std::string attributeId;
-				if (shouldTriangulate) {
-					// This approach is very efficient in terms of runtime, but there are more correct solutions that may be worth considering.
-					// Using a 3D variant of Fortune's Algorithm or something similar to compute a mesh with no overlapping triangles would be ideal.
-					if (vertexCount >= faceVertexCount) {
-						unsigned int end = buildIndices.size() - 1;
-						if (faceVertexCount > 3) {
-							// Make a triangle with the last two points and the first one
-							buildIndices.push_back(buildIndices[end - 1]);
-							buildIndices.push_back(buildIndices[end]);
-							buildIndices.push_back(buildIndices[startFace]);
-							totalVertexCount += 3;
-						}
-						face++;
-						faceVertexCount = colladaPrimitive->getGroupedVerticesVertexCount(face);
-						startFace = totalVertexCount;
-						vertexCount = 0;
-					}
-					else if (vertexCount >= 3) {
-						// Add the previous two points to complete the triangle
-						unsigned int end = buildIndices.size() - 1;
-						buildIndices.push_back(buildIndices[end - 1]);
-						buildIndices.push_back(buildIndices[end]);
-						totalVertexCount += 2;
-					}
-				}
 				for (const auto& entry : semanticIndices) {
 					semantic = entry.first;
 					unsigned int numberOfComponents = 3;
 					if (semantic.find("TEXCOORD") == 0) {
 						numberOfComponents = 2;
 					}
-					attributeId += buildAttributeId(*semanticData[semantic], semanticIndices[semantic][j], numberOfComponents);
+					unsigned int useIndex = j;
+					if (triangulated && semantic != "POSITION") {
+						useIndex = triangulatedVertexMapping[j];
+					}
+					attributeId += buildAttributeId(*semanticData[semantic], semanticIndices[semantic][useIndex], numberOfComponents);
 				}
 				std::map<std::string, unsigned int>::iterator search = attributeIndicesMapping.find(attributeId);
 				if (search != attributeIndicesMapping.end()) {
@@ -701,7 +754,11 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 							numberOfComponents = 2;
 							flipY = true;
 						}
-						unsigned int semanticIndex = semanticIndices[semantic][j];
+						unsigned int useIndex = j;
+						if (triangulated && semantic != "POSITION") {
+							useIndex = triangulatedVertexMapping[j];
+						}
+						unsigned int semanticIndex = semanticIndices[semantic][useIndex];
 						if (semantic == "POSITION") {
 							position = true;
 							mapping.push_back(semanticIndex);
@@ -726,15 +783,6 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 					buildIndices.push_back(index);
 					index++;
 				}
-				totalVertexCount++;
-				vertexCount++;
-			}
-			if (shouldTriangulate && faceVertexCount > 3) {
-				// Close the last polyshape
-				int end = buildIndices.size() - 1;
-				buildIndices.push_back(buildIndices[end - 1]);
-				buildIndices.push_back(buildIndices[end]);
-				buildIndices.push_back(buildIndices[startFace]);
 			}
 			if (_options->dracoCompression ) {
 				// Currently only support triangles. 
@@ -771,6 +819,11 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 				primitive->attributes[semantic] = accessor;
 			}
 			positionMapping[primitive] = mapping;
+		}
+		if (triangulated) {
+			_meshIsDoubleSided[uniqueId] = true;
+		} else {
+			_meshIsDoubleSided[uniqueId] = false;
 		}
 	}
 	_meshMaterialPrimitiveMapping[uniqueId] = primitiveMaterialMapping;

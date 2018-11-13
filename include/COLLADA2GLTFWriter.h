@@ -28,6 +28,7 @@ namespace COLLADA2GLTF {
 		std::map<COLLADAFW::UniqueId, std::map<int, std::set<GLTF::Primitive*>>> _meshMaterialPrimitiveMapping;
 		std::map<COLLADAFW::UniqueId, GLTF::MaterialCommon::Light*> _lightInstances;
 		std::map<COLLADAFW::UniqueId, std::map<GLTF::Primitive*, std::vector<unsigned int>>> _meshPositionMapping;
+		std::map<COLLADAFW::UniqueId, bool> _meshIsDoubleSided;
 		std::map<GLTF::Mesh*, std::map<unsigned int, unsigned int>> _meshTexCoordSetMapping;
 		std::map<COLLADAFW::UniqueId, GLTF::Skin*> _skinInstances;
 		std::map<COLLADAFW::UniqueId, GLTF::Node*> _animatedNodes;
