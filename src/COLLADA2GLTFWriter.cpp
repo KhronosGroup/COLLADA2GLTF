@@ -262,6 +262,10 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					GLTF::MaterialCommon* materialCommon = (GLTF::MaterialCommon*)material;
 					materialCommon->jointCount = _skinJointNodes[uniqueId].size();
 				}
+				if (_skinnedMeshIsDoubleSided[uniqueId]) {
+					material->doubleSided = true;
+				}
+				primitive->material = material;
 			}
 
 			for (const COLLADABU::URI& skeletonURI : instanceController->skeletons()) {
@@ -632,6 +636,12 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 						float x = getMeshVertexDataAtIndex(*positions, index * 3);
 						float y = getMeshVertexDataAtIndex(*positions, index * 3 + 1);
 						float z = getMeshVertexDataAtIndex(*positions, index * 3 + 2);
+						xMin = std::min(x, xMin);
+						xMax = std::max(x, xMax);
+						yMin = std::min(y, yMin);
+						yMax = std::max(y, yMax);
+						zMin = std::min(z, zMin);
+						zMax = std::max(z, zMax);
 					}
 					float xRange = xMax - xMin;
 					float yRange = yMax - yMin;
@@ -1793,6 +1803,7 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 
 		_skinInstances[skinControllerId] = skin;
 		_skinnedMeshes[skinControllerId] = mesh;
+		_skinnedMeshIsDoubleSided[skinControllerId] = _meshIsDoubleSided[meshId];
 	}
 	else if (controller->getControllerType() == COLLADAFW::Controller::CONTROLLER_TYPE_MORPH) {
 		COLLADAFW::MorphController* morphController = (COLLADAFW::MorphController*)controller;

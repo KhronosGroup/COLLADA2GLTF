@@ -38,6 +38,7 @@ namespace COLLADA2GLTF {
 		std::map<COLLADAFW::UniqueId, std::vector<COLLADAFW::UniqueId>> _skinJointNodes;
 		std::map<COLLADAFW::UniqueId, std::tuple<GLTF::Accessor::Type, std::vector<int*>, std::vector<float*>>> _skinData;
 		std::map<COLLADAFW::UniqueId, GLTF::Mesh*> _skinnedMeshes;
+		std::map<COLLADAFW::UniqueId, bool> _skinnedMeshIsDoubleSided;
 		std::map<COLLADAFW::UniqueId, GLTF::Image*> _images;
 		std::map<COLLADAFW::UniqueId, std::tuple<std::vector<float>, std::vector<float>>> _animationData;
 		std::map<COLLADAFW::UniqueId, std::map<std::string, GLTF::Texture*>> _effectTextureMapping;
