@@ -1004,6 +1004,25 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			packColladaColor(specular.getColor(), material->values->specular);
 		}
 
+		COLLADAFW::ColorOrTexture transparent = effectCommon->getTransparent();
+		if (transparent.isColor()) {
+			float* diffuse = material->values->diffuse;
+			if (diffuse == NULL) {
+				diffuse = new float[4];
+				diffuse[0] = 1.0;
+				diffuse[1] = 1.0;
+				diffuse[2] = 1.0;
+				diffuse[3] = 1.0;
+				material->values->diffuse = diffuse;
+			}
+			float* transparentValues = new float[4];
+			packColladaColor(transparent.getColor(), transparentValues);
+			for (size_t i = 0; i < 4; i++) {
+				diffuse[i] *= transparentValues[i];
+			}
+			delete transparentValues;
+		}
+
 		COLLADAFW::FloatOrParam shininess = effectCommon->getShininess();
 		if (shininess.getType() == COLLADAFW::FloatOrParam::FLOAT) {
 			float shininessValue = shininess.getFloatValue();
