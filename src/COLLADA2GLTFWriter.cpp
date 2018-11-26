@@ -1040,7 +1040,12 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 		}
 
 		COLLADAFW::ColorOrTexture transparent = effectCommon->getTransparent();
-		if (transparent.isColor()) {
+		if (transparent.isTexture()) {
+			std::cerr << "WARNING: Effect " << effect->getOriginalId() <<
+				" contains a transparent texture that will be omitted from" <<
+				" the converted model." << std::endl;
+		}
+		else if (transparent.isColor()) {
 			float* diffuse = material->values->diffuse;
 			if (diffuse == NULL) {
 				diffuse = new float[4];
