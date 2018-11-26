@@ -106,7 +106,6 @@ void GLTF::Material::Values::writeJSON(void* writer, GLTF::Options* options) {
 		}
 	}
 
-	std::cout << transparency << std::endl;
 	if (transparency != NULL) {
 		jsonWriter->Key("transparency");
 		if (options->version != "1.0") {
