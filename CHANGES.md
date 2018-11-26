@@ -4,6 +4,7 @@ Change Log
 
 ##### Additions :tada:
 * Added support for morph targets [#166](https://github.com/KhronosGroup/COLLADA2GLTF/issues/166)
+* Support converting models with transparency [#168](https://github.com/KhronosGroup/COLLADA2GLTF/issues/168)
 
 ### v2.1.4 - 2018-08-29
 
