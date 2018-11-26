@@ -1060,6 +1060,9 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			for (size_t i = 0; i < 4; i++) {
 				diffuse[i] *= transparentValues[i];
 			}
+			if (diffuse[3] < 1.0) {
+				material->transparent = true;
+			}
 			delete transparentValues;
 		}
 
@@ -1081,6 +1084,7 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			if (transparencyValue >= 0) {
 				material->values->transparency = new float[1];
 				material->values->transparency[0] = transparencyValue;
+				material->transparent = true;
 			}
 		}
 
