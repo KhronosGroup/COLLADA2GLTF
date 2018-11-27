@@ -19,6 +19,41 @@ void COLLADA2GLTF::Writer::finish() {
 }
 
 bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
+	const COLLADAFW::FileInfo::ValuePairPointerArray& valuePairs = asset->getValuePairArray();
+	for (size_t i = 0; i < valuePairs.getCount(); i++) {
+		const COLLADAFW::FileInfo::ValuePair* valuePair = valuePairs[i];
+		const COLLADAFW::String& key = valuePair->first;
+		const COLLADAFW::String& value = valuePair->second;
+
+		// Sketchup versions less than 8 output a transparent
+		// value of zero when they mean fully opaque.
+		//
+		// Identify this issue here and fix transparent
+		// values if present later.
+		if (key == "authoring_tool" && value.find("SketchUp") != std::string::npos) {
+			// Get last whitespace seperated token
+			std::string token;
+			std::stringstream stream(value);
+			std::vector<std::string> tokens;
+
+			while (stream >> token) {
+				tokens.push_back(token);
+			}
+
+			if (tokens.size() > 0) {
+				// Get major version
+				token = tokens[tokens.size() - 1];
+				try {
+					if (std::stoi(token) < 8) {
+						_options->invertTransparency = true;
+					}
+				} catch (const std::invalid_argument& e) {
+					// pass
+				}
+			}
+		}
+	}
+
 	float assetScale = (float)asset->getUnit().getLinearUnitMeter();
 	_assetScale = assetScale;
 	if (asset->getUpAxisType() == COLLADAFW::FileInfo::X_UP) {
@@ -1004,6 +1039,33 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			packColladaColor(specular.getColor(), material->values->specular);
 		}
 
+		COLLADAFW::ColorOrTexture transparent = effectCommon->getTransparent();
+		if (transparent.isTexture()) {
+			std::cerr << "WARNING: Effect " << effect->getOriginalId() <<
+				" contains a transparent texture that will be omitted from" <<
+				" the converted model." << std::endl;
+		}
+		else if (transparent.isColor()) {
+			float* diffuse = material->values->diffuse;
+			if (diffuse == NULL) {
+				diffuse = new float[4];
+				diffuse[0] = 1.0;
+				diffuse[1] = 1.0;
+				diffuse[2] = 1.0;
+				diffuse[3] = 1.0;
+				material->values->diffuse = diffuse;
+			}
+			float* transparentValues = new float[4];
+			packColladaColor(transparent.getColor(), transparentValues);
+			for (size_t i = 0; i < 4; i++) {
+				diffuse[i] *= transparentValues[i];
+			}
+			if (diffuse[3] < 1.0) {
+				material->transparent = true;
+			}
+			delete transparentValues;
+		}
+
 		COLLADAFW::FloatOrParam shininess = effectCommon->getShininess();
 		if (shininess.getType() == COLLADAFW::FloatOrParam::FLOAT) {
 			float shininessValue = shininess.getFloatValue();
@@ -1016,9 +1078,13 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 		COLLADAFW::FloatOrParam transparency = effectCommon->getTransparency();
 		if (transparency.getType() == COLLADAFW::FloatOrParam::FLOAT) {
 			float transparencyValue = transparency.getFloatValue();
+			if (_options->invertTransparency) {
+				transparencyValue = 1.0 - transparencyValue;
+			}
 			if (transparencyValue >= 0) {
 				material->values->transparency = new float[1];
 				material->values->transparency[0] = transparencyValue;
+				material->transparent = true;
 			}
 		}
 

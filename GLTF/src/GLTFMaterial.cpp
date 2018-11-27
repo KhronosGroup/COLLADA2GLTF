@@ -859,7 +859,11 @@ GLTF::MaterialPBR::MaterialPBR() {
 GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) {
 	GLTF::MaterialPBR* material = new GLTF::MaterialPBR();
 	material->metallicRoughness->metallicFactor = 0;
+	bool hasTransparency = false;
 	if (values->diffuse) {
+		if (values->diffuse[3] < 1.0) {
+			hasTransparency = true;
+		}
 		material->metallicRoughness->baseColorFactor = values->diffuse;
 		if (options->specularGlossiness) {
 			material->specularGlossiness->diffuseFactor = values->diffuse;
@@ -876,6 +880,9 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 	}
 
 	if (values->emission) {
+		if (values->emission[3] < 1.0) {
+			hasTransparency = true;
+		}
 		material->emissiveFactor = values->emission;
 	}
 	if (values->emissionTexture) {
@@ -895,6 +902,9 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 
 	if (options->specularGlossiness) {
 		if (values->specular) {
+			if (values->specular[3] < 1.0) {
+				hasTransparency = true;
+			}
 			material->specularGlossiness->specularFactor = values->specular;
 		}
 		if (values->specularTexture) {
@@ -917,6 +927,26 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
 		texture->texture = values->bumpTexture;
 		material->normalTexture = texture;
+	}
+
+	if (values->transparency) {
+		if (!material->metallicRoughness->baseColorFactor) {
+			float* baseColorFactor = new float[4];
+			baseColorFactor[0] = 1.0;
+			baseColorFactor[1] = 1.0;
+			baseColorFactor[2] = 1.0;
+			material->metallicRoughness->baseColorFactor = baseColorFactor;
+		}
+		float transparency = material->metallicRoughness->baseColorFactor[3];
+		transparency *= values->transparency[0];
+		material->metallicRoughness->baseColorFactor[3] = transparency;
+		if (transparency < 1.0) {
+			hasTransparency = true;
+		}
+	}
+
+	if (hasTransparency) {
+		material->alphaMode = "BLEND";
 	}
 
 	if (options->doubleSided || doubleSided) {
