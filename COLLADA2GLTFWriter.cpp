@@ -455,6 +455,22 @@ namespace GLTF
         const NodePointerArray& nodes = node->getChildNodes();
 
         std::string uniqueUID = node->getUniqueId().toAscii();
+
+        // There is a chance that we may have encountered a instance_node referring to this node.
+        // Make sure we add this node to the parent's child array.
+        if (this->_asset->_uniqueIDToParentsOfInstanceNode.count(uniqueUID) > 0) {
+            shared_ptr<JSONArray> parents = this->_asset->_uniqueIDToParentsOfInstanceNode[uniqueUID];
+            std::vector <shared_ptr <JSONValue> > values = parents->values();
+            for (size_t k = 0; k < values.size(); k++) {
+                shared_ptr<JSONString> value = static_pointer_cast<JSONString>(values[k]);
+                shared_ptr<JSONObject> parentNode = static_pointer_cast<JSONObject>(this->_asset->getValueForUniqueId(value->getString()));
+                if (parentNode) {
+                    shared_ptr <JSONArray> children = parentNode->createArrayIfNeeded(kChildren);
+                    children->appendValue(shared_ptr <JSONString>(new JSONString(nodeOriginalId)));
+                }
+            }
+        }
+
         nodeObject->setString(kName, node->getName());
 
         this->_asset->_uniqueIDToOpenCOLLADAObject[uniqueUID] = shared_ptr <COLLADAFW::Object>(node->clone());
@@ -582,7 +598,8 @@ namespace GLTF
 
             parents->appendValue(shared_ptr<JSONString>(new JSONString(node->getUniqueId().toAscii())));
 
-            if (this->_asset->containsValueForUniqueId(id)) {
+            if (this->_asset->containsValueForUniqueId(id))
+            {
                 std::string instanceNodeOriginalId = this->_asset->getOriginalId(id);
                 childrenArray->appendValue(shared_ptr <GLTF::JSONString>(new GLTF::JSONString(instanceNodeOriginalId)));
             }
@@ -732,19 +749,6 @@ namespace GLTF
         const NodePointerArray& nodeArray = libraryNodes->getNodes();
         for (size_t i = 0; i < nodeArray.getCount(); i++) {
             const COLLADAFW::Node* node = nodeArray[i];
-            std::string id = node->getUniqueId().toAscii();
-            if (this->_asset->_uniqueIDToParentsOfInstanceNode.count(id) > 0) {
-                shared_ptr<JSONArray> parents = this->_asset->_uniqueIDToParentsOfInstanceNode[id];
-                std::vector <shared_ptr <JSONValue> > values = parents->values();
-                for (size_t k = 0; k < values.size(); k++) {
-                    shared_ptr<JSONString> value = static_pointer_cast<JSONString>(values[k]);
-                    shared_ptr<JSONObject> parentNode = static_pointer_cast<JSONObject>(this->_asset->getValueForUniqueId(value->getString()));
-                    if (parentNode) {
-                        shared_ptr <JSONArray> children = parentNode->createArrayIfNeeded(kChildren);
-                        children->appendValue(shared_ptr <JSONString>(new JSONString(node->getOriginalId())));
-                    }
-                }
-            }
             nodes.push_back(node);
         }
         return writeNodes(nodes);
