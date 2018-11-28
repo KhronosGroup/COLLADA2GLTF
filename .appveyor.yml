@@ -32,8 +32,8 @@ install:
 before_build:
 - if not exist cmake-build mkdir cmake-build
 - cd cmake-build
-- IF "%PLATFORM%"=="Win32" cmake -G "Visual Studio 14 2015" .. -Dtest=ON
-- IF "%PLATFORM%"=="x64" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON
+- IF "%PLATFORM%"=="Win32" cmake -G "Visual Studio 14 2015" .. -Dtest=ON -DCMAKE_CXX_FLAGS=/w
+- IF "%PLATFORM%"=="x64" cmake -G "Visual Studio 14 2015 Win64" .. -Dtest=ON -DCMAKE_CXX_FLAGS=/w
 
 build:
   parallel: true
