@@ -297,6 +297,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 					GLTF::MaterialCommon* materialCommon = (GLTF::MaterialCommon*)material;
 					materialCommon->jointCount = _skinJointNodes[uniqueId].size();
 				}
+				primitive->material = material;
 			}
 
 			for (const COLLADABU::URI& skeletonURI : instanceController->skeletons()) {
@@ -1081,7 +1082,7 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			if (_options->invertTransparency) {
 				transparencyValue = 1.0 - transparencyValue;
 			}
-			if (transparencyValue >= 0) {
+			if (transparencyValue < 1.0) {
 				material->values->transparency = new float[1];
 				material->values->transparency[0] = transparencyValue;
 				material->transparent = true;
