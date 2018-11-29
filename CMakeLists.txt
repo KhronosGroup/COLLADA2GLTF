@@ -109,6 +109,9 @@ add_library(${PROJECT_NAME} ${LIB_HEADERS} ${LIB_SOURCES})
 include_directories(dependencies/ahoy/include)
 add_subdirectory(dependencies/ahoy)
 
+# earcut
+include_directories(dependencies/earcut.hpp/include)
+
 add_executable(${PROJECT_NAME}-bin src/main.cpp)
 target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy draco)
 
