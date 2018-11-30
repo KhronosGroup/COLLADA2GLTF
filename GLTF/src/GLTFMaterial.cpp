@@ -860,7 +860,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 	GLTF::MaterialPBR* material = new GLTF::MaterialPBR();
 	material->metallicRoughness->metallicFactor = 0;
 	bool hasTransparency = false;
-	if (values->diffuse) {
+	if (values->diffuse) {	
 		if (values->diffuse[3] < 1.0) {
 			hasTransparency = true;
 		}
@@ -935,6 +935,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 			baseColorFactor[0] = 1.0;
 			baseColorFactor[1] = 1.0;
 			baseColorFactor[2] = 1.0;
+			baseColorFactor[3] = 1.0;
 			material->metallicRoughness->baseColorFactor = baseColorFactor;
 		}
 		float transparency = material->metallicRoughness->baseColorFactor[3];
