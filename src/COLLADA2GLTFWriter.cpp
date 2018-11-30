@@ -1058,8 +1058,21 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			}
 			float* transparentValues = new float[4];
 			packColladaColor(transparent.getColor(), transparentValues);
+			auto opaqueMode = effectCommon->getOpaqueMode();
+			bool alwaysUseAlpha = (opaqueMode == COLLADAFW::EffectCommon::OpaqueMode::A_ONE) ||
+				(opaqueMode == COLLADAFW::EffectCommon::OpaqueMode::A_ZERO);
+			bool oneMinus = (opaqueMode == COLLADAFW::EffectCommon::OpaqueMode::RGB_ZERO) ||
+				(opaqueMode == COLLADAFW::EffectCommon::OpaqueMode::A_ZERO);
 			for (size_t i = 0; i < 4; i++) {
-				diffuse[i] *= transparentValues[i];
+				auto transparentValue = transparentValues[alwaysUseAlpha ? 3 : i];
+
+				if (!alwaysUseAlpha && i == 3) { //RGB_ZERO or RGB_ONE - use luminance for alpha
+                    		transparentValue = (transparentValues[0] * 0.212671) +
+                        		(transparentValues[1] * 0.715160) +
+                        		(transparentValues[2] * 0.072169);
+				}
+
+				diffuse[i] *= (oneMinus ? (1.0 - transparentValue) : transparentValue);
 			}
 			if (diffuse[3] < 1.0) {
 				material->transparent = true;
