@@ -49,6 +49,7 @@ namespace GLTF {
 		std::vector<GLTF::Image*> getAllImages();
 		std::vector<GLTF::Accessor*> getAllPrimitiveAccessors(GLTF::Primitive* primitive) const;
 		void mergeAnimations();
+		void mergeAnimations(std::vector<std::vector<size_t>> groups);
 		void removeUnusedSemantics();
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
