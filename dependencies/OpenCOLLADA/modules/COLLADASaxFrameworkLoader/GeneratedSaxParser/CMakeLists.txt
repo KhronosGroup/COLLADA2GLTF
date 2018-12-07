@@ -16,8 +16,12 @@ include_directories(${BASE_PATH}/Externals/expat/lib)
 add_subdirectory(expat)
 
 # LibXML
-include_directories(${BASE_PATH}/Externals/LibXML/include)
-add_subdirectory(LibXML)
+if(NOT LIBXML2_FOUND)
+  include_directories(${BASE_PATH}/Externals/LibXML/include)
+  add_subdirectory(LibXML)
+else()
+  include_directories(${LIBXML2_INCLUDE_DIR})
+endif()
 
 add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} expat LibXML)

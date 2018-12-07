@@ -12,7 +12,11 @@ project(${PROJECT_NAME})
 option(test "Build all tests." OFF)
 
 # RapidJSON
-include_directories(dependencies/rapidjson/include)
+if(DEFINED RAPIDJSON_INCLUDE_DIR)
+  include_directories(${RAPIDJSON_INCLUDE_DIR})
+else()
+  include_directories(dependencies/rapidjson/include)
+endif()
 
 # Draco
 include_directories(dependencies/draco/src)
