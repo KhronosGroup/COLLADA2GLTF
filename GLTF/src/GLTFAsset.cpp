@@ -8,11 +8,49 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+template<typename T>
+void GLTFObjectDeleter(std::vector<T*>& v) {
+    std::for_each(v.begin(), v.end(), std::default_delete<T>());
+    v.clear();
+}
+
 std::map<GLTF::Image*, GLTF::Texture*> _pbrTextureCache;
 
 GLTF::Asset::Asset() {
 	metadata = new GLTF::Asset::Metadata();
 	globalSampler = new GLTF::Sampler();
+}
+
+GLTF::Asset::~Asset() {
+    delete metadata;
+    delete globalSampler;
+
+    GLTFObjectDeleter(getAllImages());
+    GLTFObjectDeleter(getAllTextures());
+
+    GLTFObjectDeleter(getAllShaders());
+    GLTFObjectDeleter(getAllPrograms());
+    GLTFObjectDeleter(getAllTechniques());
+
+    GLTFObjectDeleter(getAllMaterials());
+
+    GLTFObjectDeleter(getAllBuffers());
+    GLTFObjectDeleter(getAllBufferViews());
+
+    GLTFObjectDeleter(getAllAccessors());
+
+    GLTFObjectDeleter(getAllPrimitives());
+    GLTFObjectDeleter(getAllMeshes());
+
+    GLTFObjectDeleter(getAllCameras());
+    GLTFObjectDeleter(getAllLights());
+
+    GLTFObjectDeleter(getAllSkins());
+
+    GLTFObjectDeleter(getAllNodes());
+
+    GLTFObjectDeleter(animations);
+    GLTFObjectDeleter(scenes);
 }
 
 void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
@@ -359,6 +397,64 @@ std::vector<GLTF::Accessor*> GLTF::Asset::getAllPrimitiveAccessors(GLTF::Primiti
 	}
 
 	return move(accessors);
+}
+
+std::vector<GLTF::BufferView*> GLTF::Asset::getAllBufferViews()
+{
+    std::vector<GLTF::BufferView*> bufferViews;
+    std::set<GLTF::BufferView*> uniqueBufferViewss;
+    for (GLTF::Accessor* accessor : getAllAccessors()) {
+        GLTF::BufferView* bufferView = accessor->bufferView;
+        if (uniqueBufferViewss.find(bufferView) == uniqueBufferViewss.end()) {
+            bufferViews.push_back(bufferView);
+            uniqueBufferViewss.insert(bufferView);
+        }
+    }
+    return bufferViews;
+}
+
+std::vector<GLTF::Buffer*> GLTF::Asset::getAllBuffers()
+{
+    std::vector<GLTF::Buffer*> buffers;
+    std::set<GLTF::Buffer*> uniqueBuffers;
+    for (GLTF::BufferView* bufferView : getAllBufferViews()) {
+        GLTF::Buffer* buffer = bufferView->buffer;
+        if (uniqueBuffers.find(buffer) == uniqueBuffers.end()) {
+            buffers.push_back(buffer);
+            uniqueBuffers.insert(buffer);
+        }
+    }
+    return buffers;
+}
+
+std::vector<GLTF::Camera*> GLTF::Asset::getAllCameras()
+{
+    std::vector<GLTF::Camera*> cameras;
+    std::set<GLTF::Camera*> uniqueCameras;
+    for (GLTF::Node* node : getAllNodes()) {
+        GLTF::Camera* camera = node->camera;
+        if (uniqueCameras.find(camera) == uniqueCameras.end()) {
+            cameras.push_back(camera);
+            uniqueCameras.insert(camera);
+        }
+    }
+
+    return cameras;
+}
+
+std::vector<GLTF::MaterialCommon::Light*> GLTF::Asset::getAllLights()
+{
+    std::vector<GLTF::MaterialCommon::Light*> lights;
+    std::set<GLTF::MaterialCommon::Light*> uniqueLights;
+    for (GLTF::Node* node : getAllNodes()) {
+        GLTF::MaterialCommon::Light* light = node->light;
+        if (uniqueLights.find(light) == uniqueLights.end()) {
+            lights.push_back(light);
+            uniqueLights.insert(light);
+        }
+    }
+
+    return lights;
 }
 
 std::vector<GLTF::BufferView*> GLTF::Asset::getAllCompressedBufferView() {
@@ -942,8 +1038,13 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 								if (findTechnique != generatedTechniques.end()) {
 									material = new GLTF::Material();
 									material->name = materialCommon->name;
-									material->values = materialCommon->values;
 									material->technique = findTechnique->second;
+
+                                    // New material will take ownership of values
+                                    material->values = materialCommon->values;
+                                    materialCommon->values = nullptr;
+
+                                    delete materialCommon;
 								}
 								else {
 									bool hasColor = primitive->attributes.find("COLOR_0") != primitive->attributes.end();

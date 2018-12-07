@@ -10,6 +10,7 @@ namespace GLTF {
 		std::string uri;
 
 		Buffer(unsigned char* data, int dataLength);
+        virtual ~Buffer();
 		
 		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);

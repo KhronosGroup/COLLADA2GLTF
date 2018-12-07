@@ -32,6 +32,8 @@ GLTF::Image::~Image() {
 	if (!cacheKey.empty()) {
 		_imageCache.erase(cacheKey);
 	}
+
+    delete[] this->data;
 }
 
 GLTF::Image* GLTF::Image::load(std::string imagePath) {

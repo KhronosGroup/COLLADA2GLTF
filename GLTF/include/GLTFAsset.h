@@ -35,6 +35,8 @@ namespace GLTF {
 		int scene = -1;
 
 		Asset();
+        virtual ~Asset();
+
 		GLTF::Scene* getDefaultScene();
 		std::vector<GLTF::Accessor*> getAllAccessors();
 		std::vector<GLTF::Node*> getAllNodes();
@@ -48,6 +50,11 @@ namespace GLTF {
 		std::vector<GLTF::Texture*> getAllTextures();
 		std::vector<GLTF::Image*> getAllImages();
 		std::vector<GLTF::Accessor*> getAllPrimitiveAccessors(GLTF::Primitive* primitive) const;
+        std::vector<GLTF::BufferView*> getAllBufferViews();
+        std::vector<GLTF::Buffer*> getAllBuffers();
+        std::vector<GLTF::Camera*> getAllCameras();
+        std::vector<GLTF::MaterialCommon::Light*> getAllLights();
+
 		void mergeAnimations();
 		void removeUnusedSemantics();
 		void removeUnusedNodes(GLTF::Options* options);

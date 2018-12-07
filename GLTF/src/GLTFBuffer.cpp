@@ -9,6 +9,10 @@ GLTF::Buffer::Buffer(unsigned char* data, int dataLength) {
 	this->byteLength = dataLength;
 }
 
+GLTF::Buffer::~Buffer() {
+    delete[] this->data;
+}
+
 std::string GLTF::Buffer::typeName() {
 	return "buffer";
 }

@@ -44,6 +44,7 @@ namespace GLTF {
 		bool doubleSided = false;
 
 		Material();
+        virtual ~Material();
 		bool hasTexture();
 		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
@@ -51,6 +52,8 @@ namespace GLTF {
 
 	class MaterialPBR : public GLTF::Material {
 	public: 
+        virtual ~MaterialPBR();
+
 		class Texture : public GLTF::Object {
 		public:
 			float scale = 1;
@@ -62,6 +65,7 @@ namespace GLTF {
 
 		class MetallicRoughness : public GLTF::Object {
 		public:
+            virtual ~MetallicRoughness();
 			float* baseColorFactor = NULL;
 			Texture* baseColorTexture = NULL;
 			float metallicFactor = -1.0;
@@ -73,6 +77,7 @@ namespace GLTF {
 
 		class SpecularGlossiness : public GLTF::Object {
 		public:
+            virtual ~SpecularGlossiness();
 			float* diffuseFactor = NULL;
 			Texture* diffuseTexture = NULL;
 			float* specularFactor = NULL;
