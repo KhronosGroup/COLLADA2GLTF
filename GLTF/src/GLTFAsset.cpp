@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <memory>
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
