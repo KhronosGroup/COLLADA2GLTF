@@ -701,7 +701,7 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 	GLTF::BufferView* bufferView = new GLTF::BufferView(bufferData, byteLength, target);
 	for (GLTF::Accessor* accessor : accessors) {
 		size_t byteOffset = byteOffsets[accessor];
-		auto packedAccessor = std::make_unique<GLTF::Accessor>(accessor->type, accessor->componentType, byteOffset, accessor->count, bufferView);
+		auto packedAccessor = std::unique_ptr<GLTF::Accessor>(new GLTF::Accessor(accessor->type, accessor->componentType, byteOffset, accessor->count, bufferView));
 		int numberOfComponents = accessor->getNumberOfComponents();
 		std::vector<float> component(numberOfComponents);
 		for (int i = 0; i < accessor->count; i++) {
