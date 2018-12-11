@@ -36,6 +36,8 @@ namespace GLTF {
 		Mode mode = Mode::UNKNOWN;
 		std::vector<Target*> targets;
 
+        ~Primitive();
+
 		virtual GLTF::Object* clone(GLTF::Object* clone);
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 	};

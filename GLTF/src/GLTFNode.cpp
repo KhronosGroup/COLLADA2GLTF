@@ -222,6 +222,10 @@ GLTF::Node::TransformMatrix* GLTF::Node::TransformTRS::getTransformMatrix() {
 	return result;
 }
 
+GLTF::Node::~Node() {
+    delete transform;
+}
+
 std::string GLTF::Node::typeName() {
 	return "node";
 }

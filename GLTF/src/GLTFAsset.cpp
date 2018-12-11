@@ -696,16 +696,16 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 		byteOffsets[accessor] = byteLength;
 		byteLength += componentByteLength * accessor->getNumberOfComponents() * accessor->count;
 	}
-	unsigned char* bufferData = new unsigned char[byteLength];
+	unsigned char* bufferData = (unsigned char*)malloc(byteLength);
 	GLTF::BufferView* bufferView = new GLTF::BufferView(bufferData, byteLength, target);
 	for (GLTF::Accessor* accessor : accessors) {
 		size_t byteOffset = byteOffsets[accessor];
-		GLTF::Accessor* packedAccessor = new GLTF::Accessor(accessor->type, accessor->componentType, byteOffset, accessor->count, bufferView);
+		auto packedAccessor = std::make_unique<GLTF::Accessor>(accessor->type, accessor->componentType, byteOffset, accessor->count, bufferView);
 		int numberOfComponents = accessor->getNumberOfComponents();
-		float* component = new float[numberOfComponents];
+		std::vector<float> component(numberOfComponents);
 		for (int i = 0; i < accessor->count; i++) {
-			accessor->getComponentAtIndex(i, component);
-			packedAccessor->writeComponentAtIndex(i, component);
+			accessor->getComponentAtIndex(i, component.data());
+			packedAccessor->writeComponentAtIndex(i, component.data());
 		}
 		accessor->byteOffset = packedAccessor->byteOffset;
 		accessor->bufferView = packedAccessor->bufferView;
@@ -799,6 +799,7 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 		byteLength += compressedBufferView->byteLength;
 	}
 
+	auto existingBufferViews = getAllBufferViews();
 	std::vector<int> byteStrides;
 	std::map<int, std::vector<GLTF::BufferView*>> bufferViews;
 	for (auto targetGroup : accessorGroups) {
@@ -825,7 +826,9 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 	std::sort(byteStrides.begin(), byteStrides.end(), std::greater<int>());
 
 	// Pack these into a buffer sorted from largest byteStride to smallest
-	unsigned char* bufferData = new unsigned char[byteLength];
+	auto existingBuffers = getAllBuffers();
+	std::set<GLTF::BufferView*> newBufferViews;
+	unsigned char* bufferData = (unsigned char*)malloc(byteLength);
 	GLTF::Buffer* buffer = new GLTF::Buffer(bufferData, byteLength);
 	size_t byteOffset = 0;
 	for (int byteStride : byteStrides) {
@@ -834,6 +837,7 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 			bufferView->byteOffset = byteOffset;
 			bufferView->buffer = buffer;
 			byteOffset += bufferView->byteLength;
+			newBufferViews.insert(bufferView);
 		}
 	}
 
@@ -844,6 +848,19 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 		compressedBufferView->buffer = buffer;
 		byteOffset += compressedBufferView->byteLength;
 	}
+
+	// Delete old buffers since we packed everything into one
+	for (auto& existingBuffer : existingBuffers) {
+		delete existingBuffer;
+	}
+
+	// Delete old bufferviews that are no longer used
+	for (auto& existingBufferView : existingBufferViews) {
+		if (newBufferViews.find(existingBufferView) == newBufferViews.end()) {
+			delete existingBufferView;
+		}
+	}
+
 	return buffer;
 }
 

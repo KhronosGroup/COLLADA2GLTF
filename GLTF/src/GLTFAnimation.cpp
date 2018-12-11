@@ -17,6 +17,10 @@ std::string pathString(GLTF::Animation::Path path) {
 	return "unknown";
 }
 
+GLTF::Animation::~Animation() {
+    std::for_each(channels.begin(), channels.end(), std::default_delete<Channel>());
+}
+
 std::string GLTF::Animation::typeName() {
 	return "animation";
 }
@@ -139,6 +143,12 @@ void GLTF::Animation::Sampler::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->Int(output->id);
 	}
 	GLTF::Object::writeJSON(writer, options);
+}
+
+GLTF::Animation::Channel::~Channel()
+{
+    delete sampler;
+    delete target;
 }
 
 void GLTF::Animation::Channel::writeJSON(void* writer, GLTF::Options* options) {
