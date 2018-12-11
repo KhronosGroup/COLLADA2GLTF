@@ -9,7 +9,7 @@
 #include "rapidjson/writer.h"
 
 template<typename T>
-void GLTFObjectDeleter(std::vector<T*>& v) {
+void GLTFObjectDeleter(std::vector<T*>&& v) {
     std::for_each(v.begin(), v.end(), std::default_delete<T>());
     v.clear();
 }
@@ -49,8 +49,8 @@ GLTF::Asset::~Asset() {
 
     GLTFObjectDeleter(getAllNodes());
 
-    GLTFObjectDeleter(animations);
-    GLTFObjectDeleter(scenes);
+    GLTFObjectDeleter(std::move(animations));
+    GLTFObjectDeleter(std::move(scenes));
 }
 
 void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
