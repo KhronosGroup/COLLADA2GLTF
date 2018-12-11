@@ -315,17 +315,21 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	const COLLADAFW::InstanceLightPointerArray& instanceLights = colladaNode->getInstanceLights();
 	for (size_t i = 0; i < instanceLights.getCount(); i++) {
 		COLLADAFW::InstanceLight* instanceLight = instanceLights[i];
-		GLTF::MaterialCommon::Light* light = _lightInstances[instanceLight->getInstanciatedObjectId()];
-		node->light = light;
-		light->node = node;
+        auto it = _lightInstances.find(instanceLight->getInstanciatedObjectId());
+        if (it != _lightInstances.end()) {
+            node->light = it->second;
+            it->second->node = node;
+        }
 	}
 
 	// Instance cameras
 	const COLLADAFW::InstanceCameraPointerArray& instanceCameras = colladaNode->getInstanceCameras();
 	for (size_t i = 0; i < instanceCameras.getCount(); i++) {
 		COLLADAFW::InstanceCamera* instanceCamera = instanceCameras[i];
-		GLTF::Camera* camera = _cameraInstances[instanceCamera->getInstanciatedObjectId()];
-		node->camera = camera;
+        auto it = _cameraInstances.find(instanceCamera->getInstanciatedObjectId());
+        if (it != _cameraInstances.end()) {
+            node->camera = it->second;
+        }
 	}
 
 	// Identify and map unbound skeleton nodes

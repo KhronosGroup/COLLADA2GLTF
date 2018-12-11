@@ -10,7 +10,7 @@ GLTF::Buffer::Buffer(unsigned char* data, int dataLength) {
 }
 
 GLTF::Buffer::~Buffer() {
-    delete[] this->data;
+    free(this->data);
 }
 
 std::string GLTF::Buffer::typeName() {
