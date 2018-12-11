@@ -3,6 +3,8 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+#include <algorithm>
+
 std::string pathString(GLTF::Animation::Path path) {
 	switch (path) {
 	case GLTF::Animation::Path::TRANSLATION:
