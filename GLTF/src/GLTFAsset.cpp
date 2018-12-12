@@ -46,9 +46,13 @@ GLTF::Asset::~Asset() {
     GLTFObjectDeleter(getAllCameras());
     GLTFObjectDeleter(getAllLights());
 
-    GLTFObjectDeleter(getAllSkins());
-
-    GLTFObjectDeleter(getAllNodes());
+    // Skins and nodes have some interdependency,
+    //  so get them both then delete them.
+    // We may want to look at a way to make this cleaner.
+    auto skins = getAllSkins();
+    auto nodes = getAllNodes();
+    GLTFObjectDeleter(std::move(skins));
+    GLTFObjectDeleter(std::move(nodes));
 
     GLTFObjectDeleter(std::move(animations));
     GLTFObjectDeleter(std::move(scenes));
