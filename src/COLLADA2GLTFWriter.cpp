@@ -4,7 +4,28 @@
 
 const double PI = 3.14159;
 
-COLLADA2GLTF::Writer::Writer(GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _asset(asset), _options(options), _extrasHandler(extrasHandler) {}
+COLLADA2GLTF::Writer::Writer(COLLADASaxFWL::Loader* loader, GLTF::Asset* asset, COLLADA2GLTF::Options* options, COLLADA2GLTF::ExtrasHandler* extrasHandler) : _loader(loader), _asset(asset), _options(options), _extrasHandler(extrasHandler) {}
+
+std::vector<std::vector<size_t>> COLLADA2GLTF::Writer::getAnimationGroups() {
+	std::map<GLTF::Animation*, size_t> animationIndexes;
+	for (size_t i = 0; i < _asset->animations.size(); i++) {
+		animationIndexes[_asset->animations[i]] = i;
+	}
+
+	std::vector<std::vector<size_t>> groups;
+	for (const auto& clip : _animationClips) {
+		std::vector<size_t> group;
+		for (COLLADAFW::UniqueId id : clip.second) {
+			GLTF::Animation* animation = _animationInstances[id];
+			if (animation) {
+				animation->name = clip.first;
+				group.push_back(animationIndexes[animation]);
+			}
+		}
+		groups.push_back(group);
+	}
+	return groups;
+}
 
 void COLLADA2GLTF::Writer::cancel(const std::string& errorMessage) {
 
@@ -1312,6 +1333,46 @@ void interpolateTranslation(float* base, std::vector<float> input, std::vector<f
 }
 
 /**
+ * Read the <COLLADAFW::AnimationClip> and store its animation group
+ * associations.
+ * 
+ * Currently, animations that target the same node cannot be split apart by
+ * animation clip. This is because COLLADA animations often target for example,
+ * X, Y, and Z translations as seperate animations and we flatten them together
+ * because glTF doesn't have the ability to target these channels seperately
+ * and it would take 3x the space to store them.
+ * 
+ * This is also done because in practice, animations targetting nodes are
+ * usually intended to be run together, and if two animations target the 
+ * same node, it is unclear what order their transforms should be applied in
+ * if there are overlapping keyframes in the animations. To avoid this
+ * potentially undefined case, node affinity trumps animation clip groups.
+ * 
+ * However, you could imagine the case (game assets, etc.) where a skinned
+ * figure has multiple different animations representing different actions
+ * to be taken. The current animation approach does not handle this, and I 
+ * think it would have to be done as a COLLADA2GLTF::Options because separating
+ * these animations is non-trivial. They may not even be grouped by clip,
+ * so that probably isn't a reliable way to do separation.
+ * 
+ * @return True on succeeded, false otherwise.
+ */
+bool COLLADA2GLTF::Writer::writeAnimationClip(const COLLADAFW::AnimationClip* animationClip) {
+	std::vector<COLLADAFW::UniqueId> animationIds;
+	const COLLADAFW::UniqueIdArray& instanceAnimationUniqueIds = animationClip->getInstanceAnimationUniqueIds();
+	for (size_t i = 0; i < instanceAnimationUniqueIds.getCount(); i++) {
+		const COLLADAFW::UniqueId animationId = instanceAnimationUniqueIds[i];
+		animationIds.push_back(animationId);
+	}
+	std::string name = animationClip->getName();
+	if (name == "") {
+		name = "animation_clip_" + std::to_string(_animationClips.size());
+	}
+	_animationClips[name] = animationIds;
+	return true;
+}
+
+/**
 * Reads a <COLLADAFW::AnimationList> and writes a <GLTF::Animation> object.
 *
 * A <COLLADAFW::AnimationList> targets a transformation on a node. This converter
@@ -1633,6 +1694,11 @@ bool COLLADA2GLTF::Writer::writeAnimationList(const COLLADAFW::AnimationList* an
 		channel->target = target;
 		channel->sampler = sampler;
 		animation->channels.push_back(channel);
+	}
+	// Map unique ids to the written animation instances
+	for (size_t i = 0; i < bindings.getCount(); i++) {
+		const COLLADAFW::AnimationList::AnimationBinding& binding = bindings[i];
+		_animationInstances[binding.animation] = animation;
 	}
 	_asset->animations.push_back(animation);
 	return true;
