@@ -26,6 +26,9 @@ GLTF::Asset::~Asset() {
     delete metadata;
     delete globalSampler;
 
+    GLTFObjectDeleter(getAllBuffers());
+    GLTFObjectDeleter(getAllBufferViews());
+
     GLTFObjectDeleter(getAllImages());
     GLTFObjectDeleter(getAllTextures());
 
@@ -34,9 +37,6 @@ GLTF::Asset::~Asset() {
     GLTFObjectDeleter(getAllTechniques());
 
     GLTFObjectDeleter(getAllMaterials());
-
-    GLTFObjectDeleter(getAllBuffers());
-    GLTFObjectDeleter(getAllBufferViews());
 
     GLTFObjectDeleter(getAllAccessors());
 
@@ -415,6 +415,13 @@ std::vector<GLTF::BufferView*> GLTF::Asset::getAllBufferViews()
             uniqueBufferViewss.insert(bufferView);
         }
     }
+    for (GLTF::Image* image : getAllImages()) {
+        GLTF::BufferView* bufferView = image->bufferView;
+        if (uniqueBufferViewss.find(bufferView) == uniqueBufferViewss.end()) {
+            bufferViews.push_back(bufferView);
+            uniqueBufferViewss.insert(bufferView);
+        }
+    }
     return bufferViews;
 }
 
@@ -451,8 +458,7 @@ std::vector<GLTF::MaterialCommon::Light*> GLTF::Asset::getAllLights()
 {
     std::vector<GLTF::MaterialCommon::Light*> lights;
     std::set<GLTF::MaterialCommon::Light*> uniqueLights;
-    for (GLTF::Node* node : getAllNodes()) {
-        GLTF::MaterialCommon::Light* light = node->light;
+    for (GLTF::MaterialCommon::Light* light : _ambientLights) {
         if (uniqueLights.find(light) == uniqueLights.end()) {
             lights.push_back(light);
             uniqueLights.insert(light);

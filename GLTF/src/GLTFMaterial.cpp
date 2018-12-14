@@ -926,7 +926,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 		texture->texCoord = values->emissionTexCoord;
 		texture->texture = values->emissionTexture;
 		material->emissiveTexture = texture;
-        values->emission = new float[3]{ 1.0, 1.0, 1.0 };
+        values->emission = new float[4]{ 1.0, 1.0, 1.0, 1.0 };
 	}
     if (values->emission) {
         if (values->emission[3] < 1.0) {
@@ -957,7 +957,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 		}
 		if (values->shininess) {
 			if (values->shininess[0] > 1.0) {
-                values->shininess = new float[1] {1.0};
+                values->shininess[0] = 1.0;
 			}
             material->specularGlossiness->glossinessFactor = values->shininess;
 		}
