@@ -417,7 +417,7 @@ std::vector<GLTF::BufferView*> GLTF::Asset::getAllBufferViews()
     }
     for (GLTF::Image* image : getAllImages()) {
         GLTF::BufferView* bufferView = image->bufferView;
-        if (uniqueBufferViewss.find(bufferView) == uniqueBufferViewss.end()) {
+        if (bufferView && (uniqueBufferViewss.find(bufferView) == uniqueBufferViewss.end())) {
             bufferViews.push_back(bufferView);
             uniqueBufferViewss.insert(bufferView);
         }
