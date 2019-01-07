@@ -458,6 +458,15 @@ std::vector<GLTF::MaterialCommon::Light*> GLTF::Asset::getAllLights()
 {
     std::vector<GLTF::MaterialCommon::Light*> lights;
     std::set<GLTF::MaterialCommon::Light*> uniqueLights;
+
+    for (GLTF::Node* node : getAllNodes()) {
+        GLTF::MaterialCommon::Light* light = node->light;
+        if (uniqueLights.find(light) == uniqueLights.end()) {
+            lights.push_back(light);
+            uniqueLights.insert(light);
+        }
+    }
+
     for (GLTF::MaterialCommon::Light* light : _ambientLights) {
         if (uniqueLights.find(light) == uniqueLights.end()) {
             lights.push_back(light);
