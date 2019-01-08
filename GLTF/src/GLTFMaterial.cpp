@@ -888,12 +888,7 @@ GLTF::MaterialPBR::~MaterialPBR()
     delete normalTexture;
     delete occlusionTexture;
     delete emissiveTexture;
-
-    // emissiveFactor may be a copy of values->emission,
-    //  so only delete it if it is not.
-    if (emissiveFactor != values->emission) {
-        delete emissiveFactor;
-    }
+    delete emissiveFactor;
 }
 
 GLTF::MaterialPBR::MaterialPBR() {
@@ -929,7 +924,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
         if (values->emission[3] < 1.0) {
             hasTransparency = true;
         }
-        material->emissiveFactor = values->emission;
+        material->emissiveFactor = new float[3]{ values->emission[0], values->emission[1], values->emission[2] };
     }
 	if (values->emissionTexture) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
