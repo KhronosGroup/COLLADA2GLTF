@@ -6,7 +6,7 @@
     "test": "mocha -r esm"
   },
   "author": "Rob Taglang",
-  "license": "ISC",
+  "license": "BSD",
   "devDependencies": {},
   "dependencies": {
     "bluebird": "^3.5.3",
