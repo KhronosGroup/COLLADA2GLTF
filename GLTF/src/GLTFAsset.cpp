@@ -494,20 +494,57 @@ std::vector<GLTF::BufferView*> GLTF::Asset::getAllCompressedBufferView() {
 }
 
 void GLTF::Asset::mergeAnimations() {
+	return this->mergeAnimations(std::vector<std::vector<size_t>>());
+}
+
+void GLTF::Asset::mergeAnimations(std::vector<std::vector<size_t>> groups) {
 	if (animations.size() == 0) { return; }
 
-	GLTF::Animation* mergedAnimation = new GLTF::Animation();
+	std::vector<GLTF::Animation*> mergedAnimations;
 
-	// Merge all animations. In the future, animations should be grouped
-	// according to COLLADA <animation_clip/> nodes.
-	for (GLTF::Animation* animation : animations) {
-		for (GLTF::Animation::Channel* channel : animation->channels) {
-			mergedAnimation->channels.push_back(channel);
+	// Keep track of which animations we've written
+	std::set<size_t> animationIndexes;
+	for (size_t i = 0; i < animations.size(); i++) {
+		animationIndexes.insert(i);
+	}
+
+	// Merge animations by the specified groups
+	for (std::vector<size_t> group : groups) {
+		if (group.size() == 0) { continue; }
+
+		GLTF::Animation* mergedAnimation = new GLTF::Animation();
+		for (size_t index : group) {
+			GLTF::Animation* animation = animations[index];
+			if (mergedAnimation->name == "") {
+				mergedAnimation->name = animation->name;
+			}
+			animationIndexes.erase(index);
+			for (GLTF::Animation::Channel* channel : animation->channels) {
+				mergedAnimation->channels.push_back(channel);
+			}
+			mergedAnimations.push_back(mergedAnimation);
+		}
+	}
+
+	// Merge any leftovers
+	if (animationIndexes.size() > 0) {
+		GLTF::Animation* mergedAnimation = new GLTF::Animation();
+		for (size_t index : animationIndexes) {
+			GLTF::Animation* animation = animations[index];
+			if (mergedAnimation->name == "") {
+				mergedAnimation->name = animation->name;
+			}
+			for (GLTF::Animation::Channel* channel : animation->channels) {
+				mergedAnimation->channels.push_back(channel);
+			}
+			mergedAnimations.push_back(mergedAnimation);
 		}
 	}
 
 	animations.clear();
-	animations.push_back(mergedAnimation);
+	for (GLTF::Animation* animation : mergedAnimations) {
+		animations.push_back(animation);
+	}
 }
 
 void GLTF::Asset::removeUncompressedBufferViews() {

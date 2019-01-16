@@ -56,6 +56,7 @@ namespace GLTF {
         std::vector<GLTF::MaterialCommon::Light*> getAllLights();
 
 		void mergeAnimations();
+		void mergeAnimations(std::vector<std::vector<size_t>> groups);
 		void removeUnusedSemantics();
 		void removeUnusedNodes(GLTF::Options* options);
 		GLTF::Buffer* packAccessors();
