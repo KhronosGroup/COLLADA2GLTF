@@ -4,6 +4,15 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+GLTF::Object::~Object() {
+    for (auto& kv : extensions) {
+        delete kv.second;
+    }
+    for (auto& kv : extras) {
+        delete kv.second;
+    }
+}
+
 std::string GLTF::Object::getStringId() {
 	if (stringId == "") {
 		return typeName() + "_" + std::to_string(id);

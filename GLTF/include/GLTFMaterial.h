@@ -44,6 +44,13 @@ namespace GLTF {
 		bool doubleSided = false;
 
 		Material();
+		virtual ~Material();
+
+		Material(const Material&) = delete;
+		Material& operator=(const Material&) = delete;
+		Material(Material&&) = delete;
+		Material& operator=(Material&&) = delete;
+
 		bool hasTexture();
 		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
@@ -51,6 +58,13 @@ namespace GLTF {
 
 	class MaterialPBR : public GLTF::Material {
 	public: 
+		virtual ~MaterialPBR();
+
+		MaterialPBR(const MaterialPBR&) = delete;
+		MaterialPBR& operator=(const MaterialPBR&) = delete;
+		MaterialPBR(MaterialPBR&&) = delete;
+		MaterialPBR& operator=(MaterialPBR&&) = delete;
+
 		class Texture : public GLTF::Object {
 		public:
 			float scale = 1;
@@ -62,6 +76,7 @@ namespace GLTF {
 
 		class MetallicRoughness : public GLTF::Object {
 		public:
+            virtual ~MetallicRoughness();
 			float* baseColorFactor = NULL;
 			Texture* baseColorTexture = NULL;
 			float metallicFactor = -1.0;
@@ -73,6 +88,7 @@ namespace GLTF {
 
 		class SpecularGlossiness : public GLTF::Object {
 		public:
+            virtual ~SpecularGlossiness();
 			float* diffuseFactor = NULL;
 			Texture* diffuseTexture = NULL;
 			float* specularFactor = NULL;
@@ -138,6 +154,12 @@ namespace GLTF {
 		MaterialCommon::Technique technique = MaterialCommon::Technique::UNKNOWN;
 
 		MaterialCommon();
+
+		MaterialCommon(const MaterialCommon&) = delete;
+		MaterialCommon& operator=(const MaterialCommon&) = delete;
+		MaterialCommon(MaterialCommon&&) = delete;
+		MaterialCommon& operator=(MaterialCommon&&) = delete;
+
 		const char* getTechniqueName();
 		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, GLTF::Options* options);
 		GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColorAttribute, GLTF::Options* options);

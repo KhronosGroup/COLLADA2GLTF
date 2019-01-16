@@ -4,15 +4,58 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <memory>
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+template<typename T>
+void GLTFObjectDeleter(std::vector<T*>&& v) {
+    std::for_each(v.begin(), v.end(), std::default_delete<T>());
+    v.clear();
+}
 
 std::map<GLTF::Image*, GLTF::Texture*> _pbrTextureCache;
 
 GLTF::Asset::Asset() {
 	metadata = new GLTF::Asset::Metadata();
 	globalSampler = new GLTF::Sampler();
+}
+
+GLTF::Asset::~Asset() {
+    delete metadata;
+    delete globalSampler;
+
+    GLTFObjectDeleter(getAllBuffers());
+    GLTFObjectDeleter(getAllBufferViews());
+
+    GLTFObjectDeleter(getAllImages());
+    GLTFObjectDeleter(getAllTextures());
+
+    GLTFObjectDeleter(getAllShaders());
+    GLTFObjectDeleter(getAllPrograms());
+    GLTFObjectDeleter(getAllTechniques());
+
+    GLTFObjectDeleter(getAllMaterials());
+
+    GLTFObjectDeleter(getAllAccessors());
+
+    GLTFObjectDeleter(getAllPrimitives());
+    GLTFObjectDeleter(getAllMeshes());
+
+    GLTFObjectDeleter(getAllCameras());
+    GLTFObjectDeleter(getAllLights());
+
+    // Skins and nodes have some interdependency,
+    //  so get them both then delete them.
+    // We may want to look at a way to make this cleaner.
+    auto skins = getAllSkins();
+    auto nodes = getAllNodes();
+    GLTFObjectDeleter(std::move(skins));
+    GLTFObjectDeleter(std::move(nodes));
+
+    GLTFObjectDeleter(std::move(animations));
+    GLTFObjectDeleter(std::move(scenes));
 }
 
 void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
@@ -361,6 +404,79 @@ std::vector<GLTF::Accessor*> GLTF::Asset::getAllPrimitiveAccessors(GLTF::Primiti
 	return move(accessors);
 }
 
+std::vector<GLTF::BufferView*> GLTF::Asset::getAllBufferViews()
+{
+    std::vector<GLTF::BufferView*> bufferViews;
+    std::set<GLTF::BufferView*> uniqueBufferViewss;
+    for (GLTF::Accessor* accessor : getAllAccessors()) {
+        GLTF::BufferView* bufferView = accessor->bufferView;
+        if (uniqueBufferViewss.find(bufferView) == uniqueBufferViewss.end()) {
+            bufferViews.push_back(bufferView);
+            uniqueBufferViewss.insert(bufferView);
+        }
+    }
+    for (GLTF::Image* image : getAllImages()) {
+        GLTF::BufferView* bufferView = image->bufferView;
+        if (bufferView && (uniqueBufferViewss.find(bufferView) == uniqueBufferViewss.end())) {
+            bufferViews.push_back(bufferView);
+            uniqueBufferViewss.insert(bufferView);
+        }
+    }
+    return bufferViews;
+}
+
+std::vector<GLTF::Buffer*> GLTF::Asset::getAllBuffers()
+{
+    std::vector<GLTF::Buffer*> buffers;
+    std::set<GLTF::Buffer*> uniqueBuffers;
+    for (GLTF::BufferView* bufferView : getAllBufferViews()) {
+        GLTF::Buffer* buffer = bufferView->buffer;
+        if (uniqueBuffers.find(buffer) == uniqueBuffers.end()) {
+            buffers.push_back(buffer);
+            uniqueBuffers.insert(buffer);
+        }
+    }
+    return buffers;
+}
+
+std::vector<GLTF::Camera*> GLTF::Asset::getAllCameras()
+{
+    std::vector<GLTF::Camera*> cameras;
+    std::set<GLTF::Camera*> uniqueCameras;
+    for (GLTF::Node* node : getAllNodes()) {
+        GLTF::Camera* camera = node->camera;
+        if (uniqueCameras.find(camera) == uniqueCameras.end()) {
+            cameras.push_back(camera);
+            uniqueCameras.insert(camera);
+        }
+    }
+
+    return cameras;
+}
+
+std::vector<GLTF::MaterialCommon::Light*> GLTF::Asset::getAllLights()
+{
+    std::vector<GLTF::MaterialCommon::Light*> lights;
+    std::set<GLTF::MaterialCommon::Light*> uniqueLights;
+
+    for (GLTF::Node* node : getAllNodes()) {
+        GLTF::MaterialCommon::Light* light = node->light;
+        if (uniqueLights.find(light) == uniqueLights.end()) {
+            lights.push_back(light);
+            uniqueLights.insert(light);
+        }
+    }
+
+    for (GLTF::MaterialCommon::Light* light : _ambientLights) {
+        if (uniqueLights.find(light) == uniqueLights.end()) {
+            lights.push_back(light);
+            uniqueLights.insert(light);
+        }
+    }
+
+    return lights;
+}
+
 std::vector<GLTF::BufferView*> GLTF::Asset::getAllCompressedBufferView() {
 	std::vector<GLTF::BufferView*> compressedBufferViews;
 	std::set<GLTF::BufferView*> uniqueCompressedBufferViews;
@@ -637,16 +753,16 @@ GLTF::BufferView* packAccessorsForTargetByteStride(std::vector<GLTF::Accessor*> 
 		byteOffsets[accessor] = byteLength;
 		byteLength += componentByteLength * accessor->getNumberOfComponents() * accessor->count;
 	}
-	unsigned char* bufferData = new unsigned char[byteLength];
+	unsigned char* bufferData = (unsigned char*)malloc(byteLength);
 	GLTF::BufferView* bufferView = new GLTF::BufferView(bufferData, byteLength, target);
 	for (GLTF::Accessor* accessor : accessors) {
 		size_t byteOffset = byteOffsets[accessor];
-		GLTF::Accessor* packedAccessor = new GLTF::Accessor(accessor->type, accessor->componentType, byteOffset, accessor->count, bufferView);
+		auto packedAccessor = std::unique_ptr<GLTF::Accessor>(new GLTF::Accessor(accessor->type, accessor->componentType, byteOffset, accessor->count, bufferView));
 		int numberOfComponents = accessor->getNumberOfComponents();
-		float* component = new float[numberOfComponents];
+		std::vector<float> component(numberOfComponents);
 		for (int i = 0; i < accessor->count; i++) {
-			accessor->getComponentAtIndex(i, component);
-			packedAccessor->writeComponentAtIndex(i, component);
+			accessor->getComponentAtIndex(i, component.data());
+			packedAccessor->writeComponentAtIndex(i, component.data());
 		}
 		accessor->byteOffset = packedAccessor->byteOffset;
 		accessor->bufferView = packedAccessor->bufferView;
@@ -740,6 +856,7 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 		byteLength += compressedBufferView->byteLength;
 	}
 
+	auto existingBufferViews = getAllBufferViews();
 	std::vector<int> byteStrides;
 	std::map<int, std::vector<GLTF::BufferView*>> bufferViews;
 	for (auto targetGroup : accessorGroups) {
@@ -766,7 +883,9 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 	std::sort(byteStrides.begin(), byteStrides.end(), std::greater<int>());
 
 	// Pack these into a buffer sorted from largest byteStride to smallest
-	unsigned char* bufferData = new unsigned char[byteLength];
+	auto existingBuffers = getAllBuffers();
+	std::set<GLTF::BufferView*> newBufferViews;
+	unsigned char* bufferData = (unsigned char*)malloc(byteLength);
 	GLTF::Buffer* buffer = new GLTF::Buffer(bufferData, byteLength);
 	size_t byteOffset = 0;
 	for (int byteStride : byteStrides) {
@@ -775,6 +894,7 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 			bufferView->byteOffset = byteOffset;
 			bufferView->buffer = buffer;
 			byteOffset += bufferView->byteLength;
+			newBufferViews.insert(bufferView);
 		}
 	}
 
@@ -785,6 +905,19 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
 		compressedBufferView->buffer = buffer;
 		byteOffset += compressedBufferView->byteLength;
 	}
+
+	// Delete old buffers since we packed everything into one
+	for (auto& existingBuffer : existingBuffers) {
+		delete existingBuffer;
+	}
+
+	// Delete old bufferviews that are no longer used
+	for (auto& existingBufferView : existingBufferViews) {
+		if (newBufferViews.find(existingBufferView) == newBufferViews.end()) {
+			delete existingBufferView;
+		}
+	}
+
 	return buffer;
 }
 
@@ -979,8 +1112,13 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 								if (findTechnique != generatedTechniques.end()) {
 									material = new GLTF::Material();
 									material->name = materialCommon->name;
-									material->values = materialCommon->values;
 									material->technique = findTechnique->second;
+
+                                    // New material will take ownership of values
+                                    material->values = materialCommon->values;
+                                    materialCommon->values = nullptr;
+
+                                    delete materialCommon;
 								}
 								else {
 									bool hasColor = primitive->attributes.find("COLOR_0") != primitive->attributes.end();

@@ -12,15 +12,23 @@ project(${PROJECT_NAME})
 option(test "Build all tests." OFF)
 
 # RapidJSON
-include_directories(dependencies/rapidjson/include)
+if(DEFINED RAPIDJSON_INCLUDE_DIR)
+  include_directories(${RAPIDJSON_INCLUDE_DIR})
+else()
+  include_directories(dependencies/rapidjson/include)
+endif()
 
 # Draco
-include_directories(dependencies/draco/src)
-add_subdirectory(dependencies/draco)
-get_property(draco_targets DIRECTORY dependencies/draco PROPERTY BUILDSYSTEM_TARGETS)
-foreach(draco_target IN LISTS draco_targets)
+if(DEFINED DRACO_INCLUDE_DIR)
+  include_directories(${DRACO_INCLUDE_DIR})
+else()
+  include_directories(dependencies/draco/src)
+  add_subdirectory(dependencies/draco)
+  get_property(draco_targets DIRECTORY dependencies/draco PROPERTY BUILDSYSTEM_TARGETS)
+  foreach(draco_target IN LISTS draco_targets)
 	set_property(TARGET ${draco_target} PROPERTY FOLDER "draco")
-endforeach()
+  endforeach()
+endif()
 
 # gltf
 include_directories(include)

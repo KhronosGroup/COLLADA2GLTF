@@ -41,14 +41,22 @@ include_directories(${BASE_PATH}/GeneratedSaxParser/include)
 add_subdirectory(GeneratedSaxParser)
 
 # LibXML
-include_directories(${BASE_PATH}/Externals/LibXML/include)
+if(NOT LIBXML2_FOUND)
+  include_directories(${BASE_PATH}/Externals/LibXML/include)
+else()
+  include_directories(${LIBXML2_INCLUDE_DIR})
+endif()
 
 # expat
 include_directories(${BASE_PATH}/Externals/expat/lib)
 
 # pcre
-add_definitions(-DPCRE_STATIC)
-include_directories(${BASE_PATH}/Externals/pcre/include)
+if(NOT PCRE_FOUND)
+  add_definitions(-DPCRE_STATIC)
+  include_directories(${BASE_PATH}/Externals/pcre/include)
+else()
+  include_directories(${PCRE_INCLUDE_DIR})
+endif()
 
 add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES} ${HEADERS_GENERATED14} ${SOURCES_GENERATED14} ${HEADERS_GENERATED15} ${SOURCES_GENERATED15})
 target_link_libraries(${PROJECT_NAME} COLLADAFramework GeneratedSaxParser)

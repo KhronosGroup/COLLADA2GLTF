@@ -32,6 +32,8 @@ GLTF::Image::~Image() {
 	if (!cacheKey.empty()) {
 		_imageCache.erase(cacheKey);
 	}
+
+	free(this->data);
 }
 
 GLTF::Image* GLTF::Image::load(std::string imagePath) {
@@ -67,7 +69,7 @@ GLTF::Image* GLTF::Image::load(std::string imagePath) {
 		fclose(file);
 		file = fopen(imagePath.c_str(), "rb");
 		unsigned char* buffer = (unsigned char*)malloc(size);
-		int bytesRead = fread(buffer, sizeof(unsigned char), size, file);
+		size_t bytesRead = fread(buffer, sizeof(unsigned char), size, file);
 		fclose(file);
 		image = new GLTF::Image(fileName, imagePath, buffer, bytesRead, fileExtension);
 	}
