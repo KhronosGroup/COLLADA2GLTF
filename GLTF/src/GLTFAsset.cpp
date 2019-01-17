@@ -140,7 +140,7 @@ std::vector<GLTF::Accessor*> GLTF::Asset::getAllAccessors() {
 			}
 			if (uniqueAccessors.find(sampler->output) == uniqueAccessors.end()) {
 				accessors.push_back(sampler->output);
-				uniqueAccessors.insert(sampler->input);
+				uniqueAccessors.insert(sampler->output);
 			}
 		}
 	}
@@ -522,8 +522,8 @@ void GLTF::Asset::mergeAnimations(std::vector<std::vector<size_t>> groups) {
 			for (GLTF::Animation::Channel* channel : animation->channels) {
 				mergedAnimation->channels.push_back(channel);
 			}
-			mergedAnimations.push_back(mergedAnimation);
 		}
+		mergedAnimations.push_back(mergedAnimation);
 	}
 
 	// Merge any leftovers
@@ -537,8 +537,8 @@ void GLTF::Asset::mergeAnimations(std::vector<std::vector<size_t>> groups) {
 			for (GLTF::Animation::Channel* channel : animation->channels) {
 				mergedAnimation->channels.push_back(channel);
 			}
-			mergedAnimations.push_back(mergedAnimation);
 		}
+		mergedAnimations.push_back(mergedAnimation);
 	}
 
 	animations.clear();
