@@ -194,8 +194,11 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	GLTF::Node* node = new GLTF::Node();
 	COLLADABU::Math::Matrix4 matrix;
 	GLTF::Node::TransformMatrix* transform;
+
 	// Add root node to group
-	group->push_back(node);
+	if (group) {
+		group->push_back(node);
+	}
 	const COLLADAFW::UniqueId& colladaNodeId = colladaNode->getUniqueId();
 	std::string id = colladaNode->getOriginalId();
 	COLLADAFW::TransformationPointerArray transformations = colladaNode->getTransformations();
@@ -453,6 +456,14 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 		}
 	}
 
+	// Recurse child nodes
+	// Do this before we resolve instance nodes or else none of the cloned nodes will have children
+	const COLLADAFW::NodePointerArray& childNodes = colladaNode->getChildNodes();
+	bool result = true;
+	if (childNodes.getCount() > 0) {
+		result = this->writeNodesToGroup(&node->children, childNodes);
+	}
+
 	// Resolve instance nodes that we've seen for this node
 	std::map<COLLADAFW::UniqueId, std::vector<GLTF::Node*>>::iterator findNodeInstanceTargets = _nodeInstanceTargets.find(colladaNodeId);
 	if (findNodeInstanceTargets != _nodeInstanceTargets.end()) {
@@ -464,12 +475,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 		}
 	}
 
-	// Recurse child nodes
-	const COLLADAFW::NodePointerArray& childNodes = colladaNode->getChildNodes();
-	if (childNodes.getCount() > 0) {
-		return this->writeNodesToGroup(&node->children, childNodes);
-	}
-	return true;
+	return result;
 }
 
 bool COLLADA2GLTF::Writer::writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes) {
@@ -505,7 +511,10 @@ bool COLLADA2GLTF::Writer::writeScene(const COLLADAFW::Scene* scene) {
 bool COLLADA2GLTF::Writer::writeLibraryNodes(const COLLADAFW::LibraryNodes* libraryNodes) {
 	GLTF::Asset* asset = this->_asset;
 	GLTF::Scene* scene = asset->getDefaultScene();
-	return this->writeNodesToGroup(&scene->nodes, libraryNodes->getNodes());
+
+    // Library nodes can only be used to resolve instance_nodes, so we don't add the root node to a group
+    //  we will just resolve it's references
+    return this->writeNodesToGroup(nullptr, libraryNodes->getNodes());
 }
 
 void mapAttributeIndices(const unsigned int* rootIndices, const unsigned* indices, int count, std::string semantic, std::map<std::string, GLTF::Accessor*>* attributes, std::map<std::string, std::map<int, int>>* indicesMapping) {
