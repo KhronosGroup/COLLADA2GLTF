@@ -62,10 +62,10 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 			}
 
 			if (tokens.size() > 0) {
-				// Get major version
+				// Get major version (or lack of)
 				token = tokens[tokens.size() - 1];
 				try {
-					if (std::stoi(token) < 8) {
+					if (token == "SketchUp" || (std::stoi(token) < 8)) {
 						_options->invertTransparency = true;
 					}
 				} catch (const std::invalid_argument& e) {
