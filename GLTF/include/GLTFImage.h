@@ -21,6 +21,9 @@ namespace GLTF {
 		virtual std::string typeName();
 		virtual void writeJSON(void* writer, GLTF::Options* options);
 
+        static void setWriteAbsoluteUris(bool bAbsolute);
+        static bool getWriteAbsoluteUris();
+
 	private:
 		const std::string cacheKey;
 

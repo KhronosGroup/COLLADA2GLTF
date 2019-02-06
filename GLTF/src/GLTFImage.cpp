@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <algorithm>
 
 #include "Base64.h"
 #include "GLTFImage.h"
@@ -8,6 +9,8 @@
 #include "rapidjson/writer.h"
 
 std::map<std::string, GLTF::Image*> _imageCache;
+
+static bool bWriteAbsoluteUris = false;
 
 GLTF::Image::Image(std::string uri, std::string cacheKey) : uri(uri), cacheKey(cacheKey) {}
 
@@ -42,6 +45,20 @@ GLTF::Image* GLTF::Image::load(std::string imagePath) {
 		return imageCacheIt->second;
 	}
 
+	GLTF::Image* image = NULL;
+	if (bWriteAbsoluteUris) {
+		std::string absoluteUri = "file://";
+		if (imagePath[0] != '/') {
+			absoluteUri += '/';
+		}
+		absoluteUri += imagePath;
+
+		std::replace(absoluteUri.begin(), absoluteUri.end(), '\\', '/');
+		image = new GLTF::Image(absoluteUri);
+		_imageCache[imagePath] = image;
+		return image;
+	}
+
 	size_t fileExtensionStart = imagePath.find_last_of(".");
 	std::string fileExtension = "";
 	if (fileExtensionStart != std::string::npos) {
@@ -57,7 +74,6 @@ GLTF::Image* GLTF::Image::load(std::string imagePath) {
 		fileName = imagePath.substr(lastSlash + 1);
 	}
 
-	GLTF::Image* image = NULL;
 	FILE* file = fopen(imagePath.c_str(), "rb");
 	if (file == NULL) {
 		std::cout << "WARNING: Image uri: " << imagePath << " could not be resolved " << std::endl;
@@ -167,4 +183,14 @@ void GLTF::Image::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->String(uri.c_str());
 	}
 	GLTF::Object::writeJSON(writer, options);
+}
+
+void GLTF::Image::setWriteAbsoluteUris(bool bAbsolute)
+{
+	bWriteAbsoluteUris = bAbsolute;
+}
+
+bool GLTF::Image::getWriteAbsoluteUris()
+{
+	return bWriteAbsoluteUris;
 }
