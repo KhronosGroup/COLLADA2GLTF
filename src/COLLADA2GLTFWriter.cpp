@@ -196,9 +196,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	GLTF::Node::TransformMatrix* transform;
 
 	// Add root node to group
-	if (group) {
-		group->push_back(node);
-	}
+	group->push_back(node);
 	const COLLADAFW::UniqueId& colladaNodeId = colladaNode->getUniqueId();
 	std::string id = colladaNode->getOriginalId();
 	COLLADAFW::TransformationPointerArray transformations = colladaNode->getTransformations();
@@ -508,13 +506,25 @@ bool COLLADA2GLTF::Writer::writeScene(const COLLADAFW::Scene* scene) {
 	return true;
 }
 
+void RecursiveNodeDeleter(std::vector<GLTF::Node*>& nodes) {
+    for (auto& node : nodes) {
+        RecursiveNodeDeleter(node->children);
+        delete node;
+    }
+}
+
 bool COLLADA2GLTF::Writer::writeLibraryNodes(const COLLADAFW::LibraryNodes* libraryNodes) {
 	GLTF::Asset* asset = this->_asset;
 	GLTF::Scene* scene = asset->getDefaultScene();
 
     // Library nodes can only be used to resolve instance_nodes, so we don't add the root node to a group
-    //  we will just resolve it's references
-    return this->writeNodesToGroup(nullptr, libraryNodes->getNodes());
+    //  in the actual model. Instead we add to this temporary group that stores the original and
+    //  instance_nodes will be resolved with a clone so this group can be safely freed afterwards.
+    std::vector<GLTF::Node*> temporaryGroup;
+    bool result = this->writeNodesToGroup(nullptr, libraryNodes->getNodes());
+    RecursiveNodeDeleter(temporaryGroup);
+
+    return result;
 }
 
 void mapAttributeIndices(const unsigned int* rootIndices, const unsigned* indices, int count, std::string semantic, std::map<std::string, GLTF::Accessor*>* attributes, std::map<std::string, std::map<int, int>>* indicesMapping) {
