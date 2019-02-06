@@ -521,7 +521,7 @@ bool COLLADA2GLTF::Writer::writeLibraryNodes(const COLLADAFW::LibraryNodes* libr
     //  in the actual model. Instead we add to this temporary group that stores the original and
     //  instance_nodes will be resolved with a clone so this group can be safely freed afterwards.
     std::vector<GLTF::Node*> temporaryGroup;
-    bool result = this->writeNodesToGroup(nullptr, libraryNodes->getNodes());
+    bool result = this->writeNodesToGroup(&temporaryGroup, libraryNodes->getNodes());
     RecursiveNodeDeleter(temporaryGroup);
 
     return result;
