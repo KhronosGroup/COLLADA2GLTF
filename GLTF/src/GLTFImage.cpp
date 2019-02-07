@@ -54,7 +54,7 @@ GLTF::Image* GLTF::Image::load(std::string imagePath) {
 		absoluteUri += imagePath;
 
 		std::replace(absoluteUri.begin(), absoluteUri.end(), '\\', '/');
-		image = new GLTF::Image(absoluteUri);
+		image = new GLTF::Image(absoluteUri, imagePath);
 		_imageCache[imagePath] = image;
 		return image;
 	}
