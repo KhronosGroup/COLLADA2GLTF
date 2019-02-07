@@ -14,8 +14,6 @@ static bool bWriteAbsoluteUris = false;
 
 GLTF::Image::Image(std::string uri, std::string cacheKey) : uri(uri), cacheKey(cacheKey) {}
 
-GLTF::Image::Image(std::string uri) : Image(uri, "") {}
-
 GLTF::Image::Image(std::string uri, std::string cacheKey, unsigned char* data, size_t byteLength, std::string fileExtension) : uri(uri), data(data), byteLength(byteLength), cacheKey(cacheKey) {
 	std::string dataSubstring((char*)data, 8);
 	if (dataSubstring.substr(1, 7) == "PNG\r\n\x1a\n") {
@@ -28,8 +26,6 @@ GLTF::Image::Image(std::string uri, std::string cacheKey, unsigned char* data, s
 		mimeType = "image/" + fileExtension;
 	}
 }
-
-GLTF::Image::Image(std::string uri, unsigned char* data, size_t byteLength, std::string fileExtension) : Image(uri, "", data, byteLength, fileExtension) {}
 
 GLTF::Image::~Image() {
 	if (!cacheKey.empty()) {

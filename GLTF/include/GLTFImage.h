@@ -12,8 +12,6 @@ namespace GLTF {
 		std::string mimeType;
 		GLTF::BufferView* bufferView = NULL;
 
-		Image(std::string uri);
-		Image(std::string uri, unsigned char* data, size_t byteLength, std::string fileExtension);
 		virtual ~Image();
 
 		static GLTF::Image* load(std::string path);
