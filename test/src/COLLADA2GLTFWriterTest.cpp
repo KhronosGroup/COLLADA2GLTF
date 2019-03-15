@@ -17,40 +17,40 @@ COLLADA2GLTFWriterTest::~COLLADA2GLTFWriterTest() {
 	delete asset;
 }
 
-TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_SingleNode) {
-	COLLADAFW::LibraryNodes* nodes = new COLLADAFW::LibraryNodes();
+TEST_F(COLLADA2GLTFWriterTest, WriteVisualScene_SingleNode) {
+	COLLADAFW::VisualScene* visualScene = new COLLADAFW::VisualScene(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::VISUAL_SCENE, 0, 0));
 	COLLADAFW::Node* node = new COLLADAFW::Node(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::NODE, 0, 0));
-	nodes->getNodes().append(node);
-	this->writer->writeLibraryNodes(nodes);
+	visualScene->getRootNodes().append(node);
+	this->writer->writeVisualScene(visualScene);
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
 	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
 	EXPECT_EQ(sceneNodes.size(), 1);
 }
 
-TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MultipleNodes) {
-	COLLADAFW::LibraryNodes* nodes = new COLLADAFW::LibraryNodes();
+TEST_F(COLLADA2GLTFWriterTest, WriteVisualScene_MultipleNodes) {
+	COLLADAFW::VisualScene* visualScene = new COLLADAFW::VisualScene(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::VISUAL_SCENE, 0, 0));
 	COLLADAFW::Node* nodeOne = new COLLADAFW::Node(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::NODE, 0, 0));
 	COLLADAFW::Node* nodeTwo = new COLLADAFW::Node(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::NODE, 1, 0));
-	nodes->getNodes().append(nodeOne);
-	nodes->getNodes().append(nodeTwo);
-	this->writer->writeLibraryNodes(nodes);
+	visualScene->getRootNodes().append(nodeOne);
+	visualScene->getRootNodes().append(nodeTwo);
+	this->writer->writeVisualScene(visualScene);
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
 	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
 	EXPECT_EQ(sceneNodes.size(), 2);
 }
 
-TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesNotExist) {
-	COLLADAFW::LibraryNodes* nodes = new COLLADAFW::LibraryNodes();
+TEST_F(COLLADA2GLTFWriterTest, WriteVisualScene_MeshDoesNotExist) {
+	COLLADAFW::VisualScene* visualScene = new COLLADAFW::VisualScene(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::VISUAL_SCENE, 0, 0));
 	COLLADAFW::Node* node = new COLLADAFW::Node(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::NODE, 0, 0));
 	COLLADAFW::InstanceGeometry* instanceGeometry = new COLLADAFW::InstanceGeometry(
 		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 0, 0),
 		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 1, 0)
 	);
 	node->getInstanceGeometries().append(instanceGeometry);
-	nodes->getNodes().append(node);
-	this->writer->writeLibraryNodes(nodes);
+	visualScene->getRootNodes().append(node);
+	this->writer->writeVisualScene(visualScene);
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
 	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
@@ -60,8 +60,8 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesNotExist) {
 	ASSERT_TRUE(mesh == NULL);
 }
 
-TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesExist) {
-	COLLADAFW::LibraryNodes* nodes = new COLLADAFW::LibraryNodes();
+TEST_F(COLLADA2GLTFWriterTest, WriteVisualScene_MeshDoesExist) {
+	COLLADAFW::VisualScene* visualScene = new COLLADAFW::VisualScene(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::VISUAL_SCENE, 0, 0));
 	COLLADAFW::Node* node = new COLLADAFW::Node(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::NODE, 0, 0));
 	COLLADAFW::InstanceGeometry* instanceGeometry = new COLLADAFW::InstanceGeometry(
 		COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 1, 0),
@@ -70,8 +70,8 @@ TEST_F(COLLADA2GLTFWriterTest, WriteLibraryNodes_MeshDoesExist) {
 	COLLADAFW::Geometry* geometry = new COLLADAFW::Mesh(COLLADAFW::UniqueId(COLLADAFW::COLLADA_TYPE::MESH, 0, 0));
 	this->writer->writeGeometry(geometry);
 	node->getInstanceGeometries().append(instanceGeometry);
-	nodes->getNodes().append(node);
-	this->writer->writeLibraryNodes(nodes);
+	visualScene->getRootNodes().append(node);
+	this->writer->writeVisualScene(visualScene);
 	GLTF::Scene* scene = this->asset->getDefaultScene();
 	ASSERT_TRUE(scene != NULL);
 	std::vector<GLTF::Node*> sceneNodes = scene->nodes;
