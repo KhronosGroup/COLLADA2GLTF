@@ -33,6 +33,8 @@ namespace GLTF {
 
     class Channel : public GLTF::Object {
     public:
+        ~Channel();
+
 		class Target : public GLTF::Object {
 		public:
 			GLTF::Node* node;
@@ -41,11 +43,13 @@ namespace GLTF {
 			virtual void writeJSON(void* writer, GLTF::Options* options);
 		};
 
-		GLTF::Animation::Sampler* sampler;
-		Target* target;
+        GLTF::Animation::Sampler* sampler = nullptr;
+        Target* target = nullptr;
 
 		virtual void writeJSON(void* writer, GLTF::Options* options);
     };
+
+    ~Animation();
 
     std::vector<Channel*> channels;
 

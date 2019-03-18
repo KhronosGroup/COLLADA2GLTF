@@ -62,10 +62,10 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
 			}
 
 			if (tokens.size() > 0) {
-				// Get major version
+				// Get major version (or lack of)
 				token = tokens[tokens.size() - 1];
 				try {
-					if (std::stoi(token) < 8) {
+					if (token == "SketchUp" || (std::stoi(token) < 8)) {
 						_options->invertTransparency = true;
 					}
 				} catch (const std::invalid_argument& e) {
@@ -194,6 +194,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	GLTF::Node* node = new GLTF::Node();
 	COLLADABU::Math::Matrix4 matrix;
 	GLTF::Node::TransformMatrix* transform;
+
 	// Add root node to group
 	group->push_back(node);
 	const COLLADAFW::UniqueId& colladaNodeId = colladaNode->getUniqueId();
@@ -336,17 +337,21 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 	const COLLADAFW::InstanceLightPointerArray& instanceLights = colladaNode->getInstanceLights();
 	for (size_t i = 0; i < instanceLights.getCount(); i++) {
 		COLLADAFW::InstanceLight* instanceLight = instanceLights[i];
-		GLTF::MaterialCommon::Light* light = _lightInstances[instanceLight->getInstanciatedObjectId()];
-		node->light = light;
-		light->node = node;
+        auto it = _lightInstances.find(instanceLight->getInstanciatedObjectId());
+        if (it != _lightInstances.end()) {
+            node->light = it->second;
+            it->second->node = node;
+        }
 	}
 
 	// Instance cameras
 	const COLLADAFW::InstanceCameraPointerArray& instanceCameras = colladaNode->getInstanceCameras();
 	for (size_t i = 0; i < instanceCameras.getCount(); i++) {
 		COLLADAFW::InstanceCamera* instanceCamera = instanceCameras[i];
-		GLTF::Camera* camera = _cameraInstances[instanceCamera->getInstanciatedObjectId()];
-		node->camera = camera;
+        auto it = _cameraInstances.find(instanceCamera->getInstanciatedObjectId());
+        if (it != _cameraInstances.end()) {
+            node->camera = it->second;
+        }
 	}
 
 	// Identify and map unbound skeleton nodes
@@ -449,6 +454,14 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 		}
 	}
 
+	// Recurse child nodes
+	// Do this before we resolve instance nodes or else none of the cloned nodes will have children
+	const COLLADAFW::NodePointerArray& childNodes = colladaNode->getChildNodes();
+	bool result = true;
+	if (childNodes.getCount() > 0) {
+		result = this->writeNodesToGroup(&node->children, childNodes);
+	}
+
 	// Resolve instance nodes that we've seen for this node
 	std::map<COLLADAFW::UniqueId, std::vector<GLTF::Node*>>::iterator findNodeInstanceTargets = _nodeInstanceTargets.find(colladaNodeId);
 	if (findNodeInstanceTargets != _nodeInstanceTargets.end()) {
@@ -460,12 +473,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 		}
 	}
 
-	// Recurse child nodes
-	const COLLADAFW::NodePointerArray& childNodes = colladaNode->getChildNodes();
-	if (childNodes.getCount() > 0) {
-		return this->writeNodesToGroup(&node->children, childNodes);
-	}
-	return true;
+	return result;
 }
 
 bool COLLADA2GLTF::Writer::writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes) {
@@ -498,10 +506,25 @@ bool COLLADA2GLTF::Writer::writeScene(const COLLADAFW::Scene* scene) {
 	return true;
 }
 
+void RecursiveNodeDeleter(std::vector<GLTF::Node*>& nodes) {
+    for (auto& node : nodes) {
+        RecursiveNodeDeleter(node->children);
+        delete node;
+    }
+}
+
 bool COLLADA2GLTF::Writer::writeLibraryNodes(const COLLADAFW::LibraryNodes* libraryNodes) {
 	GLTF::Asset* asset = this->_asset;
 	GLTF::Scene* scene = asset->getDefaultScene();
-	return this->writeNodesToGroup(&scene->nodes, libraryNodes->getNodes());
+
+    // Library nodes can only be used to resolve instance_nodes, so we don't add the root node to a group
+    //  in the actual model. Instead we add to this temporary group that stores the original and
+    //  instance_nodes will be resolved with a clone so this group can be safely freed afterwards.
+    std::vector<GLTF::Node*> temporaryGroup;
+    bool result = this->writeNodesToGroup(&temporaryGroup, libraryNodes->getNodes());
+    RecursiveNodeDeleter(temporaryGroup);
+
+    return result;
 }
 
 void mapAttributeIndices(const unsigned int* rootIndices, const unsigned* indices, int count, std::string semantic, std::map<std::string, GLTF::Accessor*>* attributes, std::map<std::string, std::map<int, int>>* indicesMapping) {

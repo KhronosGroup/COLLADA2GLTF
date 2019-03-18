@@ -10,6 +10,8 @@ namespace GLTF {
 	class Extension;
 	class Object {
 	public:
+        virtual ~Object();
+
 		int id = -1;
 		std::string stringId;
 		std::string name;

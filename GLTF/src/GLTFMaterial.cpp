@@ -9,6 +9,21 @@ GLTF::Material::Material() {
 	this->type = GLTF::Material::MATERIAL;
 }
 
+GLTF::Material::~Material()
+{
+    if (values) {
+        delete[] values->ambient;
+        delete[] values->diffuse;
+        delete[] values->emission;
+        delete[] values->specular;
+        delete[] values->shininess;
+        delete[] values->transparency;
+
+        delete values;
+        values = nullptr;
+    }
+}
+
 bool GLTF::Material::hasTexture() {
 	return this->values->diffuseTexture != NULL;
 }
@@ -155,6 +170,14 @@ void GLTF::MaterialPBR::Texture::writeJSON(void* writer, GLTF::Options* options)
 	GLTF::Object::writeJSON(writer, options);
 }
 
+GLTF::MaterialPBR::MetallicRoughness::~MetallicRoughness()
+{
+    delete baseColorTexture;
+    delete metallicRoughnessTexture;
+
+    // baseColorFactor is stored in this->values
+}
+
 void GLTF::MaterialPBR::MetallicRoughness::writeJSON(void* writer, GLTF::Options* options) {
 	rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 	if (baseColorFactor) {
@@ -186,6 +209,14 @@ void GLTF::MaterialPBR::MetallicRoughness::writeJSON(void* writer, GLTF::Options
 		jsonWriter->EndObject();
 	}
 	GLTF::Object::writeJSON(writer, options);
+}
+
+GLTF::MaterialPBR::SpecularGlossiness::~SpecularGlossiness()
+{
+    delete diffuseTexture;
+    delete specularGlossinessTexture;
+
+    // diffuseFactor, specularFactor, glossinessFactor are stored in this->values
 }
 
 void GLTF::MaterialPBR::SpecularGlossiness::writeJSON(void* writer, GLTF::Options* options) {
@@ -332,7 +363,6 @@ void GLTF::MaterialCommon::Light::writeJSON(void* writer, GLTF::Options* options
 }
 
 GLTF::MaterialCommon::MaterialCommon() {
-	this->values = new GLTF::Material::Values();
 	this->type = GLTF::Material::MATERIAL_COMMON;
 }
 
@@ -850,6 +880,17 @@ std::string GLTF::MaterialCommon::getTechniqueKey(GLTF::Options* options) {
 	return id;
 }
 
+GLTF::MaterialPBR::~MaterialPBR()
+{
+    delete metallicRoughness;
+    delete specularGlossiness;
+
+    delete normalTexture;
+    delete occlusionTexture;
+    delete emissiveTexture;
+    delete emissiveFactor;
+}
+
 GLTF::MaterialPBR::MaterialPBR() {
 	this->type = GLTF::Material::PBR_METALLIC_ROUGHNESS;
 	this->metallicRoughness = new GLTF::MaterialPBR::MetallicRoughness();
@@ -879,12 +920,12 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 		}
 	}
 
-	if (values->emission) {
-		if (values->emission[3] < 1.0) {
-			hasTransparency = true;
-		}
-		material->emissiveFactor = values->emission;
-	}
+    if (values->emission) {
+        if (values->emission[3] < 1.0) {
+            hasTransparency = true;
+        }
+        material->emissiveFactor = new float[3]{ values->emission[0], values->emission[1], values->emission[2] };
+    }
 	if (values->emissionTexture) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
 		texture->texCoord = values->emissionTexCoord;
@@ -914,12 +955,10 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 			material->specularGlossiness->specularGlossinessTexture = texture;
 		}
 		if (values->shininess) {
-			if (values->shininess[0] < 1.0) {
-				material->specularGlossiness->glossinessFactor = values->shininess;
+			if (values->shininess[0] > 1.0) {
+                values->shininess[0] = 1.0;
 			}
-			else {
-				material->specularGlossiness->glossinessFactor = new float[1] {1.0};
-			}
+            material->specularGlossiness->glossinessFactor = values->shininess;
 		}
 	}
 

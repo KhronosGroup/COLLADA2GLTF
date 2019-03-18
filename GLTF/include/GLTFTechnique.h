@@ -24,6 +24,8 @@ namespace GLTF {
 			Parameter(std::string semantic, GLTF::Constants::WebGL type, int count) : semantic(semantic), type(type), count(count) {};
 		};
 
+        ~Technique();
+
 		std::map<std::string, Parameter*> parameters;
 		std::map<std::string, std::string> attributes;
 		std::map<std::string, std::string> uniforms;

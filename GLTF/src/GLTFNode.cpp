@@ -111,6 +111,13 @@ GLTF::Node::TransformTRS* GLTF::Node::TransformMatrix::getTransformTRS() {
 	return trs;
 }
 
+GLTF::Node::Transform* GLTF::Node::TransformMatrix::clone()
+{
+    auto result = new TransformMatrix();
+    memcpy(result->matrix, matrix, sizeof(float) * 16);
+    return result;
+}
+
 const int rotationMatrixNext[3] = { 1, 2, 0 };
 void GLTF::Node::TransformMatrix::getTransformTRS(GLTF::Node::TransformTRS* trs) {
 	// get translation
@@ -222,6 +229,21 @@ GLTF::Node::TransformMatrix* GLTF::Node::TransformTRS::getTransformMatrix() {
 	return result;
 }
 
+GLTF::Node::Transform* GLTF::Node::TransformTRS::clone()
+{
+    auto result = new TransformTRS();
+
+    memcpy(result->translation, translation, sizeof(float) * 3);
+    memcpy(result->rotation, rotation, sizeof(float) * 4);
+    memcpy(result->scale, scale, sizeof(float) * 3);
+
+    return result;
+}
+
+GLTF::Node::~Node() {
+    delete transform;
+}
+
 std::string GLTF::Node::typeName() {
 	return "node";
 }
@@ -239,7 +261,7 @@ GLTF::Object* GLTF::Node::clone(GLTF::Object* clone) {
 		node->jointName = jointName;
 		node->mesh = mesh;
 		node->light = light;
-		node->transform = transform;
+		node->transform = transform->clone();
 		GLTF::Object::clone(clone);
 	}
 	return node;

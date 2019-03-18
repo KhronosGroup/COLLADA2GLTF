@@ -3,6 +3,12 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+GLTF::Technique::~Technique() {
+    for (auto& kv : parameters) {
+        delete kv.second;
+    }
+}
+
 std::string GLTF::Technique::typeName() {
 	return "technique";
 }

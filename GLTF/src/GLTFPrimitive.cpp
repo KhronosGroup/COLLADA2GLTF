@@ -3,6 +3,12 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+#include <algorithm>
+
+GLTF::Primitive::~Primitive() {
+    std::for_each(targets.begin(), targets.end(), std::default_delete<Target>());
+}
+
 GLTF::Object* GLTF::Primitive::clone(GLTF::Object* clone) {
 	GLTF::Primitive* primitive = dynamic_cast<GLTF::Primitive*>(clone);
 	if (primitive != NULL) {

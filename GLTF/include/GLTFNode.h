@@ -20,6 +20,8 @@ namespace GLTF {
 			};
 
 			Type type;
+
+			virtual Transform* clone() = 0;
 		};
 
 		class TransformTRS;
@@ -39,6 +41,8 @@ namespace GLTF {
 			bool isIdentity();
 			void getTransformTRS(TransformTRS* out);
 			TransformTRS* getTransformTRS();
+
+			Transform* clone();
 		};
 
 		class TransformTRS : public Transform {
@@ -52,7 +56,11 @@ namespace GLTF {
 			bool isIdentityRotation();
 			bool isIdentityScale();
 			TransformMatrix* getTransformMatrix();
+
+			Transform* clone();
 		};
+
+		~Node();
 
 		GLTF::Camera* camera = NULL;
 		std::vector<GLTF::Node*> children;

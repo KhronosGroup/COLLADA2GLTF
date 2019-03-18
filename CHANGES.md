@@ -6,6 +6,10 @@ Change Log
 * Added support for morph targets [#166](https://github.com/KhronosGroup/COLLADA2GLTF/issues/166)
 * Support converting models with transparency [#168](https://github.com/KhronosGroup/COLLADA2GLTF/issues/168)
 * Added support for exporting COLLADA animation clips as groups [#227](https://github.com/KhronosGroup/COLLADA2GLTF/pull/227)
+* Clean up glTF tree when the asset is freed [#229](https://github.com/KhronosGroup/COLLADA2GLTF/issues/229)
+
+##### Fixes :wrench:
+* Library nodes should only be written as part of a scene [#236](https://github.com/KhronosGroup/COLLADA2GLTF/issues/236)
 
 ### v2.1.4 - 2018-08-29
 

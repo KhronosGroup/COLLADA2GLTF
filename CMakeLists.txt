@@ -20,10 +20,18 @@ set(TEST_ENABLED ${test})
 set(test OFF)
 
 # RapidJSON
-include_directories(GLTF/dependencies/rapidjson/include)
+if(DEFINED RAPIDJSON_INCLUDE_DIR)
+  include_directories(${RAPIDJSON_INCLUDE_DIR})
+else()
+  include_directories(GLTF/dependencies/rapidjson/include)
+endif()
 
 # Draco
-include_directories(GLTF/dependencies/draco/src)
+if(DEFINED DRACO_INCLUDE_DIR)
+  include_directories(${DRACO_INCLUDE_DIR})
+else()
+  include_directories(GLTF/dependencies/draco/src)
+endif()
 
 # Pre-compiled
 if(precompiled MATCHES "X86")
@@ -103,14 +111,16 @@ include_directories(include)
 file(GLOB LIB_HEADERS "include/*.h")
 set(LIB_SOURCES src/COLLADA2GLTFWriter.cpp src/COLLADA2GLTFExtrasHandler.cpp)
 add_library(${PROJECT_NAME} ${LIB_HEADERS} ${LIB_SOURCES})
- target_link_libraries(${PROJECT_NAME} GLTF ${OpenCOLLADA})
+target_link_libraries(${PROJECT_NAME} GLTF ${OpenCOLLADA})
 
 # ahoy
 include_directories(dependencies/ahoy/include)
 add_subdirectory(dependencies/ahoy)
 
-add_executable(${PROJECT_NAME}-bin src/main.cpp)
-target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy draco)
+if(NOT NO_COLLADA2GLTF_BIN)
+  add_executable(${PROJECT_NAME}-bin src/main.cpp)
+  target_link_libraries(${PROJECT_NAME}-bin ${PROJECT_NAME} ahoy draco)
+endif()
 
 if(TEST_ENABLED)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
