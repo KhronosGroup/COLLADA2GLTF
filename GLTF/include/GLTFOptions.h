@@ -25,5 +25,6 @@ namespace GLTF {
 		int texcoordQuantizationBits = 10;
 		int colorQuantizationBits = 8;
 		int jointQuantizationBits = 8;
+		bool writeAbsoluteUris = false;
 	};
 }

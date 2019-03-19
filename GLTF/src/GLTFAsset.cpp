@@ -1145,7 +1145,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 										metallicRoughnessTexturePath = options->metallicRoughnessTexturePaths[0];
 									}
 									GLTF::MaterialPBR::Texture* metallicRoughnessTexture = new GLTF::MaterialPBR::Texture();
-									GLTF::Image* image = GLTF::Image::load(metallicRoughnessTexturePath);
+									GLTF::Image* image = GLTF::Image::load(metallicRoughnessTexturePath, options->writeAbsoluteUris);
 									std::map<GLTF::Image*, GLTF::Texture*>::iterator textureCacheIt = _pbrTextureCache.find(image);
 									GLTF::Texture* texture;
 									if (textureCacheIt == _pbrTextureCache.end()) {

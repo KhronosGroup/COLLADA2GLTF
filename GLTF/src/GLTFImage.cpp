@@ -10,8 +10,6 @@
 
 std::map<std::string, GLTF::Image*> _imageCache;
 
-static bool bWriteAbsoluteUris = false;
-
 GLTF::Image::Image(std::string uri, std::string cacheKey) : uri(uri), cacheKey(cacheKey) {}
 
 GLTF::Image::Image(std::string uri) : Image(uri, "") {}
@@ -39,14 +37,14 @@ GLTF::Image::~Image() {
 	free(this->data);
 }
 
-GLTF::Image* GLTF::Image::load(std::string imagePath) {
+GLTF::Image* GLTF::Image::load(std::string imagePath, bool writeAbsoluteUris) {
 	std::map<std::string, GLTF::Image*>::iterator imageCacheIt = _imageCache.find(imagePath);
 	if (imageCacheIt != _imageCache.end()) {
 		return imageCacheIt->second;
 	}
 
 	GLTF::Image* image = NULL;
-	if (bWriteAbsoluteUris) {
+	if (writeAbsoluteUris) {
 		std::string absoluteUri = "file://";
 		if (imagePath[0] != '/') {
 			absoluteUri += '/';
@@ -183,14 +181,4 @@ void GLTF::Image::writeJSON(void* writer, GLTF::Options* options) {
 		jsonWriter->String(uri.c_str());
 	}
 	GLTF::Object::writeJSON(writer, options);
-}
-
-void GLTF::Image::setWriteAbsoluteUris(bool bAbsolute)
-{
-	bWriteAbsoluteUris = bAbsolute;
-}
-
-bool GLTF::Image::getWriteAbsoluteUris()
-{
-	return bWriteAbsoluteUris;
 }
