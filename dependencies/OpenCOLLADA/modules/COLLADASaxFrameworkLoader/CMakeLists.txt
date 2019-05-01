@@ -34,6 +34,9 @@ include_directories(${BASE_PATH}/Externals/MathMLSolver/include)
 # MathMLSolver AST
 include_directories(${BASE_PATH}/Externals/MathMLSolver/include/AST)
 
+# pcre
+include_directories(${BASE_PATH}/Externals/pcre/include)
+
 # GeneratedSaxParser
 # Use LibXML by default
 add_definitions(-DGENERATEDSAXPARSER_XMLPARSER_LIBXML)
