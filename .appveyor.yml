@@ -14,7 +14,7 @@ platform:
 - x64
 
 cache:
-- cmake-build -> CMakeLists.txt
+- cmake-build
 
 configuration:
 - Release
