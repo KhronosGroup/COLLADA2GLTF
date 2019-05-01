@@ -1,10 +1,7 @@
 os:
   - linux
   - osx
-osx_image: xcode8.3
 language: cpp
-node_js:
-  - "7"
 compiler: g++
 git:
   submodules: true
