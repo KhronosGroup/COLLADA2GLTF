@@ -2,6 +2,8 @@ os:
   - linux
   - osx
 language: cpp
+node_js:
+  - "8"
 compiler: g++
 git:
   submodules: true
