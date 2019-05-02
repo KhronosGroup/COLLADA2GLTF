@@ -20,5 +20,8 @@ include_directories(${BASE_PATH}/Externals/MathMLSolver/include)
 include_directories(${BASE_PATH}/Externals/MathMLSolver/include/AST)
 add_subdirectory(MathMLSolver)
 
+# pcre
+include_directories(${BASE_PATH}/Externals/pcre/include)
+
 add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} COLLADABaseUtils MathMLSolver)
