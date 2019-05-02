@@ -101,7 +101,7 @@ include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADASaxFrameworkLoad
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADABaseUtils/include)
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/COLLADAFramework/include)
 include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/GeneratedSaxParser/include)
-include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/Externals/pcre)
+include_directories(dependencies/OpenCOLLADA/OpenCOLLADA/Externals/pcre/include)
 if(NOT OpenCOLLADA)
   add_subdirectory(dependencies/OpenCOLLADA/modules/COLLADASaxFrameworkLoader)
   set(OpenCOLLADA COLLADASaxFrameworkLoader)
