@@ -828,7 +828,7 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
 
 			// Create indices accessor
 			GLTF::Accessor* indices = NULL;
-			if (index < 65536) {
+			if (index < 65535) {
 				// We can fit this in an UNSIGNED_SHORT
 				std::vector<unsigned short> unsignedShortIndices(buildIndices.begin(), buildIndices.end());
 				indices = new GLTF::Accessor(GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT, (unsigned char*)&unsignedShortIndices[0], unsignedShortIndices.size(), GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
@@ -1769,25 +1769,7 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(const COLLADAFW::SkinControll
 
 	// JOINTS_0 and WEIGHTS_0 must be `vec4`
 	maxJointsPerVertex = 4;
-
-	GLTF::Accessor::Type type;
-	if (maxJointsPerVertex == 1) {
-		type = GLTF::Accessor::Type::SCALAR;
-	} else if (maxJointsPerVertex == 2) {
-		type = GLTF::Accessor::Type::VEC2;
-	} else if (maxJointsPerVertex == 3) {
-		type = GLTF::Accessor::Type::VEC3;
-	} else if (maxJointsPerVertex == 4) {
-		type = GLTF::Accessor::Type::VEC4;
-	} else if (maxJointsPerVertex <= 9) {
-		type = GLTF::Accessor::Type::MAT3;
-	} else if (maxJointsPerVertex <= 16) {
-		type = GLTF::Accessor::Type::MAT4;
-	} else {
-		// There is no GLTF accessor type big enough to store this many joint influences
-		return false;
-	}
-	maxJointsPerVertex = GLTF::Accessor::getNumberOfComponents(type);
+	GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC4;
 
 	size_t vertexCount = skinControllerData->getVertexCount();
 	size_t offset = 0;
@@ -1855,17 +1837,17 @@ bool COLLADA2GLTF::Writer::writeController(const COLLADAFW::Controller* controll
 		int numberOfComponents = GLTF::Accessor::getNumberOfComponents(type);
 
 		for (size_t i = 0; i < weights.size(); i++) {
-        		float weightSum = 0;
-        		float* weight = weights[i];
-        		for (size_t j = 0; j < numberOfComponents; j++) {
-            			weightSum = weightSum + std::abs(weight[j]);
-        		}
-        		if (weightSum > 0) {
-            			for (size_t j = 0; j < numberOfComponents; j++) {
-                			weight[j] = weight[j] / weightSum;
-            			}
-        		}
-    		}
+            float weightSum = 0;
+            float* weight = weights[i];
+            for (size_t j = 0; j < numberOfComponents; j++) {
+                weightSum = weightSum + std::abs(weight[j]);
+            }
+            if (weightSum > 0) {
+                for (size_t j = 0; j < numberOfComponents; j++) {
+                    weight[j] = weight[j] / weightSum;
+                }
+            }
+        }
 
 		COLLADAFW::UniqueId meshId = skinController->getSource();
 		GLTF::Mesh* mesh = _meshInstances[meshId];
