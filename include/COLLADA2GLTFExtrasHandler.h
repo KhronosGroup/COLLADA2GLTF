@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <map>
 
 #include "GeneratedSaxParser.h"
 #include "COLLADASaxFWLLoader.h"
@@ -25,7 +26,7 @@ namespace COLLADA2GLTF {
 		bool _inDoubleSided = false;
 	public:
 		std::set<COLLADAFW::UniqueId> lockAmbientDiffuse;
-		COLLADAFW::TextureAttributes* bumpTexture = NULL;
+		std::map<COLLADAFW::UniqueId, COLLADAFW::TextureAttributes*> bumpTextures;
 		std::set<COLLADAFW::UniqueId> doubleSided;
 		ExtrasHandler(COLLADASaxFWL::Loader* loader) : _loader(loader) {};
 	};

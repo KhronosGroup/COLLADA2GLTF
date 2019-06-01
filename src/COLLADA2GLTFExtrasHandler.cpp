@@ -16,7 +16,8 @@ bool COLLADA2GLTF::ExtrasHandler::elementBegin(const COLLADASaxFWL::ParserChar* 
 		const COLLADASaxFWL::FileLoader* fileLoader = _loader->getFileLoader();
 		COLLADASaxFWL::LibraryEffectsLoader* effectsLoader = (COLLADASaxFWL::LibraryEffectsLoader*)fileLoader->getPartLoader();
 		COLLADAFW::Effect* bumpEffect = (COLLADAFW::Effect*)effectsLoader->getObject();
-		bumpTexture = bumpEffect->createExtraTextureAttributes();
+		COLLADAFW::TextureAttributes* bumpTexture = bumpEffect->createExtraTextureAttributes();
+		bumpTextures[_currentId] = bumpTexture;
 
 		size_t index = 0;
 		const GeneratedSaxParser::xmlChar* attributeKey = attributes[index++];
