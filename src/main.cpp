@@ -76,6 +76,11 @@ int main(int argc, const char **argv) {
 		->alias("version")
 		->description("glTF version to output (e.g. '1.0', '2.0')");
 
+	parser->define("p", &options->preserveUnusedSemantics)
+			->alias("preserveUnusedSemantics")
+			->defaults(false)
+			->description("should unused semantics be preserved. When this value is true, all mesh data is left intact even if it's not used.");
+
 	parser->define("metallicRoughnessTextures", &options->metallicRoughnessTexturePaths)
 		->description("paths to images to use as the PBR metallicRoughness textures");
 
@@ -192,7 +197,10 @@ int main(int argc, const char **argv) {
 
 		asset->mergeAnimations(writer->getAnimationGroups());
 		asset->removeUnusedNodes(options);
-		asset->removeUnusedSemantics();
+
+		if (!options->preserveUnusedSemantics) {
+			asset->removeUnusedSemantics();
+		}
 
 		if (options->dracoCompression) {
 			asset->removeUncompressedBufferViews();

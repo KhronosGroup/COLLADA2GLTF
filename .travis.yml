@@ -1,7 +1,6 @@
 os:
   - linux
   - osx
-osx_image: xcode8.3
 language: cpp
 compiler: g++
 git:
@@ -21,7 +20,9 @@ addons:
     - g++-5
     - cmake
     - cmake-data
-script: mkdir build && cd build && cmake -Dtest=ON .. && make && make test
+script: 
+- mkdir build && cd build && cmake -Dtest=ON .. && make && make test 
+- if [ "$TRAVIS_OS_NAME" == "linux" ]; then cd ../test/js && npm i -g npm && npm install && npm run test && cd ../../build; fi
 after_success:
 - if [ ! -z "$TRAVIS_TAG" ]; then
     export RELEASE=`echo "$TRAVIS_TAG"| awk -F"-" '{print $1}'`;

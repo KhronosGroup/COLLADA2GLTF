@@ -73,3 +73,4 @@ COLLADA2GLTF[.exe] [input] [output] [options]
 | --specularGlossiness | false | No | output PBR materials with the KHR_materials_pbrSpecularGlossiness extension |
 | --lockOcclusionMetallicRoughness | false | No | Set `metallicRoughnessTexture` to be the same as the `occlusionTexture` in materials where an ambient texture is defined |
 | --doubleSided | false | No | Force all materials to be double sided. When this value is true, back-face culling is disabled and double sided lighting is enabled |
+| --preserveUnusedSemantics | false | No | Don't optimize out primitive semantics and their data, even if they aren't used. |
