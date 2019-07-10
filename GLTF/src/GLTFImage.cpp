@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <algorithm>
 
 #include "Base64.h"
 #include "GLTFImage.h"
@@ -36,10 +37,24 @@ GLTF::Image::~Image() {
 	free(this->data);
 }
 
-GLTF::Image* GLTF::Image::load(std::string imagePath) {
+GLTF::Image* GLTF::Image::load(std::string imagePath, bool writeAbsoluteUris) {
 	std::map<std::string, GLTF::Image*>::iterator imageCacheIt = _imageCache.find(imagePath);
 	if (imageCacheIt != _imageCache.end()) {
 		return imageCacheIt->second;
+	}
+
+	GLTF::Image* image = NULL;
+	if (writeAbsoluteUris) {
+		std::string absoluteUri = "file://";
+		if (imagePath[0] != '/') {
+			absoluteUri += '/';
+		}
+		absoluteUri += imagePath;
+
+		std::replace(absoluteUri.begin(), absoluteUri.end(), '\\', '/');
+		image = new GLTF::Image(absoluteUri, imagePath);
+		_imageCache[imagePath] = image;
+		return image;
 	}
 
 	size_t fileExtensionStart = imagePath.find_last_of(".");
@@ -57,7 +72,6 @@ GLTF::Image* GLTF::Image::load(std::string imagePath) {
 		fileName = imagePath.substr(lastSlash + 1);
 	}
 
-	GLTF::Image* image = NULL;
 	FILE* file = fopen(imagePath.c_str(), "rb");
 	if (file == NULL) {
 		std::cout << "WARNING: Image uri: " << imagePath << " could not be resolved " << std::endl;
