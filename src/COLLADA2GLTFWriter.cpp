@@ -488,19 +488,19 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(std::vector<GLTF::Node*>* group, con
 }
 
 void COLLADA2GLTF::Writer::nodeClonePredicate(GLTF::Node* node, GLTF::Node* clonedNode) {
-    _nodeInstanceTargetMapping[clonedNode] = std::vector<COLLADAFW::UniqueId>();
+	_nodeInstanceTargetMapping[clonedNode] = std::vector<COLLADAFW::UniqueId>();
 
-    std::map<GLTF::Node*, std::vector<COLLADAFW::UniqueId>>::iterator iter = _nodeInstanceTargetMapping.find(node);
-    if (iter != _nodeInstanceTargetMapping.end()) {
-        std::vector<COLLADAFW::UniqueId>& instanceIds = iter->second;
-        for (COLLADAFW::UniqueId& instanceId : instanceIds) {
-            // In case this node is cloned, we need to track the instance_nodes it contains
-            _nodeInstanceTargetMapping[clonedNode].push_back(instanceId);
+	std::map<GLTF::Node*, std::vector<COLLADAFW::UniqueId>>::iterator iter = _nodeInstanceTargetMapping.find(node);
+	if (iter != _nodeInstanceTargetMapping.end()) {
+		std::vector<COLLADAFW::UniqueId>& instanceIds = iter->second;
+		for (COLLADAFW::UniqueId& instanceId : instanceIds) {
+			// In case this node is cloned, we need to track the instance_nodes it contains
+			_nodeInstanceTargetMapping[clonedNode].push_back(instanceId);
 
-            // This node now needs to be notified when a child instance_node is resolved
-            _nodeInstanceTargets[instanceId].push_back(clonedNode);
-        }
-    }
+			// This node now needs to be notified when a child instance_node is resolved
+			_nodeInstanceTargets[instanceId].push_back(clonedNode);
+		}
+	}
 }
 
 bool COLLADA2GLTF::Writer::writeNodesToGroup(std::vector<GLTF::Node*>* group, const COLLADAFW::NodePointerArray& nodes) {

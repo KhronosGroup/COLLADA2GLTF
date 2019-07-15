@@ -249,14 +249,14 @@ std::string GLTF::Node::typeName() {
 }
 
 GLTF::Object* GLTF::Node::clone(GLTF::Object* clone) {
-    static std::function<void(GLTF::Node*, GLTF::Node*)> noop = [](GLTF::Node*, GLTF::Node*) { };
+	static std::function<void(GLTF::Node*, GLTF::Node*)> noop = [](GLTF::Node*, GLTF::Node*) { };
 
-    return this->clone(dynamic_cast<GLTF::Node*>(clone), noop);
+	return this->clone(dynamic_cast<GLTF::Node*>(clone), noop);
 }
 
 GLTF::Object* GLTF::Node::clone(GLTF::Node* node, std::function<void(GLTF::Node*, GLTF::Node*)>& predicate) {
 	if (node != NULL) {
-        predicate(this, node);
+		predicate(this, node);
 		node->camera = camera;
 		for (GLTF::Node* child : children) {
 			GLTF::Node* cloneChild = new GLTF::Node();

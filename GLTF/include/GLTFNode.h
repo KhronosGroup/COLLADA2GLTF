@@ -71,8 +71,8 @@ namespace GLTF {
 
 		Transform* transform = NULL;
 
-        // Special implementation that takes a predicate so mappings can be updated for all children
-        GLTF::Object* clone(GLTF::Node* node, std::function<void(GLTF::Node*, GLTF::Node*)>& predicate);
+		// Special implementation that takes a predicate so mappings can be updated for all children
+		GLTF::Object* clone(GLTF::Node* node, std::function<void(GLTF::Node*, GLTF::Node*)>& predicate);
 
 		virtual std::string typeName();
 		virtual GLTF::Object* clone(GLTF::Object* clone);
