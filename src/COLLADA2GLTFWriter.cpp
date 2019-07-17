@@ -1146,9 +1146,9 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
 			}
 		}
 
-		if (_extrasHandler->bumpTexture != NULL) {
-			material->values->bumpTexture = fromColladaTexture(effectCommon, _extrasHandler->bumpTexture->samplerId);
-			_extrasHandler->bumpTexture = NULL;
+		auto bumpTextureIt = _extrasHandler->bumpTextures.find(effect->getUniqueId());
+		if (bumpTextureIt != _extrasHandler->bumpTextures.end()) {
+			material->values->bumpTexture = fromColladaTexture(effectCommon, (*bumpTextureIt).second->samplerId);
 		}
 
 		bool doubleSided = _extrasHandler->doubleSided.find(effect->getUniqueId()) != _extrasHandler->doubleSided.end();
