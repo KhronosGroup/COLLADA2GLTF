@@ -249,12 +249,18 @@ std::string GLTF::Node::typeName() {
 }
 
 GLTF::Object* GLTF::Node::clone(GLTF::Object* clone) {
-	GLTF::Node* node = dynamic_cast<GLTF::Node*>(clone);
+	static std::function<void(GLTF::Node*, GLTF::Node*)> noop = [](GLTF::Node*, GLTF::Node*) { };
+
+	return this->clone(dynamic_cast<GLTF::Node*>(clone), noop);
+}
+
+GLTF::Object* GLTF::Node::clone(GLTF::Node* node, std::function<void(GLTF::Node*, GLTF::Node*)>& predicate) {
 	if (node != NULL) {
+		predicate(this, node);
 		node->camera = camera;
 		for (GLTF::Node* child : children) {
 			GLTF::Node* cloneChild = new GLTF::Node();
-			child->clone(cloneChild);
+			child->clone(cloneChild, predicate);
 			node->children.push_back(cloneChild);
 		}
 		node->skin = skin;
@@ -262,7 +268,7 @@ GLTF::Object* GLTF::Node::clone(GLTF::Object* clone) {
 		node->mesh = mesh;
 		node->light = light;
 		node->transform = transform->clone();
-		GLTF::Object::clone(clone);
+		GLTF::Object::clone(node);
 	}
 	return node;
 }
