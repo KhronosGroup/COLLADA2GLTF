@@ -215,9 +215,10 @@ GLTF::MaterialPBR::SpecularGlossiness::~SpecularGlossiness()
 {
 	delete diffuseTexture;
 	delete specularGlossinessTexture;
+	delete specularFactor;
 	delete glossinessFactor;
 
-	// diffuseFactor, specularFactor are stored in this->values
+	// diffuseFactor is stored in this->values
 }
 
 void GLTF::MaterialPBR::SpecularGlossiness::writeJSON(void* writer, GLTF::Options* options) {
