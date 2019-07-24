@@ -215,8 +215,9 @@ GLTF::MaterialPBR::SpecularGlossiness::~SpecularGlossiness()
 {
     delete diffuseTexture;
     delete specularGlossinessTexture;
+	delete glossinessFactor;
 
-    // diffuseFactor, specularFactor, glossinessFactor are stored in this->values
+    // diffuseFactor, specularFactor are stored in this->values
 }
 
 void GLTF::MaterialPBR::SpecularGlossiness::writeJSON(void* writer, GLTF::Options* options) {
@@ -941,24 +942,50 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 		material->occlusionTexture = texture;
 	}
 
-	if (options->specularGlossiness) {
-		if (values->specular) {
-			if (values->specular[3] < 1.0) {
-				hasTransparency = true;
-			}
-			material->specularGlossiness->specularFactor = values->specular;
+	float specularIntensity = 1.0;
+	if (values->specular) {
+		if (values->specular[3] < 1.0) {
+			hasTransparency = true;
 		}
+		// Compute specular intensity as luminance of the specular color.
+		float opacity = values->specular[3];
+		specularIntensity = values->specular[0] * opacity * 0.2125 + 
+			values->specular[1] * opacity * 0.7154 +
+			values->specular[2] * opacity * 0.0721;
+	}
+
+	float roughnessFactor = 1.0;
+	if (values->shininess) {
+		// Transform from 0-1000 range to 0-1 range. Then invert.
+		roughnessFactor = values->shininess[0] / 1000.0;
+		roughnessFactor = 1 - roughnessFactor;
+		// Clamp to 0.0-1.0 range.
+		if (roughnessFactor < 0) {
+			roughnessFactor = 0;
+		} else if (roughnessFactor > 1) {
+			roughnessFactor = 1;
+		}
+	}
+
+	// Low specular intensity values should produce a rough material even if shininess is high.
+    if (specularIntensity < 0.1) {
+        roughnessFactor *= (1.0 - specularIntensity);
+    }
+	if (roughnessFactor < 1.0) {
+		material->metallicRoughness->roughnessFactor = roughnessFactor;
+	}
+
+	if (options->specularGlossiness) {
+		// Specular factor is based on metallic factor, which when converting from Blinn-Phong is always zero.
+		material->specularGlossiness->specularFactor = new float[4]{ 0.0, 0.0, 0.0, 1.0 };	
 		if (values->specularTexture) {
 			GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
 			texture->texCoord = values->specularTexCoord;
 			texture->texture = values->specularTexture;
 			material->specularGlossiness->specularGlossinessTexture = texture;
 		}
-		if (values->shininess) {
-			if (values->shininess[0] > 1.0) {
-                values->shininess[0] = 1.0;
-			}
-            material->specularGlossiness->glossinessFactor = values->shininess;
+		if (roughnessFactor < 1.0) {
+			material->specularGlossiness->glossinessFactor = new float[1]{ 1.0f - roughnessFactor };
 		}
 	}
 
