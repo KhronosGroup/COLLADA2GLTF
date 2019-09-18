@@ -1,5 +1,10 @@
 Change Log
 ==========
+### Next Release
+
+##### Fixes :wrench:
+* Fixed spec/glossiness extension export [#156](https://github.com/KhronosGroup/COLLADA2GLTF/issues/156)
+
 ### v2.1.5 - 2019-05-22
 
 ##### Additions :tada:
