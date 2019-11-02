@@ -12,7 +12,7 @@
     "bluebird": "^3.5.3",
     "chai": "^4.2.0",
     "chai-subset": "^1.6.0",
-    "esm": "^3.0.84",
+    "esm": "^3.1.0",
     "gltf-validator": "^2.0.0-dev.2.7",
     "mocha": "^5.2.0",
     "tmp": "0.0.33"
