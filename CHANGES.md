@@ -1,5 +1,10 @@
 Change Log
 ==========
+### Next Release
+
+##### Fixes :wrench:
+* Avoid primitive restart issue [#213](https://github.com/KhronosGroup/COLLADA2GLTF/issues/213)
+
 ### v2.1.5 - 2019-05-22
 
 ##### Additions :tada:
