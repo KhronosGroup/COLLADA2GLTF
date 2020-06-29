@@ -977,8 +977,7 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 			baseColorFactor[3] = 1.0;
 			material->metallicRoughness->baseColorFactor = baseColorFactor;
 		}
-		float transparency = material->metallicRoughness->baseColorFactor[3];
-		transparency *= values->transparency[0];
+		float transparency = values->transparency[0];
 		material->metallicRoughness->baseColorFactor[3] = transparency;
 		if (transparency < 1.0) {
 			hasTransparency = true;
