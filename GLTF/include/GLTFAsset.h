@@ -16,6 +16,7 @@ namespace GLTF {
 class Asset : public GLTF::Object {
  private:
     std::vector<GLTF::MaterialCommon::Light*> _ambientLights;
+
  public:
     class Metadata : public GLTF::Object {
      public:
@@ -50,7 +51,8 @@ class Asset : public GLTF::Object {
     std::vector<GLTF::Shader*> getAllShaders();
     std::vector<GLTF::Texture*> getAllTextures();
     std::vector<GLTF::Image*> getAllImages();
-    std::vector<GLTF::Accessor*> getAllPrimitiveAccessors(GLTF::Primitive* primitive) const;
+    std::vector<GLTF::Accessor*> getAllPrimitiveAccessors(
+        GLTF::Primitive* primitive) const;
     std::vector<GLTF::BufferView*> getAllBufferViews();
     std::vector<GLTF::Buffer*> getAllBuffers();
     std::vector<GLTF::Camera*> getAllCameras();
@@ -66,7 +68,8 @@ class Asset : public GLTF::Object {
     std::vector<GLTF::BufferView*> getAllCompressedBufferView();
     bool compressPrimitives(GLTF::Options* options);
     void removeUncompressedBufferViews();
-    void removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic);
+    void removeAttributeFromDracoExtension(
+        GLTF::Primitive* primitive, const std::string &semantic);
 
     void requireExtension(std::string extension);
     void useExtension(std::string extension);

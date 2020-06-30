@@ -1,6 +1,8 @@
 // Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
+#include <string>
+
 #include "GLTFObject.h"
 
 namespace GLTF {

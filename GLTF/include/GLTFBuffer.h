@@ -1,6 +1,8 @@
 // Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
+#include <string>
+
 #include "GLTFObject.h"
 
 namespace GLTF {
@@ -12,7 +14,7 @@ class Buffer : public GLTF::Object {
 
     Buffer(unsigned char* data, int dataLength);
     virtual ~Buffer();
-    
+
     virtual std::string typeName();
     virtual void writeJSON(void* writer, GLTF::Options* options);
 };

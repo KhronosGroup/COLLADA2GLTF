@@ -1,6 +1,8 @@
 // Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
+#include <string>
+
 #include "GLTFBuffer.h"
 #include "GLTFConstants.h"
 #include "GLTFObject.h"
@@ -18,8 +20,7 @@ class BufferView : public GLTF::Object {
     BufferView(unsigned char* data, int dataLength);
     BufferView(unsigned char* data,
         int dataLength,
-        GLTF::Constants::WebGL target
-    );
+        GLTF::Constants::WebGL target);
 
     virtual std::string typeName();
     virtual void writeJSON(void* writer, GLTF::Options* options);
