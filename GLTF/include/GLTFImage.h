@@ -1,6 +1,9 @@
 // Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
+#include <string>
+#include <utility>
+
 #include "GLTFBufferView.h"
 #include "GLTFObject.h"
 
@@ -13,8 +16,9 @@ class Image : public GLTF::Object {
     std::string mimeType;
     GLTF::BufferView* bufferView = NULL;
 
-    Image(std::string uri);
-    Image(std::string uri, unsigned char* data, size_t byteLength, std::string fileExtension);
+    explicit Image(std::string uri);
+    Image(std::string uri, unsigned char* data, size_t byteLength,
+        std::string fileExtension);
     virtual ~Image();
 
     static GLTF::Image* load(std::string path, bool writeAbsoluteUris);
@@ -26,6 +30,7 @@ class Image : public GLTF::Object {
     const std::string cacheKey;
 
     Image(std::string uri, std::string cacheKey);
-    Image(std::string uri, std::string cacheKey, unsigned char* data, size_t byteLength, std::string fileExtension);
+    Image(std::string uri, std::string cacheKey, unsigned char* data,
+        size_t byteLength, std::string fileExtension);
 };
 }  // namespace GLTF

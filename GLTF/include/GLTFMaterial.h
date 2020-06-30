@@ -1,8 +1,9 @@
 // Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
-#include <string>
 #include <cmath>
+#include <string>
+#include <vector>
 
 #include "GLTFObject.h"
 #include "GLTFTechnique.h"
@@ -58,7 +59,7 @@ class Material : public GLTF::Object {
 };
 
 class MaterialPBR : public GLTF::Material {
- public: 
+ public:
     virtual ~MaterialPBR();
 
     MaterialPBR(const MaterialPBR&) = delete;
@@ -129,7 +130,7 @@ class MaterialCommon : public GLTF::Material {
     };
 
     class Light: public GLTF::Object {
-    public:
+     public:
         enum Type {
             AMBIENT,
             DIRECTIONAL,
@@ -162,8 +163,12 @@ class MaterialCommon : public GLTF::Material {
     MaterialCommon& operator=(MaterialCommon&&) = delete;
 
     const char* getTechniqueName();
-    GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, GLTF::Options* options);
-    GLTF::Material* getMaterial(std::vector<GLTF::MaterialCommon::Light*> lights, bool hasColorAttribute, GLTF::Options* options);
+    GLTF::Material* getMaterial(
+        std::vector<GLTF::MaterialCommon::Light*> lights,
+        GLTF::Options* options);
+    GLTF::Material* getMaterial(
+        std::vector<GLTF::MaterialCommon::Light*> lights,
+        bool hasColorAttribute, GLTF::Options* options);
     std::string getTechniqueKey(GLTF::Options* options);
     GLTF::MaterialPBR* getMaterialPBR(GLTF::Options* options);
     virtual void writeJSON(void* writer, GLTF::Options* options);

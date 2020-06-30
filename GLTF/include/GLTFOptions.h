@@ -6,7 +6,7 @@
 
 namespace GLTF {
 class Options {
-public:
+ public:
     std::string name;
     bool embeddedBuffers = true;
     bool embeddedTextures = true;

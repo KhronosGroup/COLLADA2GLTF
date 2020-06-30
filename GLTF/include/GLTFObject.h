@@ -23,5 +23,5 @@ class Object {
     virtual std::string typeName();
     virtual GLTF::Object* clone(GLTF::Object* clone);
     virtual void writeJSON(void* writer, GLTF::Options* options);
-    };
+};
 }  // namespace GLTF

@@ -1,6 +1,7 @@
 // Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "GLTFObject.h"

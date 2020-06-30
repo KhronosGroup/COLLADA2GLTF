@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "GLTFAccessor.h"
 #include "GLTFDracoExtension.h"

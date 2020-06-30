@@ -1,7 +1,10 @@
 // Copyright 2020 The Khronos® Group Inc.
-#pragma
+#pragma once
 
+#include <map>
 #include <set>
+#include <string>
+#include <vector>
 
 #include "GLTFObject.h"
 #include "GLTFProgram.h"
@@ -19,10 +22,13 @@ class Technique : public GLTF::Object {
         std::string nodeString;
         int count = -1;
 
-        Parameter(GLTF::Constants::WebGL type) : type(type) {};
-        Parameter(GLTF::Constants::WebGL type, float* value, int valueLength) : type(type), value(value), valueLength(valueLength) {};
-        Parameter(std::string semantic, GLTF::Constants::WebGL type) : semantic(semantic), type(type) {};
-        Parameter(std::string semantic, GLTF::Constants::WebGL type, int count) : semantic(semantic), type(type), count(count) {};
+        Parameter(GLTF::Constants::WebGL type) : type(type) {}
+        Parameter(GLTF::Constants::WebGL type, float* value, int valueLength)
+            : type(type), value(value), valueLength(valueLength) {}
+        Parameter(std::string semantic, GLTF::Constants::WebGL type)
+            : semantic(semantic), type(type) {}
+        Parameter(std::string semantic, GLTF::Constants::WebGL type, int count)
+            : semantic(semantic), type(type), count(count) {}
     };
 
     ~Technique();

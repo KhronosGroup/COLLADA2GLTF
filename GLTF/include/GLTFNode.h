@@ -31,13 +31,14 @@ class Node : public GLTF::Object {
         float matrix[16];
 
         TransformMatrix();
-        TransformMatrix(float a00, float a01, float a02, float a03, 
-            float a10, float a11, float a12, float a13, 
-            float a20, float a21, float a22, float a23, 
+        TransformMatrix(float a00, float a01, float a02, float a03,
+            float a10, float a11, float a12, float a13,
+            float a20, float a21, float a22, float a23,
             float a30, float a31, float a32, float a33);
 
         void premultiply(TransformMatrix* transform);
-        void premultiply(TransformMatrix* transform, TransformMatrix* destination);
+        void premultiply(TransformMatrix* transform,
+            TransformMatrix* destination);
         void scaleUniform(float scale);
         bool isIdentity();
         void getTransformTRS(TransformTRS* out);
@@ -72,8 +73,10 @@ class Node : public GLTF::Object {
 
     Transform* transform = NULL;
 
-    // Special implementation that takes a predicate so mappings can be updated for all children
-    GLTF::Object* clone(GLTF::Node* node, std::function<void(GLTF::Node*, GLTF::Node*)>& predicate);
+    // Special implementation that takes a predicate so mappings can be
+    // updated for all children.
+    GLTF::Object* clone(GLTF::Node* node,
+        const std::function<void(GLTF::Node*, GLTF::Node*)>& predicate);
 
     virtual std::string typeName();
     virtual GLTF::Object* clone(GLTF::Object* clone);

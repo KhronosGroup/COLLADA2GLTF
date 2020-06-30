@@ -1,6 +1,7 @@
 // Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "GLTFAccessor.h"
@@ -18,5 +19,5 @@ class Skin : public GLTF::Object {
     virtual std::string typeName();
     virtual void writeJSON(void* writer, GLTF::Options* options);
 };
-}  // Copyright 2020 The Khronos® Group Inc.
+}  // namespace GLTF
 
