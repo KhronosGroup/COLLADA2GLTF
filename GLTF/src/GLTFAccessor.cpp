@@ -1,11 +1,12 @@
 // Copyright 2020 The Khronos® Group Inc.
 #include "GLTFAccessor.h"
 
+#include <stdlib>
+
 #include <algorithm>
 #include <limits>
 #include <cstring>
 #include <set>
-#include <stdlib>
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
@@ -128,11 +129,11 @@ bool GLTF::Accessor::getComponentAtIndex(int index, float* component) {
             break;
         case GLTF::Constants::WebGL::SHORT:
             component[i] = static_cast<float>(
-                reinterpret_cast<short*>(buf)[i]);
+                reinterpret_cast<int16_t*>(buf)[i]);
             break;
         case GLTF::Constants::WebGL::UNSIGNED_SHORT:
             component[i] = static_cast<float>(
-                reinterpret_cast<unsigned short*>(buf)[i]);
+                reinterpret_cast<uint16_t*>(buf)[i]);
             break;
         case GLTF::Constants::WebGL::FLOAT:
             component[i] = reinterpret_cast<float*>(buf)[i];
@@ -163,12 +164,12 @@ bool GLTF::Accessor::writeComponentAtIndex(int index, float* component) {
             buf[i] = static_cast<unsigned char>(component[i]);
             break;
         case GLTF::Constants::WebGL::SHORT:
-            reinterpret_cast<short*>(buf)[i] =
-                static_cast<short>(component[i]);
+            reinterpret_cast<int16_t*>(buf)[i] =
+                static_cast<int16_t>(component[i]);
             break;
         case GLTF::Constants::WebGL::UNSIGNED_SHORT:
-            reinterpret_cast<unsigned short*>(buf)[i] =
-                static_cast<unsigned short>(component[i]);
+            reinterpret_cast<uint16_t*>(buf)[i] =
+                static_cast<uint16_t>(component[i]);
             break;
         case GLTF::Constants::WebGL::FLOAT:
             reinterpret_cast<float*>(buf)[i] =
@@ -185,7 +186,8 @@ bool GLTF::Accessor::writeComponentAtIndex(int index, float* component) {
     return true;
 }
 
-int GLTF::Accessor::getComponentByteLength(GLTF::Constants::WebGL componentType) {
+int GLTF::Accessor::getComponentByteLength(
+        GLTF::Constants::WebGL componentType) {
     switch (componentType) {
     case GLTF::Constants::WebGL::BYTE:
     case GLTF::Constants::WebGL::UNSIGNED_BYTE:
@@ -273,7 +275,7 @@ std::string GLTF::Accessor::typeName() {
 
 void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
     rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
-        static_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
+        reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
     if (this->bufferView) {
         jsonWriter->Key("bufferView");
         if (options->version == "1.0") {
@@ -292,7 +294,7 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
         }
     }
     jsonWriter->Key("componentType");
-    jsonWriter->Int((int)this->componentType);
+    jsonWriter->Int(static_cast<int>(this->componentType));
     jsonWriter->Key("count");
     jsonWriter->Int(this->count);
     if (this->max) {
@@ -302,7 +304,7 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
             if (componentType == GLTF::Constants::WebGL::FLOAT) {
                 jsonWriter->Double(this->max[i]);
             } else {
-                jsonWriter->Int((int)this->max[i]);
+                jsonWriter->Int(static_cast<int>(this->max[i]));
             }
         }
         jsonWriter->EndArray();
@@ -314,7 +316,7 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
             if (componentType == GLTF::Constants::WebGL::FLOAT) {
                 jsonWriter->Double(this->min[i]);
             } else {
-                jsonWriter->Int((int)this->min[i]);
+                jsonWriter->Int(static_cast<int>(this->min[i]));
             }
         }
         jsonWriter->EndArray();

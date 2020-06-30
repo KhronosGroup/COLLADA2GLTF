@@ -1,10 +1,10 @@
 // Copyright 2020 The Khronos® Group Inc.
 #include "GLTFAnimation.h"
 
+#include <algorithm>
+
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-
-#include <algorithm>
 
 std::string pathString(GLTF::Animation::Path path) {
     switch (path) {
@@ -21,7 +21,8 @@ std::string pathString(GLTF::Animation::Path path) {
 }
 
 GLTF::Animation::~Animation() {
-    std::for_each(channels.begin(), channels.end(), std::default_delete<Channel>());
+    std::for_each(channels.begin(), channels.end(),
+        std::default_delete<Channel>());
 }
 
 std::string GLTF::Animation::typeName() {
@@ -29,7 +30,8 @@ std::string GLTF::Animation::typeName() {
 }
 
 void GLTF::Animation::writeJSON(void* writer, GLTF::Options* options) {
-    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
+        reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
 
     jsonWriter->Key("channels");
     jsonWriter->StartArray();
@@ -65,8 +67,7 @@ void GLTF::Animation::writeJSON(void* writer, GLTF::Options* options) {
                     parameterMap[inputAccessorId] = inputString;
                     timeIndex++;
                 }
-            }
-            else {
+            } else {
                 parameterMap[inputAccessorId] = inputString;
                 timeIndex++;
             }
@@ -76,12 +77,12 @@ void GLTF::Animation::writeJSON(void* writer, GLTF::Options* options) {
             findPathCount = pathCounts.find(path);
             if (findPathCount == pathCounts.end()) {
                 pathCounts[path] = 1;
-            }
-            else {
+            } else {
                 count = findPathCount->second;
                 pathCounts[path]++;
             }
-            std::string outputString = path + (count > 0 ? "_" + std::to_string(count) : "");
+            std::string outputString = path +
+                (count > 0 ? "_" + std::to_string(count) : "");
             std::string outputAccessorId = sampler->output->getStringId();
             parameterMap[outputAccessorId] = outputString;
             sampler->outputString = outputString;
@@ -100,8 +101,7 @@ void GLTF::Animation::writeJSON(void* writer, GLTF::Options* options) {
     jsonWriter->Key("samplers");
     if (options->version == "1.0") {
         jsonWriter->StartObject();
-    }
-    else {
+    } else {
         jsonWriter->StartArray();
     }
     for (GLTF::Animation::Sampler* sampler : samplers) {
@@ -114,8 +114,7 @@ void GLTF::Animation::writeJSON(void* writer, GLTF::Options* options) {
     }
     if (options->version == "1.0") {
         jsonWriter->EndObject();
-    }
-    else {
+    } else {
         jsonWriter->EndArray();
     }
     samplers.clear();
@@ -127,13 +126,13 @@ std::string GLTF::Animation::Sampler::typeName() {
 }
 
 void GLTF::Animation::Sampler::writeJSON(void* writer, GLTF::Options* options) {
-    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
+        reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
 
     jsonWriter->Key("input");
     if (options->version == "1.0") {
         jsonWriter->String(inputString.c_str());
-    }
-    else {
+    } else {
         jsonWriter->Int(input->id);
     }
     jsonWriter->Key("interpolation");
@@ -141,8 +140,7 @@ void GLTF::Animation::Sampler::writeJSON(void* writer, GLTF::Options* options) {
     jsonWriter->Key("output");
     if (options->version == "1.0") {
         jsonWriter->String(outputString.c_str());
-    }
-    else {
+    } else {
         jsonWriter->Int(output->id);
     }
     GLTF::Object::writeJSON(writer, options);
@@ -155,13 +153,13 @@ GLTF::Animation::Channel::~Channel()
 }
 
 void GLTF::Animation::Channel::writeJSON(void* writer, GLTF::Options* options) {
-    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
+        reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
 
     jsonWriter->Key("sampler");
     if (options->version == "1.0") {
         jsonWriter->String(sampler->getStringId().c_str());
-    }
-    else {
+    } else {
         jsonWriter->Int(sampler->id);
     }
     jsonWriter->Key("target");
@@ -173,13 +171,13 @@ void GLTF::Animation::Channel::writeJSON(void* writer, GLTF::Options* options) {
 }
 
 void GLTF::Animation::Channel::Target::writeJSON(void* writer, GLTF::Options* options) {
-    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
+        reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
     
     if (options->version == "1.0") {
         jsonWriter->Key("id");
         jsonWriter->String(node->getStringId().c_str());
-    }
-    else {
+    } else {
         jsonWriter->Key("node");
         jsonWriter->Int(node->id);
     }
