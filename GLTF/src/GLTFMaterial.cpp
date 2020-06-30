@@ -11,17 +11,17 @@ GLTF::Material::Material() {
 
 GLTF::Material::~Material()
 {
-    if (values) {
-        delete[] values->ambient;
-        delete[] values->diffuse;
-        delete[] values->emission;
-        delete[] values->specular;
-        delete[] values->shininess;
-        delete[] values->transparency;
+	if (values) {
+		delete[] values->ambient;
+		delete[] values->diffuse;
+		delete[] values->emission;
+		delete[] values->specular;
+		delete[] values->shininess;
+		delete[] values->transparency;
 
-        delete values;
-        values = nullptr;
-    }
+		delete values;
+		values = nullptr;
+	}
 }
 
 bool GLTF::Material::hasTexture() {
@@ -172,10 +172,10 @@ void GLTF::MaterialPBR::Texture::writeJSON(void* writer, GLTF::Options* options)
 
 GLTF::MaterialPBR::MetallicRoughness::~MetallicRoughness()
 {
-    delete baseColorTexture;
-    delete metallicRoughnessTexture;
+	delete baseColorTexture;
+	delete metallicRoughnessTexture;
 
-    // baseColorFactor is stored in this->values
+	// baseColorFactor is stored in this->values
 }
 
 void GLTF::MaterialPBR::MetallicRoughness::writeJSON(void* writer, GLTF::Options* options) {
@@ -213,10 +213,12 @@ void GLTF::MaterialPBR::MetallicRoughness::writeJSON(void* writer, GLTF::Options
 
 GLTF::MaterialPBR::SpecularGlossiness::~SpecularGlossiness()
 {
-    delete diffuseTexture;
-    delete specularGlossinessTexture;
+	delete diffuseTexture;
+	delete specularGlossinessTexture;
+	delete specularFactor;
+	delete glossinessFactor;
 
-    // diffuseFactor, specularFactor, glossinessFactor are stored in this->values
+	// diffuseFactor is stored in this->values
 }
 
 void GLTF::MaterialPBR::SpecularGlossiness::writeJSON(void* writer, GLTF::Options* options) {
@@ -569,10 +571,10 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(std::vector<GLTF::MaterialComm
 	std::string vertexShaderMain = "";
 	if (hasSkinning) {
 		vertexShaderMain += "\
-    mat4 skinMat = a_weight.x * u_jointMatrix[int(a_joint.x)];\n\
-    skinMat += a_weight.y * u_jointMatrix[int(a_joint.y)];\n\
-    skinMat += a_weight.z * u_jointMatrix[int(a_joint.z)];\n\
-    skinMat += a_weight.w * u_jointMatrix[int(a_joint.w)];\n";
+	mat4 skinMat = a_weight.x * u_jointMatrix[int(a_joint.x)];\n\
+	skinMat += a_weight.y * u_jointMatrix[int(a_joint.y)];\n\
+	skinMat += a_weight.z * u_jointMatrix[int(a_joint.z)];\n\
+	skinMat += a_weight.w * u_jointMatrix[int(a_joint.w)];\n";
 	}
 
 	// Add position always
@@ -586,8 +588,8 @@ varying vec3 v_position;\n";
 		vertexShaderMain += "    vec4 pos = u_modelViewMatrix * vec4(a_position,1.0);\n";
 	}
 	vertexShaderMain += "\
-    v_position = pos.xyz;\n\
-    gl_Position = u_projectionMatrix * pos;\n";
+	v_position = pos.xyz;\n\
+	gl_Position = u_projectionMatrix * pos;\n";
 	fragmentShaderSource += "varying vec3 v_position;\n";
 
 	// Add normal if we don't have constant lighting
@@ -638,9 +640,9 @@ attribute vec4 a_weight;\n";
 	std::string fragmentLightingBlock = "";
 	for (std::string lightBaseName : ambientLights) {
 		fragmentLightingBlock += "\
-    {\n\
-        ambientLight += u_" + lightBaseName + "Color;\n\
-    }\n";
+	{\n\
+		ambientLight += u_" + lightBaseName + "Color;\n\
+	}\n";
 	}
 	if (hasNormals) {
 		for (auto const light : nonAmbientLights) {
@@ -666,10 +668,10 @@ attribute vec4 a_weight;\n";
 
 				vertexShaderMain += "    " + varyingPositionName + " = u_" + lightBaseName + "Transform[3].xyz;\n";
 				fragmentLightingBlock += "\
-    vec3 VP = " + varyingPositionName + " - v_position;\n\
-    vec3 l = normalize(VP);\n\
-    float range = length(VP);\n\
-    float attenuation = 1.0 / (u_" + lightBaseName + "Attenuation.x + \
+	vec3 VP = " + varyingPositionName + " - v_position;\n\
+	vec3 l = normalize(VP);\n\
+	float range = length(VP);\n\
+	float attenuation = 1.0 / (u_" + lightBaseName + "Attenuation.x + \
 (u_" + lightBaseName + "Attenuation.y * range) + \
 (u_" + lightBaseName + "Attenuation.z * range * range));\n";
 			}
@@ -679,15 +681,15 @@ attribute vec4 a_weight;\n";
 
 			if (lightType == Light::SPOT) {
 				fragmentLightingBlock += "\
-    float spotDot = dot(l, normalize(" + varyingDirectionName + "));\n\
-    if (spotDot < cos(u_" + lightBaseName + "FallOff.x * 0.5))\n\
-    {\n\
-        attenuation = 0.0;\n\
-    }\n\
-    else\n\
-    {\n\
-        attenuation *= max(0.0, pow(spotDot, u_" + lightBaseName + "FallOff.y));\n\
-    }\n";
+	float spotDot = dot(l, normalize(" + varyingDirectionName + "));\n\
+	if (spotDot < cos(u_" + lightBaseName + "FallOff.x * 0.5))\n\
+	{\n\
+		attenuation = 0.0;\n\
+	}\n\
+	else\n\
+	{\n\
+		attenuation *= max(0.0, pow(spotDot, u_" + lightBaseName + "FallOff.y));\n\
+	}\n";
 			}
 
 			fragmentLightingBlock += "    diffuseLight += u_" + lightBaseName + "Color * max(dot(normal, l), 0.) * attenuation;\n";
@@ -695,18 +697,18 @@ attribute vec4 a_weight;\n";
 			if (hasSpecular) {
 				if (this->technique == Technique::BLINN) {
 					fragmentLightingBlock += "\
-    vec3 h = normalize(l + viewDir);\n\
-    float specularIntensity = max(0., pow(max(dot(normal, h), 0.), u_shininess)) * attenuation;\n";
+	vec3 h = normalize(l + viewDir);\n\
+	float specularIntensity = max(0., pow(max(dot(normal, h), 0.), u_shininess)) * attenuation;\n";
 				} 
 				else { // PHONG
 					fragmentLightingBlock += "\
-    vec3 reflectDir = reflect(-l, normal);\n\
-    float specularIntensity = max(0., pow(max(dot(reflectDir, viewDir), 0.), u_shininess)) * attenuation;\n";
+	vec3 reflectDir = reflect(-l, normal);\n\
+	float specularIntensity = max(0., pow(max(dot(reflectDir, viewDir), 0.), u_shininess)) * attenuation;\n";
 				}
 			}
 			fragmentLightingBlock += "\
-    specularLight += u_" + lightBaseName + "Color * specularIntensity;\n\
-    }\n";
+	specularLight += u_" + lightBaseName + "Color * specularIntensity;\n\
+	}\n";
 		}
 	}
 
@@ -717,23 +719,23 @@ attribute vec4 a_weight;\n";
 
 	if (nonAmbientLights.size() == 0 && this->technique != Technique::CONSTANT) {
 		fragmentLightingBlock += "\
-    vec3 l = vec3(0.0, 0.0, 1.0);\n\
-    diffuseLight += vec3(1.0, 1.0, 1.0) * max(dot(normal, l), 0.); \n";
+	vec3 l = vec3(0.0, 0.0, 1.0);\n\
+	diffuseLight += vec3(1.0, 1.0, 1.0) * max(dot(normal, l), 0.); \n";
 
 		if (hasSpecular) {
 			if (this->technique == Technique::BLINN) {
 				fragmentLightingBlock += "\
-    vec3 h = normalize(l + viewDir);\n\
-    float specularIntensity = max(0., pow(max(dot(normal, h), 0.), u_shininess));\n";
+	vec3 h = normalize(l + viewDir);\n\
+	float specularIntensity = max(0., pow(max(dot(normal, h), 0.), u_shininess));\n";
 			}
 			else { // PHONG
 				fragmentLightingBlock += "\
-    vec3 reflectDir = reflect(-l, normal);\n\
-    float specularIntensity = max(0., pow(max(dot(reflectDir, viewDir), 0.), u_shininess));\n";
+	vec3 reflectDir = reflect(-l, normal);\n\
+	float specularIntensity = max(0., pow(max(dot(reflectDir, viewDir), 0.), u_shininess));\n";
 			}
 
 			fragmentLightingBlock += "\
-    specularLight += vec3(1.0, 1.0, 1.0) * specularIntensity;\n";
+	specularLight += vec3(1.0, 1.0, 1.0) * specularIntensity;\n";
 		}
 	}
 
@@ -756,9 +758,9 @@ void main(void) {\n";
 		fragmentShaderSource += "    vec3 normal = normalize(v_normal);\n";
 		if (doubleSided || options->doubleSided) {
 			fragmentShaderSource += "\
-    if (gl_FrontFacing == false)\n\
-    {\n\
-        normal = -normal;\n\
+	if (gl_FrontFacing == false)\n\
+	{\n\
+		normal = -normal;\n\
 	}\n";
 		}
 	}
@@ -826,8 +828,8 @@ void main(void) {\n";
 		colorCreationBlock += "    color += ambient * ambientLight;\n";
 	}
 	fragmentShaderSource += "\
-    vec3 viewDir = -normalize(v_position);\n\
-    vec3 ambientLight = vec3(0.0, 0.0, 0.0);\n";
+	vec3 viewDir = -normalize(v_position);\n\
+	vec3 ambientLight = vec3(0.0, 0.0, 0.0);\n";
 
 	// Add in light computations
 	fragmentShaderSource += fragmentLightingBlock;
@@ -882,13 +884,13 @@ std::string GLTF::MaterialCommon::getTechniqueKey(GLTF::Options* options) {
 
 GLTF::MaterialPBR::~MaterialPBR()
 {
-    delete metallicRoughness;
-    delete specularGlossiness;
+	delete metallicRoughness;
+	delete specularGlossiness;
 
-    delete normalTexture;
-    delete occlusionTexture;
-    delete emissiveTexture;
-    delete emissiveFactor;
+	delete normalTexture;
+	delete occlusionTexture;
+	delete emissiveTexture;
+	delete emissiveFactor;
 }
 
 GLTF::MaterialPBR::MaterialPBR() {
@@ -920,12 +922,12 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 		}
 	}
 
-    if (values->emission) {
-        if (values->emission[3] < 1.0) {
-            hasTransparency = true;
-        }
-        material->emissiveFactor = new float[3]{ values->emission[0], values->emission[1], values->emission[2] };
-    }
+	if (values->emission) {
+		if (values->emission[3] < 1.0) {
+			hasTransparency = true;
+		}
+		material->emissiveFactor = new float[3]{ values->emission[0], values->emission[1], values->emission[2] };
+	}
 	if (values->emissionTexture) {
 		GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
 		texture->texCoord = values->emissionTexCoord;
@@ -941,24 +943,50 @@ GLTF::MaterialPBR* GLTF::MaterialCommon::getMaterialPBR(GLTF::Options* options) 
 		material->occlusionTexture = texture;
 	}
 
-	if (options->specularGlossiness) {
-		if (values->specular) {
-			if (values->specular[3] < 1.0) {
-				hasTransparency = true;
-			}
-			material->specularGlossiness->specularFactor = values->specular;
+	float specularIntensity = 1.0;
+	if (values->specular) {
+		if (values->specular[3] < 1.0) {
+			hasTransparency = true;
 		}
+		// Compute specular intensity as luminance of the specular color.
+		float opacity = values->specular[3];
+		specularIntensity = values->specular[0] * opacity * 0.2125 + 
+			values->specular[1] * opacity * 0.7154 +
+			values->specular[2] * opacity * 0.0721;
+	}
+
+	float roughnessFactor = 1.0;
+	if (values->shininess) {
+		// Transform from 0-1000 range to 0-1 range. Then invert.
+		roughnessFactor = values->shininess[0] / 1000.0;
+		roughnessFactor = 1 - roughnessFactor;
+		// Clamp to 0.0-1.0 range.
+		if (roughnessFactor < 0) {
+			roughnessFactor = 0;
+		} else if (roughnessFactor > 1) {
+			roughnessFactor = 1;
+		}
+	}
+
+	// Low specular intensity values should produce a rough material even if shininess is high.
+	if (specularIntensity < 0.1) {
+		roughnessFactor *= (1.0 - specularIntensity);
+	}
+	if (roughnessFactor < 1.0) {
+		material->metallicRoughness->roughnessFactor = roughnessFactor;
+	}
+
+	if (options->specularGlossiness) {
+		// Specular factor is based on metallic factor, which when converting from Blinn-Phong is always zero.
+		material->specularGlossiness->specularFactor = new float[4]{ 0.0, 0.0, 0.0, 1.0 };	
 		if (values->specularTexture) {
 			GLTF::MaterialPBR::Texture* texture = new GLTF::MaterialPBR::Texture();
 			texture->texCoord = values->specularTexCoord;
 			texture->texture = values->specularTexture;
 			material->specularGlossiness->specularGlossinessTexture = texture;
 		}
-		if (values->shininess) {
-			if (values->shininess[0] > 1.0) {
-                values->shininess[0] = 1.0;
-			}
-            material->specularGlossiness->glossinessFactor = values->shininess;
+		if (roughnessFactor < 1.0) {
+			material->specularGlossiness->glossinessFactor = new float[1]{ 1.0f - roughnessFactor };
 		}
 	}
 

@@ -1,8 +1,12 @@
 Change Log
 ==========
 ### Next Release
+
 ##### Additions :tada:
 * Switch CI builds to GitHub actions [#264](https://github.com/KhronosGroup/COLLADA2GLTF/pull/264)
+
+##### Fixes :wrench:
+* Fixed spec/glossiness extension export [#156](https://github.com/KhronosGroup/COLLADA2GLTF/issues/156)
 
 ### v2.1.5 - 2019-05-22
 
