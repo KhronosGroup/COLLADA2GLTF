@@ -1,11 +1,13 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFShader.h"
-#include "GLTFOptions.h"
-#include "Base64.h"
+
+#include <string>
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-#include <string>
+#include "GLTFOptions.h"
+#include "Base64.h"
 
 std::string GLTF::Shader::typeName() {
     return "shader";

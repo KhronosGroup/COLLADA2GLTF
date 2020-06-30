@@ -1,8 +1,10 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFBuffer.h"
-#include "Base64.h"
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+#include "Base64.h"
 
 GLTF::Buffer::Buffer(unsigned char* data, int dataLength) {
     this->data = data;

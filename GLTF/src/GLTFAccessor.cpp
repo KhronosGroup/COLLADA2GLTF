@@ -1,10 +1,11 @@
+// Copyright 2020 The Khronos® Group Inc.
+#include "GLTFAccessor.h"
+
 #include <algorithm>
 #include <limits>
 #include <cstring>
 #include <set>
-#include <stdlib.h>
-
-#include "GLTFAccessor.h"
+#include <stdlib>
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
@@ -19,7 +20,8 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
     int count,
     GLTF::Constants::WebGL target
 ) : Accessor(type, componentType) {
-    int byteLength = count * this->getNumberOfComponents() * this->getComponentByteLength();
+    int byteLength = count * this->getNumberOfComponents() *
+        this->getComponentByteLength();
     unsigned char* allocatedData = (unsigned char*)malloc(byteLength);
     std::memcpy(allocatedData, data, byteLength);
     this->bufferView = new GLTF::BufferView(allocatedData, byteLength, target);
@@ -38,7 +40,8 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
     this->byteOffset = bufferView->byteLength;
     this->count = count;
     int componentByteLength = this->getComponentByteLength();
-    int byteLength = count * this->getNumberOfComponents() * componentByteLength;
+    int byteLength = count * this->getNumberOfComponents() *
+        componentByteLength;
 
     int padding = byteOffset % componentByteLength;
     if (padding != 0) {
@@ -46,7 +49,8 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
     }
     this->byteOffset += padding;
 
-    buffer->data = (unsigned char*)realloc(buffer->data, buffer->byteLength + padding + byteLength);
+    buffer->data = (unsigned char*)realloc(buffer->data, buffer->byteLength +
+        padding + byteLength);
     std::memcpy(buffer->data + buffer->byteLength + padding, data, byteLength);
     buffer->byteLength += byteLength + padding;
     bufferView->byteLength += byteLength + padding;
@@ -67,7 +71,8 @@ GLTF::Accessor::Accessor(GLTF::Accessor::Type type,
 GLTF::Accessor::Accessor(GLTF::Accessor* accessor) : Accessor(
         accessor->type,
         accessor->componentType,
-        &(accessor->bufferView->buffer->data[accessor->byteOffset + accessor->bufferView->byteOffset]),
+        &(accessor->bufferView->buffer->data[accessor->byteOffset +
+            accessor->bufferView->byteOffset]),
         accessor->count,
         accessor->bufferView->target) {
 }
@@ -115,22 +120,26 @@ bool GLTF::Accessor::getComponentAtIndex(int index, float* component) {
     for (int i = 0; i < numberOfComponents; i++) {
         switch (this->componentType) {
         case GLTF::Constants::WebGL::BYTE:
-            component[i] = (float)((char*)buf)[i];
+            component[i] = static_cast<float>(
+                reinterpret_cast<char*>(buf)[i]);
             break;
         case GLTF::Constants::WebGL::UNSIGNED_BYTE:
-            component[i] = (float)buf[i];
+            component[i] = static_cast<float>(buf[i]);
             break;
         case GLTF::Constants::WebGL::SHORT:
-            component[i] = (float)((short*)buf)[i];
+            component[i] = static_cast<float>(
+                reinterpret_cast<short*>(buf)[i]);
             break;
         case GLTF::Constants::WebGL::UNSIGNED_SHORT:
-            component[i] = (float)((unsigned short*)buf)[i];
+            component[i] = static_cast<float>(
+                reinterpret_cast<unsigned short*>(buf)[i]);
             break;
         case GLTF::Constants::WebGL::FLOAT:
-            component[i] = ((float*)buf)[i];
+            component[i] = reinterpret_cast<float*>(buf)[i];
             break;
         case GLTF::Constants::WebGL::UNSIGNED_INT:
-            component[i] = (float)((unsigned int*)buf)[i];
+            component[i] = static_cast<float>(
+                reinterpret_cast<unsigned int*>(buf)[i]);
             break;
         default:
             return false;
@@ -148,22 +157,26 @@ bool GLTF::Accessor::writeComponentAtIndex(int index, float* component) {
     for (int i = 0; i < numberOfComponents; i++) {
         switch (this->componentType) {
         case GLTF::Constants::WebGL::BYTE:
-            buf[i] = (char)component[i];
+            buf[i] = static_cast<char>(component[i]);
             break;
         case GLTF::Constants::WebGL::UNSIGNED_BYTE:
-            buf[i] = (unsigned char)component[i];
+            buf[i] = static_cast<unsigned char>(component[i]);
             break;
         case GLTF::Constants::WebGL::SHORT:
-            ((short*)buf)[i] = (short)component[i];
+            reinterpret_cast<short*>(buf)[i] =
+                static_cast<short>(component[i]);
             break;
         case GLTF::Constants::WebGL::UNSIGNED_SHORT:
-            ((unsigned short*)buf)[i] = (unsigned short)component[i];
+            reinterpret_cast<unsigned short*>(buf)[i] =
+                static_cast<unsigned short>(component[i]);
             break;
         case GLTF::Constants::WebGL::FLOAT:
-            ((float*)buf)[i] = (float)component[i];
+            reinterpret_cast<float*>(buf)[i] =
+                static_cast<float>(component[i]);
             break;
         case GLTF::Constants::WebGL::UNSIGNED_INT:
-            ((unsigned int*)buf)[i] = (unsigned int)component[i];
+            reinterpret_cast<unsigned int*>(buf)[i] =
+                static_cast<unsigned int>(component[i]);
             break;
         default:
             return false;
@@ -235,7 +248,8 @@ const char* GLTF::Accessor::getTypeName() {
 }
 
 bool GLTF::Accessor::equals(GLTF::Accessor* accessor) {
-    if (type != accessor->type || componentType != accessor->componentType || count != accessor->count) {
+    if (type != accessor->type || componentType != accessor->componentType ||
+            count != accessor->count) {
         return false;
     }
     int numberOfComponents = getNumberOfComponents();
@@ -258,13 +272,13 @@ std::string GLTF::Accessor::typeName() {
 }
 
 void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
-    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
+        static_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
     if (this->bufferView) {
         jsonWriter->Key("bufferView");
         if (options->version == "1.0") {
             jsonWriter->String(this->bufferView->getStringId().c_str());
-        }
-        else {
+        } else {
             jsonWriter->Int(this->bufferView->id);
         }
         jsonWriter->Key("byteOffset");
@@ -287,8 +301,7 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
         for (int i = 0; i < this->getNumberOfComponents(); i++) {
             if (componentType == GLTF::Constants::WebGL::FLOAT) {
                 jsonWriter->Double(this->max[i]);
-            }
-            else {
+            } else {
                 jsonWriter->Int((int)this->max[i]);
             }
         }
@@ -300,8 +313,7 @@ void GLTF::Accessor::writeJSON(void* writer, GLTF::Options* options) {
         for (int i = 0; i < this->getNumberOfComponents(); i++) {
             if (componentType == GLTF::Constants::WebGL::FLOAT) {
                 jsonWriter->Double(this->min[i]);
-            }
-            else {
+            } else {
                 jsonWriter->Int((int)this->min[i]);
             }
         }

@@ -22,7 +22,7 @@ class Technique : public GLTF::Object {
         std::string nodeString;
         int count = -1;
 
-        Parameter(GLTF::Constants::WebGL type) : type(type) {}
+        explicit Parameter(GLTF::Constants::WebGL type) : type(type) {}
         Parameter(GLTF::Constants::WebGL type, float* value, int valueLength)
             : type(type), value(value), valueLength(valueLength) {}
         Parameter(std::string semantic, GLTF::Constants::WebGL type)

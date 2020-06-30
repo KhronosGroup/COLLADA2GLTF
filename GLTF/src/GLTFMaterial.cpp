@@ -1,8 +1,10 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFMaterial.h"
-#include "GLTFNode.h"
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+#include "GLTFNode.h"
 
 GLTF::Material::Material() {
     this->values = new GLTF::Material::Values();

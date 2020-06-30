@@ -1,9 +1,10 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFDracoExtension.h"
+
+#include <iostream>
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-
-#include <iostream>
 
 void GLTF::DracoExtension::writeJSON(void* writer, GLTF::Options* options) {
     rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;

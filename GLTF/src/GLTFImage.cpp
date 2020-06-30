@@ -1,12 +1,14 @@
+// Copyright 2020 The Khronos® Group Inc.
+#include "GLTFImage.h"
+
 #include <iostream>
 #include <map>
 #include <algorithm>
 
-#include "Base64.h"
-#include "GLTFImage.h"
-
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+#include "Base64.h"
 
 std::map<std::string, GLTF::Image*> _imageCache;
 

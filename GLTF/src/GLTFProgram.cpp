@@ -1,3 +1,4 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFProgram.h"
 
 #include "rapidjson/stringbuffer.h"

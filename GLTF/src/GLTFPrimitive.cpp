@@ -1,9 +1,10 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFPrimitive.h"
+
+#include <algorithm>
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-
-#include <algorithm>
 
 GLTF::Primitive::~Primitive() {
     std::for_each(targets.begin(), targets.end(), std::default_delete<Target>());

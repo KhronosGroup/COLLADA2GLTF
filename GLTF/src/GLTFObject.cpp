@@ -1,8 +1,10 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFObject.h"
-#include "GLTFExtension.h"
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+#include "GLTFExtension.h"
 
 GLTF::Object::~Object() {
     for (auto& kv : extensions) {

@@ -1,8 +1,10 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFSkin.h"
-#include "GLTFNode.h"
 
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+#include "GLTFNode.h"
 
 std::string GLTF::Skin::typeName() {
     return "skin";

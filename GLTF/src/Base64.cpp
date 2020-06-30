@@ -1,3 +1,4 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "Base64.h"
 
 #include <cmath>
@@ -6,7 +7,8 @@ static inline bool is_base64(unsigned char c) {
     return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
-static const std::string base64CharSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char base64CharSet[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 char* Base64::encode(unsigned char* data, size_t length) {
     size_t base64Length = (size_t)(ceil(length / 3.0) * 4) + 1;
     char* base64 = new char[base64Length];
@@ -29,13 +31,11 @@ char* Base64::encode(unsigned char* data, size_t length) {
                 index = data[i + 2] & 0x3F;
                 base64[j] = base64CharSet[index];
                 j++;
-            }
-            else {
+            } else {
                 base64[j] = base64CharSet[index];
                 base64[j + 1] = '=';
             }
-        }
-        else {
+        } else {
             base64[j] = base64CharSet[index];
             base64[j + 1] = '=';
             base64[j + 2] = '=';
@@ -57,12 +57,16 @@ std::string Base64::decode(std::string string) {
         char_array_4[i++] = string[in_]; in_++;
         if (i == 4) {
             for (i = 0; i < 4; i++) {
-                char_array_4[i] = static_cast<unsigned char>(base64CharSet.find(char_array_4[i]));
+                char_array_4[i] = static_cast<unsigned char>(
+                    base64CharSet.find(char_array_4[i]));
             }
 
-            char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-            char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-            char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+            char_array_3[0] = (char_array_4[0] << 2) + 
+                ((char_array_4[1] & 0x30) >> 4);
+            char_array_3[1] = ((char_array_4[1] & 0xf) << 4) +
+                ((char_array_4[2] & 0x3c) >> 2);
+            char_array_3[2] = ((char_array_4[2] & 0x3) << 6) +
+                char_array_4[3];
 
             for (i = 0; i < 3; i++) {
                 ret += char_array_3[i];
@@ -76,12 +80,16 @@ std::string Base64::decode(std::string string) {
             char_array_4[j] = 0;
         }
         for (j = 0; j < 4; j++) {
-            char_array_4[j] = static_cast<unsigned char>(base64CharSet.find(char_array_4[j]));
+            char_array_4[j] = static_cast<unsigned char>(
+                base64CharSet.find(char_array_4[j]));
         }
 
-        char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-        char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-        char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+        char_array_3[0] = (char_array_4[0] << 2) +
+            ((char_array_4[1] & 0x30) >> 4);
+        char_array_3[1] = ((char_array_4[1] & 0xf) << 4) +
+            ((char_array_4[2] & 0x3c) >> 2);
+        char_array_3[2] = ((char_array_4[2] & 0x3) << 6) +
+            char_array_4[3];
 
         for (j = 0; (j < i - 1); j++) {
             ret += char_array_3[j];
