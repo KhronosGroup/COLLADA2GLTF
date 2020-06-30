@@ -66,4 +66,4 @@ class Accessor : public GLTF::Object {
     virtual std::string typeName();
     virtual void writeJSON(void* writer, GLTF::Options* options);
 };
-};  // namespace GLTF
+}  // namespace GLTF
