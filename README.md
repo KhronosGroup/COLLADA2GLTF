@@ -3,8 +3,7 @@
 </p>
 
 # COLLADA2GLTF
-[![Build Status](https://travis-ci.org/KhronosGroup/COLLADA2GLTF.svg?branch=master)](https://travis-ci.org/KhronosGroup/COLLADA2GLTF)
-[![Build Status](https://ci.appveyor.com/api/projects/status/3xtpxjohflwd5t1p/branch/master)](https://ci.appveyor.com/project/Khronoswebmaster/collada2gltf/history)
+[![Build Status](https://github.com/KhronosGroup/COLLADA2GLTF/workflows/CI/badge.svg)](https://github.com/KhronosGroup/COLLADA2GLTF/actions?query=workflow%3ACI)
 
 # COLLADA to glTF converter
 
