@@ -7,9 +7,9 @@
 namespace {
   class GLTFObjectTest : public ::testing::Test {
   public:
-	  GLTF::Options* options;
+    GLTF::Options* options;
 
-	  GLTFObjectTest();
-	  ~GLTFObjectTest();
+    GLTFObjectTest();
+    ~GLTFObjectTest();
   };
 }

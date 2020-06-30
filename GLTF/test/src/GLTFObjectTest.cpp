@@ -7,11 +7,11 @@
 #include "GLTFObject.h"
 
 GLTFObjectTest::GLTFObjectTest() {
-	options = new GLTF::Options();
+  options = new GLTF::Options();
 }
 
 GLTFObjectTest::~GLTFObjectTest() {
-	delete options;
+  delete options;
 }
 
 rapidjson::StringBuffer writeObject(GLTF::Object* object, GLTF::Options* options) {

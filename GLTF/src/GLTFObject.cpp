@@ -14,26 +14,26 @@ GLTF::Object::~Object() {
 }
 
 std::string GLTF::Object::getStringId() {
-	if (stringId == "") {
-		return typeName() + "_" + std::to_string(id);
-	}
-	return stringId;
+  if (stringId == "") {
+    return typeName() + "_" + std::to_string(id);
+  }
+  return stringId;
 }
 
 std::string GLTF::Object::typeName() {
-	return "object";
+  return "object";
 }
 
 GLTF::Object* GLTF::Object::clone(GLTF::Object* clone) {
-	clone->id = this->id;
-	clone->name = this->name;
-	for (const auto extra : this->extras) {
-		clone->extras[extra.first] = extra.second;
-	}
-	for (const auto extension : this->extensions) {
-		clone->extensions[extension.first] = extension.second;
-	}
-	return clone;
+  clone->id = this->id;
+  clone->name = this->name;
+  for (const auto extra : this->extras) {
+    clone->extras[extra.first] = extra.second;
+  }
+  for (const auto extension : this->extensions) {
+    clone->extensions[extension.first] = extension.second;
+  }
+  return clone;
 }
 
 void GLTF::Object::writeJSON(void* writer, GLTF::Options* options) {

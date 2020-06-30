@@ -9,7 +9,7 @@
 
 namespace GLTF {
 class Accessor : public GLTF::Object {
-public:
+ public:
     enum class Type {
         SCALAR,
         VEC2,
@@ -66,4 +66,4 @@ public:
     virtual std::string typeName();
     virtual void writeJSON(void* writer, GLTF::Options* options);
 };
-}; // namespace GLTF
+};  // namespace GLTF
