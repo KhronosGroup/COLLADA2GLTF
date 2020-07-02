@@ -1411,7 +1411,7 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
         static_cast<float>(colladaCamera->getFarClippingPlane().getValue()) *
         _assetScale;
     writeCamera->znear =
-        static_cast<float>colladaCamera->getNearClippingPlane().getValue()) *
+        static_cast<float>(colladaCamera->getNearClippingPlane().getValue()) *
         _assetScale;
     _cameraInstances[colladaCamera->getUniqueId()] = writeCamera;
     return true;

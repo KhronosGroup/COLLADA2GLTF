@@ -14,8 +14,6 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-using ahoy;
-
 const int HEADER_LENGTH = 12;
 const int CHUNK_HEADER_LENGTH = 8;
 
@@ -25,7 +23,7 @@ int main(int argc, const char** argv) {
   bool separate;
   bool separateTextures;
 
-  Parser* parser = new Parser();
+  ahoy::Parser* parser = new ahoy::Parser();
   parser->name("COLLADA2GLTF")
       ->usage("./COLLADA2GLTF input.dae output.gltf [options]");
 
