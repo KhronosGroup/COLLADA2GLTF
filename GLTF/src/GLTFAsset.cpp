@@ -636,7 +636,7 @@ void GLTF::Asset::removeUnusedSemantics() {
           std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord =
               primitive->attributes.find(semantic);
           primitive->attributes.erase(removeTexcoord);
-          // TODO: This will need to be adjusted for multiple maps
+          // TODO(rob): This will need to be adjusted for multiple maps
           removeAttributeFromDracoExtension(primitive, semantic);
         }
       }

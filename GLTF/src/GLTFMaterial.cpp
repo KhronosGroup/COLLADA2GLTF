@@ -609,9 +609,9 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
         "    vec4 pos = u_modelViewMatrix * vec4(a_position,1.0);\n";
   }
   vertexShaderMain +=
-      "\
-    v_position = pos.xyz;\n\
-    gl_Position = u_projectionMatrix * pos;\n";
+
+      "    v_position = pos.xyz;\n" +
+      "    gl_Position = u_projectionMatrix * pos;\n";
   fragmentShaderSource += "varying vec3 v_position;\n";
 
   // Add normal if we don't have constant lighting

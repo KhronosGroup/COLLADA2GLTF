@@ -1,3 +1,4 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "COLLADA2GLTFWriter.h"
 
 #include "Base64.h"
@@ -77,7 +78,7 @@ bool COLLADA2GLTF::Writer::writeGlobalAsset(const COLLADAFW::FileInfo* asset) {
     }
   }
 
-  float assetScale = (float)asset->getUnit().getLinearUnitMeter();
+  float assetScale = static_cast<float>(asset->getUnit().getLinearUnitMeter());
   _assetScale = assetScale;
   if (asset->getUpAxisType() == COLLADAFW::FileInfo::X_UP) {
     _rootNode = new GLTF::Node();
@@ -174,7 +175,8 @@ void packColladaMatrix(COLLADABU::Math::Matrix4 matrix, float* dataArray,
                        size_t offset) {
   for (int j = 0; j < 4; j++) {
     for (int k = 0; k < 4; k++) {
-      dataArray[k * 4 + j + offset] = (float)matrix.getElement(j, k);
+      dataArray[k * 4 + j + offset] =
+          static_cast<float>(matrix.getElement(j, k));
     }
   }
 }
@@ -239,7 +241,7 @@ bool COLLADA2GLTF::Writer::writeNodeToGroup(
           COLLADAFW::Transformation::ROTATE) {
         COLLADAFW::Rotate* rotate = (COLLADAFW::Rotate*)transformation;
         _originalRotationAngles[animationListId] =
-            (float)rotate->getRotationAngle();
+            static_cast<float>(rotate->getRotationAngle());
       }
       isAnimated = true;
     } else {
@@ -645,7 +647,7 @@ GLTF::Accessor* bufferAndMapVertexData(
     switch (dataType) {
       case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE:
         floatBuffer[index] =
-            (float)(vertexData.getDoubleValues()->getData()[i]);
+            static_cast<float>(vertexData.getDoubleValues()->getData()[i]);
         break;
       case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_FLOAT:
         floatBuffer[index] = vertexData.getFloatValues()->getData()[i];
@@ -666,7 +668,7 @@ float getMeshVertexDataAtIndex(const COLLADAFW::MeshVertexData& data,
                                int index) {
   COLLADAFW::FloatOrDoubleArray::DataType type = data.getType();
   if (type == COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE) {
-    return (float)data.getDoubleValues()->getData()[index];
+    return static_cast<float>(data.getDoubleValues()->getData()[index]);
   }
   return data.getFloatValues()->getData()[index];
 }
@@ -1125,10 +1127,10 @@ bool COLLADA2GLTF::Writer::writeMaterial(const COLLADAFW::Material* material) {
 }
 
 void packColladaColor(COLLADAFW::Color color, float* packArray) {
-  packArray[0] = (float)color.getRed();
-  packArray[1] = (float)color.getGreen();
-  packArray[2] = (float)color.getBlue();
-  packArray[3] = (float)color.getAlpha();
+  packArray[0] = static_cast<float>(color.getRed());
+  packArray[1] = static_cast<float>(color.getGreen());
+  packArray[2] = static_cast<float>(color.getBlue());
+  packArray[3] = static_cast<float>(color.getAlpha());
 }
 
 GLTF::Texture* COLLADA2GLTF::Writer::fromColladaTexture(
@@ -1343,35 +1345,40 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
       case COLLADAFW::Camera::ASPECTRATIO_AND_X:
         // fall through to single X if aspect ratio is zero
         if (colladaCamera->getAspectRatio().getValue() != 0) {
-          x = (float)colladaCamera->getXMag().getValue();
+          x = static_cast<float>(colladaCamera->getXMag().getValue());
           camera->xmag = x;
-          camera->ymag = x / (float)colladaCamera->getAspectRatio().getValue();
+          camera->ymag = x / static_cast<float>(
+                                 colladaCamera->getAspectRatio().getValue());
           break;
         }
       case COLLADAFW::Camera::SINGLE_X:
-        camera->xmag = (float)colladaCamera->getXMag().getValue();
+        camera->xmag = static_cast<float>(colladaCamera->getXMag().getValue());
         camera->ymag = 1.0;
         break;
       case COLLADAFW::Camera::SINGLE_Y:
         camera->xmag = 1.0;
-        camera->ymag = (float)colladaCamera->getYMag().getValue();
+        camera->ymag = static_cast<float>(colladaCamera->getYMag().getValue());
         break;
       case COLLADAFW::Camera::X_AND_Y:
-        camera->xmag = (float)colladaCamera->getXMag().getValue();
-        camera->ymag = (float)colladaCamera->getYMag().getValue();
+        camera->xmag = static_cast<float>(colladaCamera->getXMag().getValue());
+        camera->ymag = static_cast<float>(colladaCamera->getYMag().getValue());
         break;
       case COLLADAFW::Camera::ASPECTRATIO_AND_Y:
-        y = (float)colladaCamera->getYMag().getValue();
-        camera->xmag = y * (float)colladaCamera->getAspectRatio().getValue();
+        y = static_cast<float>(colladaCamera->getYMag().getValue());
+        camera->xmag =
+            y * static_cast < float(colladaCamera->getAspectRatio().getValue());
         camera->ymag = y;
         break;
     };
     writeCamera = camera;
   } else if (colladaCamera->getCameraType() == COLLADAFW::Camera::PERSPECTIVE) {
     GLTF::CameraPerspective* camera = new GLTF::CameraPerspective();
-    float x = (float)(colladaCamera->getXFov().getValue() * (PI / 180.0));
-    float y = (float)(colladaCamera->getYFov().getValue() * (PI / 180.0));
-    float aspectRatio = (float)colladaCamera->getAspectRatio().getValue();
+    float x =
+        static_cast<float>(colladaCamera->getXFov().getValue() * (PI / 180.0));
+    float y =
+        static_cast<float>(colladaCamera->getYFov().getValue() * (PI / 180.0));
+    float aspectRatio =
+        static_cast<float>(colladaCamera->getAspectRatio().getValue());
     switch (colladaCamera->getDescriptionType()) {
       case COLLADAFW::Camera::UNDEFINED:
       case COLLADAFW::Camera::SINGLE_X:
@@ -1402,9 +1409,10 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
     }
     writeCamera->stringId = colladaCamera->getOriginalId();
     writeCamera->zfar =
-        (float)colladaCamera->getFarClippingPlane().getValue() * _assetScale;
+        static_cast<float>(colladaCamera->getFarClippingPlane().getValue()) *
+        _assetScale;
     writeCamera->znear =
-        (float)colladaCamera->getNearClippingPlane().getValue() * _assetScale;
+        static_cast<float>colladaCamera->getNearClippingPlane().getValue()) * _assetScale;
     _cameraInstances[colladaCamera->getUniqueId()] = writeCamera;
     return true;
   }
@@ -1436,10 +1444,11 @@ bool COLLADA2GLTF::Writer::writeLight(const COLLADAFW::Light* colladaLight) {
     case COLLADAFW::Light::POINT_LIGHT:
       light->type = GLTF::MaterialCommon::Light::Type::POINT;
       light->constantAttenuation =
-          (float)colladaLight->getConstantAttenuation();
-      light->linearAttenuation = (float)colladaLight->getLinearAttenuation();
+          static_cast<float>(colladaLight->getConstantAttenuation());
+      light->linearAttenuation =
+          static_cast<float>(colladaLight->getLinearAttenuation());
       light->quadraticAttenuation =
-          (float)colladaLight->getQuadraticAttenuation();
+          static_cast<float>(colladaLight->getQuadraticAttenuation());
       break;
   }
 
@@ -1478,7 +1487,8 @@ bool COLLADA2GLTF::Writer::writeAnimation(
     for (int i = 0; i < inputLength; i++) {
       switch (inputArray.getType()) {
         case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE:
-          value = (float)(inputArray.getDoubleValues()->getData()[i]);
+          value =
+              static_cast<float>(inputArray.getDoubleValues()->getData()[i]);
           break;
         case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_FLOAT:
           value = inputArray.getFloatValues()->getData()[i];
@@ -1489,7 +1499,8 @@ bool COLLADA2GLTF::Writer::writeAnimation(
     for (int i = 0; i < outputLength; i++) {
       switch (outputArray.getType()) {
         case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE:
-          value = (float)(outputArray.getDoubleValues()->getData()[i]);
+          value =
+              static_cast<float>(outputArray.getDoubleValues()->getData()[i]);
           break;
         case COLLADAFW::FloatOrDoubleArray::DATA_TYPE_FLOAT:
           value = outputArray.getFloatValues()->getData()[i];
@@ -1533,7 +1544,7 @@ void interpolateTranslation(float* base, std::vector<float> input,
                                    (time - startTime) / (endTime - startTime);
     value = value * assetScale;
   }
-  translationOut[offset] = (float)value;
+  translationOut[offset] = static_cast<float>(value);
 }
 
 /**
@@ -1836,10 +1847,10 @@ bool COLLADA2GLTF::Writer::writeAnimationList(
           }
           angle = COLLADABU::Math::Utils::degToRad(output[index]);
           quaternion.fromAngleAxis(angle, axis);
-          rotation[j * 4] = (float)quaternion.x;
-          rotation[j * 4 + 1] = (float)quaternion.y;
-          rotation[j * 4 + 2] = (float)quaternion.z;
-          rotation[j * 4 + 3] = (float)quaternion.w;
+          rotation[j * 4] = static_cast<float>(quaternion.x);
+          rotation[j * 4 + 1] = static_cast<float>(quaternion.y);
+          rotation[j * 4 + 2] = static_cast<float>(quaternion.z);
+          rotation[j * 4 + 3] = static_cast<float>(quaternion.w);
           minimizeRotationDistance = true;
           break;
         }
@@ -2050,8 +2061,8 @@ bool COLLADA2GLTF::Writer::writeSkinControllerData(
           weightValue = weightsArray.getFloatValues()->getData()[weightIndex];
         } else if (weightsArray.getType() ==
                    COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE) {
-          weightValue =
-              (float)weightsArray.getDoubleValues()->getData()[weightIndex];
+          weightValue = static_cast<float>(
+              weightsArray.getDoubleValues()->getData()[weightIndex]);
         }
         weight[j] = weightValue;
       } else {
@@ -2183,7 +2194,8 @@ bool COLLADA2GLTF::Writer::writeController(
         weightValue = morphWeights.getFloatValues()->getData()[i];
       } else if (morphWeights.getType() ==
                  COLLADAFW::FloatOrDoubleArray::DATA_TYPE_DOUBLE) {
-        weightValue = (float)morphWeights.getDoubleValues()->getData()[i];
+        weightValue =
+            static_cast<float>(morphWeights.getDoubleValues()->getData()[i]);
       }
       mesh->weights.push_back(weightValue);
     }

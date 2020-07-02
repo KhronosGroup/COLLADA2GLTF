@@ -1,6 +1,10 @@
+// Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
 #include <map>
+#include <set>
+#include <string>
+#include <tuple>
 #include <vector>
 
 #include "COLLADA2GLTFExtrasHandler.h"

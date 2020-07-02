@@ -1,3 +1,4 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "COLLADA2GLTFExtrasHandler.h"
 
 #include <COLLADAFW.h>

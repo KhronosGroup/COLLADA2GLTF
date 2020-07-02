@@ -1,3 +1,4 @@
+// Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
 #include <map>
@@ -30,6 +31,6 @@ class ExtrasHandler : COLLADASaxFWL::IExtraDataCallbackHandler {
   std::set<COLLADAFW::UniqueId> lockAmbientDiffuse;
   std::map<COLLADAFW::UniqueId, COLLADAFW::TextureAttributes*> bumpTextures;
   std::set<COLLADAFW::UniqueId> doubleSided;
-  ExtrasHandler(COLLADASaxFWL::Loader* loader) : _loader(loader){};
+  explicit ExtrasHandler(COLLADASaxFWL::Loader* loader) : _loader(loader) {}
 };
 }  // namespace COLLADA2GLTF

@@ -1,3 +1,4 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFAssetTest.h"
 
 #include "GLTFAsset.h"

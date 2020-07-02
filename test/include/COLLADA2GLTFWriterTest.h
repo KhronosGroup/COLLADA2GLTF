@@ -1,9 +1,9 @@
+// Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
 #include "COLLADA2GLTFWriter.h"
 #include "gtest/gtest.h"
 
-namespace {
 class COLLADA2GLTFWriterTest : public ::testing::Test {
  public:
   COLLADA2GLTF::Writer* writer;
@@ -14,4 +14,3 @@ class COLLADA2GLTFWriterTest : public ::testing::Test {
   COLLADA2GLTFWriterTest();
   ~COLLADA2GLTFWriterTest();
 };
-}  // namespace
