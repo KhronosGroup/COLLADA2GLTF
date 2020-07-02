@@ -574,7 +574,7 @@ bool COLLADA2GLTF::Writer::writeScene(const COLLADAFW::Scene* scene) {
   return true;
 }
 
-void RecursiveNodeDeleter(std::vector<GLTF::Node*>& nodes) {
+void RecursiveNodeDeleter(const std::vector<GLTF::Node*>& nodes) {
   for (auto& node : nodes) {
     RecursiveNodeDeleter(node->children);
     delete node;
@@ -1411,7 +1411,8 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
         static_cast<float>(colladaCamera->getFarClippingPlane().getValue()) *
         _assetScale;
     writeCamera->znear =
-        static_cast<float>colladaCamera->getNearClippingPlane().getValue()) * _assetScale;
+        static_cast<float>colladaCamera->getNearClippingPlane().getValue()) *
+        _assetScale;
     _cameraInstances[colladaCamera->getUniqueId()] = writeCamera;
     return true;
   }
