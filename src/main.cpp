@@ -14,7 +14,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-using namespace ahoy;
+using ahoy;
 
 const int HEADER_LENGTH = 12;
 const int CHUNK_HEADER_LENGTH = 8;
@@ -416,7 +416,8 @@ int main(int argc, const char** argv) {
     }
 
     std::clock_t end = std::clock();
-    std::cout << "Time: " << ((end - start) / (double)(CLOCKS_PER_SEC / 1000))
+    std::cout << "Time: "
+              << ((end - start) / static_cast<double>(CLOCKS_PER_SEC / 1000))
               << " ms" << std::endl;
     delete asset;
     return 0;

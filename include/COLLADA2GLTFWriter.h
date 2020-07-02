@@ -181,7 +181,6 @@ class Writer : public COLLADAFW::IWriter {
 
   /** Add joint indices and joint weights to draco compression extension.*/
   bool addControllerDataToDracoMesh(GLTF::Primitive* primitive,
-                                    unsigned short* jointArray,
-                                    float* weightArray);
+                                    uint16_t* jointArray, float* weightArray);
 };
 }  // namespace COLLADA2GLTF

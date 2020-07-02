@@ -942,8 +942,8 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
       GLTF::Accessor* indices = NULL;
       if (index < 65536) {
         // We can fit this in an UNSIGNED_SHORT
-        std::vector<unsigned short> unsignedShortIndices(buildIndices.begin(),
-                                                         buildIndices.end());
+        std::vector<uint16_t> unsignedShortIndices(buildIndices.begin(),
+                                                   buildIndices.end());
         indices =
             new GLTF::Accessor(GLTF::Accessor::Type::SCALAR,
                                GLTF::Constants::WebGL::UNSIGNED_SHORT,
@@ -1052,8 +1052,7 @@ bool COLLADA2GLTF::Writer::addAttributesToDracoMesh(
 }
 
 bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(
-    GLTF::Primitive* primitive, unsigned short* jointArray,
-    float* weightArray) {
+    GLTF::Primitive* primitive, uint16_t* jointArray, float* weightArray) {
   const int vertexCount = primitive->attributes["POSITION"]->count;
   const GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC4;
   int componentCount = GLTF::Accessor::getNumberOfComponents(type);
@@ -1074,7 +1073,7 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(
   draco::PointAttribute joint_att;
   joint_att.Init(att_type, NULL, componentCount, draco::DT_UINT16,
                  /* normalized */ false,
-                 /* stride */ sizeof(unsigned short) * componentCount,
+                 /* stride */ sizeof(uint16_t) * componentCount,
                  /* byte_offset */ 0);
   int joint_att_id = dracoMesh->AddAttribute(
       joint_att, /* identity_mapping */ true, vertexCount);
@@ -1082,9 +1081,9 @@ bool COLLADA2GLTF::Writer::addControllerDataToDracoMesh(
   dracoExtension->attributeToId["JOINTS_0"] = joint_att_id;
   att_ptr = dracoMesh->attribute(joint_att_id);
   for (draco::PointIndex i(0); i < vertexCount; ++i) {
-    std::vector<unsigned short> vertex_data(componentCount);
+    std::vector<uint16_t> vertex_data(componentCount);
     memcpy(&vertex_data[0], &jointArray[i.value() * componentCount],
-           sizeof(unsigned short) * componentCount);
+           sizeof(uint16_t) * componentCount);
     att_ptr->SetAttributeValue(att_ptr->mapped_index(i), &vertex_data[0]);
   }
 
@@ -1366,10 +1365,10 @@ bool COLLADA2GLTF::Writer::writeCamera(const COLLADAFW::Camera* colladaCamera) {
       case COLLADAFW::Camera::ASPECTRATIO_AND_Y:
         y = static_cast<float>(colladaCamera->getYMag().getValue());
         camera->xmag =
-            y * static_cast < float(colladaCamera->getAspectRatio().getValue());
+            y * static_cast<float>(colladaCamera->getAspectRatio().getValue());
         camera->ymag = y;
         break;
-    };
+    }
     writeCamera = camera;
   } else if (colladaCamera->getCameraType() == COLLADAFW::Camera::PERSPECTIVE) {
     GLTF::CameraPerspective* camera = new GLTF::CameraPerspective();
@@ -2138,8 +2137,7 @@ bool COLLADA2GLTF::Writer::writeController(
     for (const auto& primitiveEntry : positionMapping) {
       GLTF::Primitive* primitive = primitiveEntry.first;
       int count = primitive->attributes["POSITION"]->count;
-      unsigned short* jointArray =
-          new unsigned short[count * numberOfComponents];
+      uint16_t* jointArray = new uint16_t[count * numberOfComponents];
       float* weightArray = new float[count * numberOfComponents];
 
       std::vector<unsigned int> mapping = primitiveEntry.second;

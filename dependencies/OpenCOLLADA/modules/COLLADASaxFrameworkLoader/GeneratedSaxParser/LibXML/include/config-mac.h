@@ -1,3 +1,6 @@
+// Copyright 2020 The Khronos® Group Inc.
+#pragma once
+
 /* config.h generated manually for macos.  */
 
 /* Define if you have the strftime function.  */
