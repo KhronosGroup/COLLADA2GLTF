@@ -125,7 +125,8 @@ std::string GLTF::Animation::Sampler::typeName() {
     return "sampler";
 }
 
-void GLTF::Animation::Sampler::writeJSON(void* writer, GLTF::Options* options) {
+void GLTF::Animation::Sampler::writeJSON(
+        void* writer, GLTF::Options* options) {
     rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
         reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
 
@@ -146,13 +147,13 @@ void GLTF::Animation::Sampler::writeJSON(void* writer, GLTF::Options* options) {
     GLTF::Object::writeJSON(writer, options);
 }
 
-GLTF::Animation::Channel::~Channel()
-{
+GLTF::Animation::Channel::~Channel() {
     delete sampler;
     delete target;
 }
 
-void GLTF::Animation::Channel::writeJSON(void* writer, GLTF::Options* options) {
+void GLTF::Animation::Channel::writeJSON(
+        void* writer, GLTF::Options* options) {
     rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
         reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
 
@@ -170,7 +171,8 @@ void GLTF::Animation::Channel::writeJSON(void* writer, GLTF::Options* options) {
     GLTF::Object::writeJSON(writer, options);
 }
 
-void GLTF::Animation::Channel::Target::writeJSON(void* writer, GLTF::Options* options) {
+void GLTF::Animation::Channel::Target::writeJSON(
+        void* writer, GLTF::Options* options) {
     rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
         reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
     

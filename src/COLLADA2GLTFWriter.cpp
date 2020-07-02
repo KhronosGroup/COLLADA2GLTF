@@ -1148,7 +1148,7 @@ bool COLLADA2GLTF::Writer::writeEffect(const COLLADAFW::Effect* effect) {
             if (diffuse[3] < 1.0) {
                 material->transparent = true;
             }
-            delete transparentValues;
+            delete[] transparentValues;
         }
 
         COLLADAFW::FloatOrParam shininess = effectCommon->getShininess();

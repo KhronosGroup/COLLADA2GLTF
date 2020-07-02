@@ -1,7 +1,7 @@
 // Copyright 2020 The Khronos® Group Inc.
 #include "GLTFAccessor.h"
 
-#include <stdlib>
+#include <stdlib.h>
 
 #include <algorithm>
 #include <limits>

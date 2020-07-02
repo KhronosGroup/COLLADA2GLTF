@@ -20,7 +20,6 @@ const int HEADER_LENGTH = 12;
 const int CHUNK_HEADER_LENGTH = 8;
 
 int main(int argc, const char **argv) {
-    GLTF::Asset* asset = new GLTF::Asset();
     COLLADA2GLTF::Options* options = new COLLADA2GLTF::Options();
 
     bool separate;
@@ -185,6 +184,7 @@ int main(int argc, const char **argv) {
         std::cout << "Converting " << options->inputPath << " -> " << options->outputPath << std::endl;
         std::clock_t start = std::clock();
 
+        GLTF::Asset* asset = new GLTF::Asset();
         COLLADASaxFWL::Loader* loader = new COLLADASaxFWL::Loader();
         COLLADA2GLTF::ExtrasHandler* extrasHandler = new COLLADA2GLTF::ExtrasHandler(loader);
         COLLADA2GLTF::Writer* writer = new COLLADA2GLTF::Writer(loader, asset, options, extrasHandler);
@@ -343,6 +343,7 @@ int main(int argc, const char **argv) {
                 for (int i = 0; i < binPadding; i++) {
                     fwrite("\0", sizeof(char), 1, file);
                 }
+                delete[] writeHeader;
 
                 fclose(file);
             }
@@ -353,6 +354,7 @@ int main(int argc, const char **argv) {
 
         std::clock_t end = std::clock();
         std::cout << "Time: " << ((end - start) / (double)(CLOCKS_PER_SEC / 1000)) << " ms" << std::endl;
+        delete asset;
         return 0;
     }
     else {

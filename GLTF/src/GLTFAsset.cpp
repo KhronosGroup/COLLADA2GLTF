@@ -60,7 +60,9 @@ GLTF::Asset::~Asset() {
 }
 
 void GLTF::Asset::Metadata::writeJSON(void* writer, GLTF::Options* options) {
-    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
+        reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
+
     if (options->version != "") {
         version = options->version;
     }
@@ -96,8 +98,7 @@ GLTF::Scene* GLTF::Asset::getDefaultScene() {
         scene = new GLTF::Scene();
         this->scenes.push_back(scene);
         this->scene = 0;
-    }
-    else {
+    } else {
         scene = this->scenes[this->scene];
     }
     return scene;
@@ -109,7 +110,8 @@ std::vector<GLTF::Accessor*> GLTF::Asset::getAllAccessors() {
     for (GLTF::Skin* skin : getAllSkins()) {
         GLTF::Accessor* inverseBindMatrices = skin->inverseBindMatrices;
         if (inverseBindMatrices != NULL) {
-            if (uniqueAccessors.find(inverseBindMatrices) == uniqueAccessors.end()) {
+            if (uniqueAccessors.find(inverseBindMatrices)
+                    == uniqueAccessors.end()) {
                 accessors.push_back(inverseBindMatrices);
                 uniqueAccessors.insert(inverseBindMatrices);
             }
@@ -125,7 +127,8 @@ std::vector<GLTF::Accessor*> GLTF::Asset::getAllAccessors() {
         }
         GLTF::Accessor* indicesAccessor = primitive->indices;
         if (indicesAccessor != NULL) {
-            if (uniqueAccessors.find(indicesAccessor) == uniqueAccessors.end()) {
+            if (uniqueAccessors.find(indicesAccessor)
+                    == uniqueAccessors.end()) {
                 accessors.push_back(indicesAccessor);
                 uniqueAccessors.insert(indicesAccessor);
             }
@@ -135,11 +138,13 @@ std::vector<GLTF::Accessor*> GLTF::Asset::getAllAccessors() {
     for (GLTF::Animation* animation : animations) {
         for (GLTF::Animation::Channel* channel : animation->channels) {
             GLTF::Animation::Sampler* sampler = channel->sampler;
-            if (uniqueAccessors.find(sampler->input) == uniqueAccessors.end()) {
+            if (uniqueAccessors.find(sampler->input)
+                    == uniqueAccessors.end()) {
                 accessors.push_back(sampler->input);
                 uniqueAccessors.insert(sampler->input);
             }
-            if (uniqueAccessors.find(sampler->output) == uniqueAccessors.end()) {
+            if (uniqueAccessors.find(sampler->output)
+                    == uniqueAccessors.end()) {
                 accessors.push_back(sampler->output);
                 uniqueAccessors.insert(sampler->output);
             }
@@ -292,40 +297,45 @@ std::vector<GLTF::Texture*> GLTF::Asset::getAllTextures() {
     std::vector<GLTF::Texture*> textures;
     std::set<GLTF::Texture*> uniqueTextures;
     for (GLTF::Material* material : getAllMaterials()) {
-        if (material->type == GLTF::Material::MATERIAL || material->type == GLTF::Material::MATERIAL_COMMON) {
+        if (material->type == GLTF::Material::MATERIAL
+                || material->type == GLTF::Material::MATERIAL_COMMON) {
             GLTF::Material::Values* values = material->values;
             if (values->ambientTexture != NULL) {
-                if (uniqueTextures.find(values->ambientTexture) == uniqueTextures.end()) {
+                if (uniqueTextures.find(values->ambientTexture)
+                        == uniqueTextures.end()) {
                     textures.push_back(values->ambientTexture);
                     uniqueTextures.insert(values->ambientTexture);
                 }
             }
             if (values->diffuseTexture != NULL) {
-                if (uniqueTextures.find(values->diffuseTexture) == uniqueTextures.end()) {
+                if (uniqueTextures.find(values->diffuseTexture)
+                        == uniqueTextures.end()) {
                     textures.push_back(values->diffuseTexture);
                     uniqueTextures.insert(values->diffuseTexture);
                 }
             }
             if (values->emissionTexture != NULL) {
-                if (uniqueTextures.find(values->emissionTexture) == uniqueTextures.end()) {
+                if (uniqueTextures.find(values->emissionTexture)
+                        == uniqueTextures.end()) {
                     textures.push_back(values->emissionTexture);
                     uniqueTextures.insert(values->emissionTexture);
                 }
             }
             if (values->specularTexture != NULL) {
-                if (uniqueTextures.find(values->specularTexture) == uniqueTextures.end()) {
+                if (uniqueTextures.find(values->specularTexture)
+                        == uniqueTextures.end()) {
                     textures.push_back(values->specularTexture);
                     uniqueTextures.insert(values->specularTexture);
                 }
             }
             if (values->bumpTexture != NULL) {
-                if (uniqueTextures.find(values->bumpTexture) == uniqueTextures.end()) {
+                if (uniqueTextures.find(values->bumpTexture)
+                        == uniqueTextures.end()) {
                     textures.push_back(values->bumpTexture);
                     uniqueTextures.insert(values->bumpTexture);
                 }
             }
-        }
-        else if (material->type == GLTF::Material::PBR_METALLIC_ROUGHNESS) {
+        } else if (material->type == GLTF::Material::PBR_METALLIC_ROUGHNESS) {
             GLTF::MaterialPBR* materialPBR = (GLTF::MaterialPBR*)material;
             if (materialPBR->metallicRoughness->baseColorTexture != NULL) {
                 if (uniqueTextures.find(materialPBR->metallicRoughness->baseColorTexture->texture) == uniqueTextures.end()) {
@@ -389,8 +399,8 @@ std::vector<GLTF::Image*> GLTF::Asset::getAllImages() {
     return images;
 }
 
-std::vector<GLTF::Accessor*> GLTF::Asset::getAllPrimitiveAccessors(GLTF::Primitive* primitive) const
-{
+std::vector<GLTF::Accessor*> GLTF::Asset::getAllPrimitiveAccessors(
+    GLTF::Primitive* primitive) const {
     std::vector<GLTF::Accessor*> accessors;
 
     for (const auto& attribute : primitive->attributes) {
@@ -405,22 +415,22 @@ std::vector<GLTF::Accessor*> GLTF::Asset::getAllPrimitiveAccessors(GLTF::Primiti
     return move(accessors);
 }
 
-std::vector<GLTF::BufferView*> GLTF::Asset::getAllBufferViews()
-{
+std::vector<GLTF::BufferView*> GLTF::Asset::getAllBufferViews() {
     std::vector<GLTF::BufferView*> bufferViews;
-    std::set<GLTF::BufferView*> uniqueBufferViewss;
+    std::set<GLTF::BufferView*> uniqueBufferViews;
     for (GLTF::Accessor* accessor : getAllAccessors()) {
         GLTF::BufferView* bufferView = accessor->bufferView;
-        if (uniqueBufferViewss.find(bufferView) == uniqueBufferViewss.end()) {
+        if (uniqueBufferViews.find(bufferView) == uniqueBufferViews.end()) {
             bufferViews.push_back(bufferView);
-            uniqueBufferViewss.insert(bufferView);
+            uniqueBufferViews.insert(bufferView);
         }
     }
     for (GLTF::Image* image : getAllImages()) {
         GLTF::BufferView* bufferView = image->bufferView;
-        if (bufferView && (uniqueBufferViewss.find(bufferView) == uniqueBufferViewss.end())) {
+        if (bufferView && (uniqueBufferViews.find(
+                bufferView) == uniqueBufferViews.end())) {
             bufferViews.push_back(bufferView);
-            uniqueBufferViewss.insert(bufferView);
+            uniqueBufferViews.insert(bufferView);
         }
     }
     return bufferViews;
@@ -482,10 +492,13 @@ std::vector<GLTF::BufferView*> GLTF::Asset::getAllCompressedBufferView() {
     std::vector<GLTF::BufferView*> compressedBufferViews;
     std::set<GLTF::BufferView*> uniqueCompressedBufferViews;
     for (GLTF::Primitive* primitive : getAllPrimitives()) {
-        auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+        auto dracoExtensionPtr =
+            primitive->extensions.find("KHR_draco_mesh_compression");
         if (dracoExtensionPtr != primitive->extensions.end()) {
-            GLTF::BufferView* bufferView = ((GLTF::DracoExtension*)dracoExtensionPtr->second)->bufferView;
-            if (uniqueCompressedBufferViews.find(bufferView) == uniqueCompressedBufferViews.end()) {
+            GLTF::BufferView* bufferView =
+                ((GLTF::DracoExtension*)dracoExtensionPtr->second)->bufferView;
+            if (uniqueCompressedBufferViews.find(
+                    bufferView) == uniqueCompressedBufferViews.end()) {
                 compressedBufferViews.push_back(bufferView);
                 uniqueCompressedBufferViews.insert(bufferView);
             }
@@ -550,7 +563,8 @@ void GLTF::Asset::mergeAnimations(std::vector<std::vector<size_t>> groups) {
 
 void GLTF::Asset::removeUncompressedBufferViews() {
     for (GLTF::Primitive* primitive : getAllPrimitives()) {
-        auto dracoExtensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+        auto dracoExtensionPtr =
+            primitive->extensions.find("KHR_draco_mesh_compression");
         if (dracoExtensionPtr != primitive->extensions.end()) {
             // Currently assume all attributes are compressed in Draco extension.
             for (const auto accessor: getAllPrimitiveAccessors(primitive)) {
@@ -576,7 +590,8 @@ void GLTF::Asset::removeUnusedSemantics() {
         GLTF::Material* material = primitive->material;
         if (material != NULL) {
             GLTF::Material::Values* values = material->values;
-            std::map<std::string, GLTF::Accessor*> attributes = primitive->attributes;
+            std::map<std::string, GLTF::Accessor*> attributes =
+                primitive->attributes;
             std::vector<std::string> semantics;
             for (const auto attribute : attributes) {
                 std::string semantic = attribute.first;
@@ -585,7 +600,8 @@ void GLTF::Asset::removeUnusedSemantics() {
                 }
             }
             for (const std::string semantic : semantics) {
-                std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord = primitive->attributes.find(semantic);
+                std::map<std::string, GLTF::Accessor*>::iterator removeTexcoord =
+                    primitive->attributes.find(semantic);
                 size_t index = std::stoi(semantic.substr(semantic.find_last_of('_') + 1));
                 if ((values->ambientTexture == NULL || values->ambientTexCoord != index) &&
                         (values->diffuseTexture == NULL || values->diffuseTexCoord != index) &&
@@ -658,10 +674,13 @@ void GLTF::Asset::removeUnusedSemantics() {
     }
 }
 
-void GLTF::Asset::removeAttributeFromDracoExtension(GLTF::Primitive* primitive, const std::string &semantic) {
-    auto extensionPtr = primitive->extensions.find("KHR_draco_mesh_compression");
+void GLTF::Asset::removeAttributeFromDracoExtension(
+        GLTF::Primitive* primitive, const std::string &semantic) {
+    auto extensionPtr =
+        primitive->extensions.find("KHR_draco_mesh_compression");
     if (extensionPtr != primitive->extensions.end()) {
-        GLTF::DracoExtension* dracoExtension = (GLTF::DracoExtension*)extensionPtr->second;
+        GLTF::DracoExtension* dracoExtension =
+            (GLTF::DracoExtension*)extensionPtr->second;
         auto attPtr = dracoExtension->attributeToId.find(semantic);
         if (attPtr != dracoExtension->attributeToId.end()) {
             const int att_id = attPtr->second;
@@ -673,10 +692,14 @@ void GLTF::Asset::removeAttributeFromDracoExtension(GLTF::Primitive* primitive, 
     }
 }
 
-bool isUnusedNode(GLTF::Node* node, std::set<GLTF::Node*> skinNodes, bool isPbr) {
-    if (node->children.size() == 0 && node->mesh == NULL && node->camera == NULL && node->skin == NULL) {
-        if (isPbr || node->light == NULL || node->light->type == GLTF::MaterialCommon::Light::AMBIENT) {
-            if (std::find(skinNodes.begin(), skinNodes.end(), node) == skinNodes.end()) {
+bool isUnusedNode(GLTF::Node* node, std::set<GLTF::Node*> skinNodes,
+        bool isPbr) {
+    if (node->children.size() == 0 && node->mesh == NULL
+            && node->camera == NULL && node->skin == NULL) {
+        if (isPbr || node->light == NULL ||
+                node->light->type == GLTF::MaterialCommon::Light::AMBIENT) {
+            if (std::find(skinNodes.begin(), skinNodes.end(), node)
+                    == skinNodes.end()) {
                 return true;
             }
         }
@@ -712,8 +735,7 @@ void GLTF::Asset::removeUnusedNodes(GLTF::Options* options) {
                 }
                 defaultScene->nodes.erase(defaultScene->nodes.begin() + i);
                 i--;
-            }
-            else {
+            } else {
                 nodeStack.push_back(node);
             }
         }
@@ -733,8 +755,7 @@ void GLTF::Asset::removeUnusedNodes(GLTF::Options* options) {
                         // another pass may be required to clean up the parent
                         needsPass = true;
                     }
-                }
-                else {
+                } else {
                     nodeStack.push_back(child);
                 }
             }
@@ -839,8 +860,7 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
         std::vector<GLTF::Accessor*> byteStrideGroup;
         if (findByteStrideGroup == targetGroup.end()) {
             byteStrideGroup = std::vector<GLTF::Accessor*>();
-        }
-        else {
+        } else {
             byteStrideGroup = findByteStrideGroup->second;
         }
         byteStrideGroup.push_back(accessor);
@@ -873,8 +893,7 @@ GLTF::Buffer* GLTF::Asset::packAccessors() {
             if (findBufferViews == bufferViews.end()) {
                 byteStrides.push_back(byteStride);
                 bufferViewGroup = std::vector<GLTF::BufferView*>();
-            }
-            else {
+            } else {
                 bufferViewGroup = findBufferViews->second;
             }
             bufferViewGroup.push_back(bufferView);
@@ -932,7 +951,8 @@ void GLTF::Asset::useExtension(std::string extension) {
 }
 
 void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
-    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+    rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
+        reinterpret_cast<rapidjson::Writer<rapidjson::StringBuffer>*>(writer);
 
     if (options->binary && options->version == "1.0") {
         useExtension("KHR_binary_glTF");
@@ -952,8 +972,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("scenes");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         int sceneId = 0;
@@ -991,8 +1010,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1002,8 +1020,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("scene");
         if (options->version == "1.0") {
             jsonWriter->String(this->scenes[0]->getStringId().c_str());
-        }
-        else {
+        } else {
             jsonWriter->Int(this->scene);
         }
     }
@@ -1017,8 +1034,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("nodes");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Node* node : nodes) {
@@ -1055,8 +1071,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1067,8 +1082,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("cameras");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Camera* camera : cameras) {
@@ -1081,8 +1095,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1096,8 +1109,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("meshes");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Mesh* mesh : meshes) {
@@ -1120,21 +1132,18 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
                                     materialCommon->values = nullptr;
 
                                     delete materialCommon;
-                                }
-                                else {
+                                } else {
                                     bool hasColor = primitive->attributes.find("COLOR_0") != primitive->attributes.end();
                                     material = materialCommon->getMaterial(lights, hasColor, options);
                                     generatedTechniques[techniqueKey] = material->technique;
                                 }
-                            }
-                            else {
+                            } else {
                                 GLTF::MaterialPBR* materialPbr = materialCommon->getMaterialPBR(options);
                                 if (options->lockOcclusionMetallicRoughness && materialPbr->occlusionTexture != NULL) {
                                     GLTF::MaterialPBR::Texture* metallicRoughnessTexture = new GLTF::MaterialPBR::Texture();
                                     metallicRoughnessTexture->texture = materialPbr->occlusionTexture->texture;
                                     materialPbr->metallicRoughness->metallicRoughnessTexture = metallicRoughnessTexture;
-                                }
-                                else if (options->metallicRoughnessTexturePaths.size() > 0) {
+                                } else if (options->metallicRoughnessTexturePaths.size() > 0) {
                                     std::string metallicRoughnessTexturePath = options->metallicRoughnessTexturePaths[0];
                                     if (options->metallicRoughnessTexturePaths.size() > 1) {
                                         size_t index = materials.size();
@@ -1154,8 +1163,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
                                         texture->sampler = globalSampler;
                                         texture->source = image;
                                         _pbrTextureCache[image] = texture;
-                                    }
-                                    else {
+                                    } else {
                                         texture = textureCacheIt->second;
                                     }
                                     metallicRoughnessTexture->texture = texture;
@@ -1203,8 +1211,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1214,8 +1221,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("animations");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (size_t i = 0; i < animations.size(); i++) {
@@ -1247,8 +1253,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1258,8 +1263,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("skins");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Skin* skin : skins) {
@@ -1276,8 +1280,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1288,8 +1291,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("accessors");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Accessor* accessor : accessors) {
@@ -1309,8 +1311,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1332,8 +1333,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("materials");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Material* material : materials) {
@@ -1350,8 +1350,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
                         }
                         usesTechniqueWebGL = true;
                     }
-                }
-                else if (material->type == GLTF::Material::Type::MATERIAL_COMMON && !usesMaterialsCommon) {
+                } else if (material->type == GLTF::Material::Type::MATERIAL_COMMON && !usesMaterialsCommon) {
                     this->requireExtension("KHR_materials_common");
                     usesMaterialsCommon = true;
                 }
@@ -1375,8 +1374,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
                     specularTexture->id = textures.size();
                     textures.push_back(specularTexture);
                 }
-            }
-            else if (material->type == GLTF::Material::Type::PBR_METALLIC_ROUGHNESS) {
+            } else if (material->type == GLTF::Material::Type::PBR_METALLIC_ROUGHNESS) {
                 GLTF::MaterialPBR* materialPBR = (GLTF::MaterialPBR*)material;
                 GLTF::MaterialPBR::Texture* baseColorTexture = materialPBR->metallicRoughness->baseColorTexture;
                 if (baseColorTexture != NULL && baseColorTexture->texture->id < 0) {
@@ -1429,8 +1427,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1443,8 +1440,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("KHR_materials_common");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::MaterialCommon::Light* light : lights) {
@@ -1458,8 +1454,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         lights.clear();
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
         jsonWriter->EndObject();
@@ -1472,8 +1467,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("textures");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Texture* texture : textures) {
@@ -1496,8 +1490,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1508,8 +1501,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("images");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Image* image : images) {
@@ -1527,8 +1519,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1539,8 +1530,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("samplers");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Sampler* sampler : samplers) {
@@ -1553,8 +1543,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1566,8 +1555,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("techniques");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Technique* technique : techniques) {
@@ -1587,8 +1575,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1600,8 +1587,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("programs");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Program* program : programs) {
@@ -1624,8 +1610,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1636,8 +1621,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("shaders");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Shader* shader : shaders) {
@@ -1650,8 +1634,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1663,8 +1646,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("bufferViews");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::BufferView* bufferView : bufferViews) {
@@ -1684,8 +1666,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
@@ -1696,8 +1677,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("buffers");
         if (options->version == "1.0") {
             jsonWriter->StartObject();
-        }
-        else {
+        } else {
             jsonWriter->StartArray();
         }
         for (GLTF::Buffer* buffer : buffers) {
@@ -1710,8 +1690,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
         }
         if (options->version == "1.0") {
             jsonWriter->EndObject();
-        }
-        else {
+        } else {
             jsonWriter->EndArray();
         }
     }
