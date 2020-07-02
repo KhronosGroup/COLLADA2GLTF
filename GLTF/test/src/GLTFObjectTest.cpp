@@ -1,20 +1,17 @@
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFObjectTest.h"
-
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
 
 #include "GLTFExtension.h"
 #include "GLTFObject.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
 
-GLTFObjectTest::GLTFObjectTest() {
-	options = new GLTF::Options();
-}
+GLTFObjectTest::GLTFObjectTest() { options = new GLTF::Options(); }
 
-GLTFObjectTest::~GLTFObjectTest() {
-	delete options;
-}
+GLTFObjectTest::~GLTFObjectTest() { delete options; }
 
-rapidjson::StringBuffer writeObject(GLTF::Object* object, GLTF::Options* options) {
+rapidjson::StringBuffer writeObject(GLTF::Object* object,
+                                    GLTF::Options* options) {
   rapidjson::StringBuffer s;
   rapidjson::Writer<rapidjson::StringBuffer> writer(s);
   writer.StartObject();
@@ -49,7 +46,8 @@ TEST_F(GLTFObjectTest, WriteJSON_WithExtra) {
   object->extras["extra"] = extra;
   rapidjson::StringBuffer s = writeObject(object, this->options);
 
-  EXPECT_STREQ(s.GetString(), "{\"extras\":{\"extra\":{\"name\":\"extra,extra\"}}}");
+  EXPECT_STREQ(s.GetString(),
+               "{\"extras\":{\"extra\":{\"name\":\"extra,extra\"}}}");
 
   free(object);
 }

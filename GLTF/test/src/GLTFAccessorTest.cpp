@@ -1,13 +1,14 @@
-#include "GLTFAccessor.h"
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFAccessorTest.h"
 
+#include "GLTFAccessor.h"
+
 TEST(GLTFAccessorTest, CreateFromData) {
-  float points[12] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-  GLTF::Accessor* accessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3,
-    GLTF::Constants::WebGL::FLOAT,
-    (unsigned char*)points, 4,
-    GLTF::Constants::WebGL::ARRAY_BUFFER
-  );
+  float points[12] = {1.0, 2.0, 3.0, 4.0,  5.0,  6.0,
+                      7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
+  GLTF::Accessor* accessor = new GLTF::Accessor(
+      GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT,
+      (unsigned char*)points, 4, GLTF::Constants::WebGL::ARRAY_BUFFER);
   float* min = accessor->min;
   ASSERT_TRUE(min != NULL);
   EXPECT_EQ(min[0], 1.0);
@@ -31,20 +32,16 @@ TEST(GLTFAccessorTest, CreateFromData) {
 }
 
 TEST(GLTFAccessorTest, CreateOnBuffer) {
-  float pointsBuffer[12] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-  GLTF::Accessor* accessorFromData = new GLTF::Accessor(GLTF::Accessor::Type::VEC3,
-    GLTF::Constants::WebGL::FLOAT,
-    (unsigned char*)pointsBuffer,
-    4,
-    GLTF::Constants::WebGL::ARRAY_BUFFER
-  );
+  float pointsBuffer[12] = {1.0, 2.0, 3.0, 4.0,  5.0,  6.0,
+                            7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
+  GLTF::Accessor* accessorFromData = new GLTF::Accessor(
+      GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT,
+      (unsigned char*)pointsBuffer, 4, GLTF::Constants::WebGL::ARRAY_BUFFER);
   GLTF::BufferView* bufferView = accessorFromData->bufferView;
   float points[6] = {13.0, 14.0, 15.0, 16.0, 17.0, 18.0};
-  GLTF::Accessor* accessor = new GLTF::Accessor(GLTF::Accessor::Type::VEC3,
-    GLTF::Constants::WebGL::FLOAT,
-    (unsigned char*)points, 2,
-    bufferView
-  );
+  GLTF::Accessor* accessor = new GLTF::Accessor(
+      GLTF::Accessor::Type::VEC3, GLTF::Constants::WebGL::FLOAT,
+      (unsigned char*)points, 2, bufferView);
 
   float* min = accessor->min;
   ASSERT_TRUE(min != NULL);

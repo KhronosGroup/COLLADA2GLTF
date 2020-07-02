@@ -1,5 +1,7 @@
-#include "GLTFAsset.h"
+// Copyright 2020 The Khronos® Group Inc.
 #include "GLTFAssetTest.h"
+
+#include "GLTFAsset.h"
 
 TEST(GLTFAssetTest, RemoveUnusedSemantics) {
   GLTF::Asset* asset = new GLTF::Asset();
@@ -13,7 +15,7 @@ TEST(GLTFAssetTest, RemoveUnusedSemantics) {
 
   GLTF::Mesh* mesh = new GLTF::Mesh();
   node->mesh = mesh;
-  
+
   GLTF::Primitive* primitive = new GLTF::Primitive();
   mesh->primitives.push_back(primitive);
 

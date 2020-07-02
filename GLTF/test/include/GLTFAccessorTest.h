@@ -1,7 +1,6 @@
+// Copyright 2020 The Khronos® Group Inc.
 #pragma once
 
 #include "gtest/gtest.h"
 
-namespace {
-  class GLTFAccessorTest : public ::testing::Test {};
-}
+class GLTFAccessorTest : public ::testing::Test {};
