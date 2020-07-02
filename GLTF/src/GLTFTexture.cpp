@@ -11,13 +11,13 @@ void GLTF::Texture::writeJSON(void* writer, GLTF::Options* options) {
       (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
   if (options->version == "1.0") {
     jsonWriter->Key("format");
-    jsonWriter->Int((int)GLTF::Constants::WebGL::RGBA);
+    jsonWriter->Int(static_cast<int>(GLTF::Constants::WebGL::RGBA));
     jsonWriter->Key("internalFormat");
-    jsonWriter->Int((int)GLTF::Constants::WebGL::RGBA);
+    jsonWriter->Int(static_cast<int>(GLTF::Constants::WebGL::RGBA));
     jsonWriter->Key("target");
-    jsonWriter->Int((int)GLTF::Constants::WebGL::TEXTURE_2D);
+    jsonWriter->Int(static_cast<int>(GLTF::Constants::WebGL::TEXTURE_2D));
     jsonWriter->Key("type");
-    jsonWriter->Int((int)GLTF::Constants::WebGL::UNSIGNED_BYTE);
+    jsonWriter->Int(static_cast<int>(GLTF::Constants::WebGL::UNSIGNED_BYTE));
   }
   jsonWriter->Key("sampler");
   if (options->version == "1.0") {

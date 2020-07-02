@@ -19,7 +19,7 @@ GLTF::Image::Image(std::string uri) : Image(uri, "") {}
 GLTF::Image::Image(std::string uri, std::string cacheKey, unsigned char* data,
                    size_t byteLength, std::string fileExtension)
     : uri(uri), data(data), byteLength(byteLength), cacheKey(cacheKey) {
-  std::string dataSubstring((char*)data, 8);
+  std::string dataSubstring(reinterpret_cast<char*>(data), 8);
   if (dataSubstring.substr(1, 7) == "PNG\r\n\x1a\n") {
     mimeType = "image/png";
   } else if (data[0] == 255 && data[1] == 216) {
@@ -84,7 +84,7 @@ GLTF::Image* GLTF::Image::load(std::string imagePath, bool writeAbsoluteUris) {
     image = new GLTF::Image(fileName, imagePath);
   } else {
     fseek(file, 0, SEEK_END);
-    long int size = ftell(file);
+    size_t size = ftell(file);
     fclose(file);
     file = fopen(imagePath.c_str(), "rb");
     unsigned char* buffer = (unsigned char*)malloc(size);
@@ -112,7 +112,7 @@ std::pair<int, int> GLTF::Image::getDimensions() {
   int width = -1;
   int height = -1;
   if (mimeType == "image/png") {
-    uint32_t* readUInt32 = (uint32_t*)(data + 16);
+    uint32_t* readUInt32 = reinterpret_cast<uint32_t*>(data + 16);
     height = endianSwap32(readUInt32[0]);
     width = endianSwap32(readUInt32[1]);
   } else if (mimeType == "image/jpeg") {
@@ -122,14 +122,14 @@ std::pair<int, int> GLTF::Image::getDimensions() {
     uint16_t i;
     unsigned char next;
     while (offset < byteLength) {
-      uint16_t* readUint16 = (uint16_t*)(data + offset);
+      uint16_t* readUint16 = reinterpret_cast<uint16_t*>(data + offset);
       i = endianSwap16(readUint16[0]);
       next = (data + offset)[i + 1];
 
       // 0xFFC0 is baseline(SOF)
       // 0xFFC2 is progressive(SOF2)
       if (next == 0xC0 || next == 0xC2) {
-        readUint16 = (uint16_t*)(data + offset + i + 5);
+        readUint16 = reinterpret_cast<uint16_t*>(data + offset + i + 5);
         height = endianSwap16(readUint16[0]);
         width = endianSwap16(readUint16[1]);
         break;

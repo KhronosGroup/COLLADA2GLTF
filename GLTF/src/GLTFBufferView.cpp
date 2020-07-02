@@ -44,8 +44,8 @@ void GLTF::BufferView::writeJSON(void* writer, GLTF::Options* options) {
     jsonWriter->Key("byteStride");
     jsonWriter->Int(this->byteStride);
   }
-  if ((int)target > 0) {
+  if (static_cast<int>(target) > 0) {
     jsonWriter->Key("target");
-    jsonWriter->Int((int)this->target);
+    jsonWriter->Int(static_cast<int>(this->target));
   }
 }

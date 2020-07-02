@@ -59,7 +59,7 @@ void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
       jsonWriter->Int(parameterValue->count);
     }
     jsonWriter->Key("type");
-    jsonWriter->Int((int)parameterValue->type);
+    jsonWriter->Int(static_cast<int>(parameterValue->type));
     jsonWriter->EndObject();
   }
   jsonWriter->EndObject();
@@ -81,7 +81,7 @@ void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
       jsonWriter->Key("enable");
       jsonWriter->StartArray();
       for (GLTF::Constants::WebGL constant : enableStates) {
-        jsonWriter->Int((int)constant);
+        jsonWriter->Int(static_cast<int>(constant));
       }
       jsonWriter->EndArray();
     }
@@ -96,7 +96,7 @@ void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("blendEquationSeparate");
         jsonWriter->StartArray();
         for (GLTF::Constants::WebGL constant : blendEquationSeparate) {
-          jsonWriter->Int((int)constant);
+          jsonWriter->Int(static_cast<int>(constant));
         }
         jsonWriter->EndArray();
       }
@@ -104,7 +104,7 @@ void GLTF::Technique::writeJSON(void* writer, GLTF::Options* options) {
         jsonWriter->Key("blendFuncSeparate");
         jsonWriter->StartArray();
         for (GLTF::Constants::WebGL constant : blendFuncSeparate) {
-          jsonWriter->Int((int)constant);
+          jsonWriter->Int(static_cast<int>(constant));
         }
         jsonWriter->EndArray();
       }

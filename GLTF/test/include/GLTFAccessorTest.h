@@ -3,5 +3,5 @@
 #include "gtest/gtest.h"
 
 namespace {
-  class GLTFAccessorTest : public ::testing::Test {};
-}
+class GLTFAccessorTest : public ::testing::Test {};
+}  // namespace

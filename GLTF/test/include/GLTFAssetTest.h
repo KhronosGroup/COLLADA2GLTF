@@ -3,5 +3,5 @@
 #include "gtest/gtest.h"
 
 namespace {
-  class GLTFAssetTest : public ::testing::Test {};
-}
+class GLTFAssetTest : public ::testing::Test {};
+}  // namespace

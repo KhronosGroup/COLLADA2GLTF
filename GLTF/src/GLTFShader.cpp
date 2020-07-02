@@ -15,7 +15,7 @@ void GLTF::Shader::writeJSON(void* writer, GLTF::Options* options) {
       (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
 
   jsonWriter->Key("type");
-  jsonWriter->Int((int)type);
+  jsonWriter->Int(static_cast<int>(type));
   jsonWriter->Key("uri");
   if (options->embeddedShaders) {
     uri = "data:text/plain;base64," +
