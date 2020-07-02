@@ -58,8 +58,8 @@ std::string Base64::decode(std::string string) {
     in_++;
     if (i == 4) {
       for (i = 0; i < 4; i++) {
-        char_array_4[i] =
-            static_cast<unsigned char>(base64CharSet.find(char_array_4[i]));
+        char_array_4[i] = static_cast<unsigned char>(
+            std::string(base64CharSet).find(char_array_4[i]));
       }
 
       char_array_3[0] =
@@ -80,8 +80,8 @@ std::string Base64::decode(std::string string) {
       char_array_4[j] = 0;
     }
     for (j = 0; j < 4; j++) {
-      char_array_4[j] =
-          static_cast<unsigned char>(base64CharSet.find(char_array_4[j]));
+      char_array_4[j] = static_cast<unsigned char>(
+          std::string(base64CharSet).find(char_array_4[j]));
     }
 
     char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);

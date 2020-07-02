@@ -591,7 +591,8 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
   // Add attributes with semantics
   std::string vertexShaderMain = "";
   if (hasSkinning) {
-    vertexShaderMain +=
+    vertexShaderMain =
+        vertexShaderMain +
         "    mat4 skinMat = a_weight.x * u_jointMatrix[int(a_joint.x)];\n" +
         "    skinMat += a_weight.y * u_jointMatrix[int(a_joint.y)];\n" +
         "    skinMat += a_weight.z * u_jointMatrix[int(a_joint.z)];\n" +
@@ -600,7 +601,7 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
 
   // Add position always
   vertexShaderSource +=
-      "attribute vec3 a_position;\n" + "varying vec3 v_position;\n";
+      "attribute vec3 a_position;\nvarying vec3 v_position;\n";
   if (hasSkinning) {
     vertexShaderMain +=
         "    vec4 pos = u_modelViewMatrix * skinMat * vec4(a_position,1.0);\n";
@@ -608,16 +609,13 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
     vertexShaderMain +=
         "    vec4 pos = u_modelViewMatrix * vec4(a_position,1.0);\n";
   }
-  vertexShaderMain +=
-
-      "    v_position = pos.xyz;\n" +
-      "    gl_Position = u_projectionMatrix * pos;\n";
+  vertexShaderMain = vertexShaderMain + "    v_position = pos.xyz;\n" +
+                     "    gl_Position = u_projectionMatrix * pos;\n";
   fragmentShaderSource += "varying vec3 v_position;\n";
 
   // Add normal if we don't have constant lighting
   if (hasNormals) {
-    vertexShaderSource +=
-        "attribute vec3 a_normal;\n" + "varying vec3 v_normal;\n";
+    vertexShaderSource += "attribute vec3 a_normal;\nvarying vec3 v_normal;\n";
     if (hasSkinning) {
       vertexShaderMain +=
           "    v_normal = u_normalMatrix * mat3(skinMat) * a_normal;\n";
@@ -633,22 +631,20 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
   if (hasTexture) {
     v_texcoord = "v_texcoord0";
     vertexShaderSource +=
-        "attribute vec2 a_texcoord0;\n" + "varying vec2 " + v_texcoord + ";\n";
+        "attribute vec2 a_texcoord0;\nvarying vec2 " + v_texcoord + ";\n";
     vertexShaderMain += "    " + v_texcoord + " = a_texcoord0;\n";
     fragmentShaderSource += "varying vec2 " + v_texcoord + ";\n";
   }
 
   // Add color if a color attribute exists
   if (hasColor) {
-    vertexShaderSource +=
-        "attribute vec3 a_color0;\n" + "varying vec3 v_color0;\n";
+    vertexShaderSource += "attribute vec3 a_color0;\nvarying vec3 v_color0;\n";
     vertexShaderMain += "    v_color0 = a_color0;\n";
     fragmentShaderSource += "varying vec3 v_color0;\n";
   }
 
   if (hasSkinning) {
-    vertexShaderSource +=
-        "attribute vec4 a_joint;\n" + "attribute vec4 a_weight;\n";
+    vertexShaderSource += "attribute vec4 a_joint;\nattribute vec4 a_weight;\n";
   }
 
   bool hasSpecular =
@@ -661,8 +657,9 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
   // Generate lighting code blocks
   std::string fragmentLightingBlock = "";
   for (std::string lightBaseName : ambientLights) {
-    fragmentLightingBlock += "    {\n" + "        ambientLight += u_" +
-                             lightBaseName + "Color;\n" + "    }\n";
+    fragmentLightingBlock = fragmentLightingBlock + "    {\n" +
+                            "        ambientLight += u_" + lightBaseName +
+                            "Color;\n" + "    }\n";
   }
   if (hasNormals) {
     for (auto const light : nonAmbientLights) {
@@ -718,12 +715,13 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
 
       if (hasSpecular) {
         if (this->technique == Technique::BLINN) {
-          fragmentLightingBlock +=
-              "    vec3 h = normalize(l + viewDir);\n" +
+          fragmentLightingBlock =
+              fragmentLightingBlock + "    vec3 h = normalize(l + viewDir);\n" +
               "    float specularIntensity = max(0., pow(max(dot(normal, h), "
               "0.), u_shininess)) * attenuation;\n";
         } else {  // PHONG
-          fragmentLightingBlock +=
+          fragmentLightingBlock =
+              fragmentLightingBlock +
               "    vec3 reflectDir = reflect(-l, normal);\n" +
               "    float specularIntensity = max(0., pow(max(dot(reflectDir, "
               "viewDir), 0.), u_shininess)) * attenuation;\n";
@@ -740,18 +738,19 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
   }
 
   if (nonAmbientLights.size() == 0 && this->technique != Technique::CONSTANT) {
-    fragmentLightingBlock +=
-        "    vec3 l = vec3(0.0, 0.0, 1.0);\n" +
+    fragmentLightingBlock =
+        fragmentLightingBlock + "    vec3 l = vec3(0.0, 0.0, 1.0);\n" +
         "    diffuseLight += vec3(1.0, 1.0, 1.0) * max(dot(normal, l), 0.); \n";
 
     if (hasSpecular) {
       if (this->technique == Technique::BLINN) {
-        fragmentLightingBlock +=
-            "    vec3 h = normalize(l + viewDir);\n" +
+        fragmentLightingBlock =
+            fragmentLightingBlock + "    vec3 h = normalize(l + viewDir);\n" +
             "    float specularIntensity = max(0., pow(max(dot(normal, h), "
             "0.), u_shininess));\n";
       } else {  // PHONG
-        fragmentLightingBlock +=
+        fragmentLightingBlock =
+            fragmentLightingBlock +
             "    vec3 reflectDir = reflect(-l, normal);\n" +
             "    float specularIntensity = max(0., pow(max(dot(reflectDir, "
             "viewDir), 0.), u_shininess));\n";
@@ -775,8 +774,9 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
   if (hasNormals) {
     fragmentShaderSource += "    vec3 normal = normalize(v_normal);\n";
     if (doubleSided || options->doubleSided) {
-      fragmentShaderSource += "    if (gl_FrontFacing == false)\n" + "    {\n" +
-                              "        normal = -normal;\n" + "    }\n";
+      fragmentShaderSource = fragmentShaderSource +
+                             "    if (gl_FrontFacing == false)\n" + "    {\n" +
+                             "        normal = -normal;\n" + "    }\n";
     }
   }
 
@@ -843,8 +843,9 @@ GLTF::Material* GLTF::MaterialCommon::getMaterial(
     }
     colorCreationBlock += "    color += ambient * ambientLight;\n";
   }
-  fragmentShaderSource += "    vec3 viewDir = -normalize(v_position);\n" +
-                          "    vec3 ambientLight = vec3(0.0, 0.0, 0.0);\n";
+  fragmentShaderSource = fragmentShaderSource +
+                         "    vec3 viewDir = -normalize(v_position);\n" +
+                         "    vec3 ambientLight = vec3(0.0, 0.0, 0.0);\n";
 
   // Add in light computations
   fragmentShaderSource += fragmentLightingBlock;

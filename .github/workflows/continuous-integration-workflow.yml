@@ -91,17 +91,11 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 8
-    - uses: actions/setup-python@v1
 
     - name: Checkout
       uses: actions/checkout@v1
       with:
           submodules: recursive
-
-    - name: Lint
-      run: |
-        pip install cpplint
-        cpplint --recursive .
 
     - name: Run cmake
       run: |

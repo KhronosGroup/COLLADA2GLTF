@@ -995,21 +995,21 @@ void GLTF::Asset::useExtension(std::string extension) {
 }
 
 void writeAssetMetadataJSON(
-    GLTF::Asset* this, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
+    GLTF::Asset* asset, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
     GLTF::Options* options) {
-  if (this->metadata) {
+  if (asset->metadata) {
     jsonWriter->Key("asset");
     jsonWriter->StartObject();
-    this->metadata->writeJSON(writer, options);
+    asset->metadata->writeJSON(jsonWriter, options);
     jsonWriter->EndObject();
   }
 }
 
 std::vector<GLTF::Node*> writeScenesJSON(
-    GLTF::Asset* this, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
+    GLTF::Asset* asset, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
     GLTF::Options* options) {
   std::vector<GLTF::Node*> nodes;
-  if (this->scenes.size() > 0) {
+  if (asset->scenes.size() > 0) {
     jsonWriter->Key("scenes");
     if (options->version == "1.0") {
       jsonWriter->StartObject();
@@ -1017,7 +1017,7 @@ std::vector<GLTF::Node*> writeScenesJSON(
       jsonWriter->StartArray();
     }
     int sceneId = 0;
-    for (GLTF::Scene* scene : this->scenes) {
+    for (GLTF::Scene* scene : asset->scenes) {
       scene->id = sceneId;
       sceneId++;
       std::vector<GLTF::Node*> nodeStack;
@@ -1046,7 +1046,7 @@ std::vector<GLTF::Node*> writeScenesJSON(
         jsonWriter->Key(scene->getStringId().c_str());
       }
       jsonWriter->StartObject();
-      scene->writeJSON(writer, options);
+      scene->writeJSON(jsonWriter, options);
       jsonWriter->EndObject();
     }
     if (options->version == "1.0") {
@@ -1056,19 +1056,19 @@ std::vector<GLTF::Node*> writeScenesJSON(
     }
   }
 
-  if (this->scene >= 0) {
+  if (asset->scene >= 0) {
     jsonWriter->Key("scene");
     if (options->version == "1.0") {
-      jsonWriter->String(this->scenes[0]->getStringId().c_str());
+      jsonWriter->String(asset->scenes[0]->getStringId().c_str());
     } else {
-      jsonWriter->Int(this->scene);
+      jsonWriter->Int(asset->scene);
     }
   }
 
   return nodes;
 }
 
-void writeCamerasJSON(GLTF::Asset* this,
+void writeCamerasJSON(GLTF::Asset* asset,
                       rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
                       GLTF::Options* options,
                       std::vector<GLTF::Camera*> cameras) {
@@ -1084,7 +1084,7 @@ void writeCamerasJSON(GLTF::Asset* this,
         jsonWriter->Key(camera->getStringId().c_str());
       }
       jsonWriter->StartObject();
-      camera->writeJSON(writer, options);
+      camera->writeJSON(jsonWriter, options);
       jsonWriter->EndObject();
     }
     if (options->version == "1.0") {
@@ -1095,10 +1095,11 @@ void writeCamerasJSON(GLTF::Asset* this,
   }
 }
 
-void writeLightsJSON(GLTF::Asset* this,
+void writeLightsJSON(GLTF::Asset* asset,
                      rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
                      GLTF::Options* options,
-                     std::vector<GLTF::MaterialCommon::Light*> lights) {
+                     std::vector<GLTF::MaterialCommon::Light*> lights,
+                     bool usesMaterialsCommon) {
   if (usesMaterialsCommon && lights.size() > 0) {
     jsonWriter->Key("extensions");
     jsonWriter->StartObject();
@@ -1113,7 +1114,7 @@ void writeLightsJSON(GLTF::Asset* this,
         jsonWriter->Key(light->getStringId().c_str());
       }
       jsonWriter->StartObject();
-      light->writeJSON(writer, options);
+      light->writeJSON(jsonWriter, options);
       jsonWriter->EndObject();
     }
     lights.clear();
@@ -1126,7 +1127,7 @@ void writeLightsJSON(GLTF::Asset* this,
   }
 }
 
-void writeSamplersJSON(GLTF::Asset* this,
+void writeSamplersJSON(GLTF::Asset* asset,
                        rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
                        GLTF::Options* options,
                        std::vector<GLTF::Sampler*> samplers) {
@@ -1142,7 +1143,7 @@ void writeSamplersJSON(GLTF::Asset* this,
         jsonWriter->Key(sampler->getStringId().c_str());
       }
       jsonWriter->StartObject();
-      sampler->writeJSON(writer, options);
+      sampler->writeJSON(jsonWriter, options);
       jsonWriter->EndObject();
     }
     if (options->version == "1.0") {
@@ -1155,7 +1156,7 @@ void writeSamplersJSON(GLTF::Asset* this,
 }
 
 std::vector<GLTF::Program*> writeTechniquesJSON(
-    GLTF::Asset* this, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
+    GLTF::Asset* asset, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
     GLTF::Options* options, std::vector<GLTF::Technique*> techniques) {
   std::vector<GLTF::Program*> programs;
   if (techniques.size() > 0) {
@@ -1177,7 +1178,7 @@ std::vector<GLTF::Program*> writeTechniquesJSON(
         jsonWriter->Key(technique->getStringId().c_str());
       }
       jsonWriter->StartObject();
-      technique->writeJSON(writer, options);
+      technique->writeJSON(jsonWriter, options);
       jsonWriter->EndObject();
     }
     if (options->version == "1.0") {
@@ -1191,7 +1192,7 @@ std::vector<GLTF::Program*> writeTechniquesJSON(
 }
 
 std::vector<GLTF::Shader*> writeProgramsJSON(
-    GLTF::Asset* this, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
+    GLTF::Asset* asset, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
     GLTF::Options* options, std::vector<GLTF::Program*> programs) {
   std::vector<GLTF::Shader*> shaders;
   if (programs.size() > 0) {
@@ -1216,7 +1217,7 @@ std::vector<GLTF::Shader*> writeProgramsJSON(
         jsonWriter->Key(program->getStringId().c_str());
       }
       jsonWriter->StartObject();
-      program->writeJSON(writer, options);
+      program->writeJSON(jsonWriter, options);
       jsonWriter->EndObject();
     }
     if (options->version == "1.0") {
@@ -1226,9 +1227,10 @@ std::vector<GLTF::Shader*> writeProgramsJSON(
     }
   }
   programs.clear();
+  return shaders;
 }
 
-void writeShadersJSON(GLTF::Asset* this,
+void writeShadersJSON(GLTF::Asset* asset,
                       rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
                       GLTF::Options* options,
                       std::vector<GLTF::Shader*> shaders) {
@@ -1244,7 +1246,7 @@ void writeShadersJSON(GLTF::Asset* this,
         jsonWriter->Key(shader->getStringId().c_str());
       }
       jsonWriter->StartObject();
-      shader->writeJSON(writer, options);
+      shader->writeJSON(jsonWriter, options);
       jsonWriter->EndObject();
     }
     if (options->version == "1.0") {
@@ -1257,7 +1259,7 @@ void writeShadersJSON(GLTF::Asset* this,
 }
 
 std::vector<GLTF::Buffer*> writeBufferViewsJSON(
-    GLTF::Asset* this, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
+    GLTF::Asset* asset, rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
     GLTF::Options* options, std::vector<GLTF::BufferView*> bufferViews) {
   std::vector<GLTF::Buffer*> buffers;
   if (bufferViews.size() > 0) {
@@ -1279,7 +1281,7 @@ std::vector<GLTF::Buffer*> writeBufferViewsJSON(
         jsonWriter->Key(bufferView->getStringId().c_str());
       }
       jsonWriter->StartObject();
-      bufferView->writeJSON(writer, options);
+      bufferView->writeJSON(jsonWriter, options);
       jsonWriter->EndObject();
     }
     if (options->version == "1.0") {
@@ -1292,7 +1294,7 @@ std::vector<GLTF::Buffer*> writeBufferViewsJSON(
   return buffers;
 }
 
-void writeBuffersJSON(GLTF::Asset* this,
+void writeBuffersJSON(GLTF::Asset* asset,
                       rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
                       GLTF::Options* options,
                       std::vector<GLTF::Buffer*> buffers) {
@@ -1308,7 +1310,7 @@ void writeBuffersJSON(GLTF::Asset* this,
         jsonWriter->Key(buffer->getStringId().c_str());
       }
       jsonWriter->StartObject();
-      buffer->writeJSON(writer, options);
+      buffer->writeJSON(jsonWriter, options);
       jsonWriter->EndObject();
     }
     if (options->version == "1.0") {
@@ -1320,21 +1322,21 @@ void writeBuffersJSON(GLTF::Asset* this,
   buffers.clear();
 }
 
-void writeExtensionsJSON(GLTF::Asset* this,
+void writeExtensionsJSON(GLTF::Asset* asset,
                          rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter,
                          GLTF::Options* options) {
-  if (this->extensionsRequired.size() > 0 && options->version != "1.0") {
+  if (asset->extensionsRequired.size() > 0 && options->version != "1.0") {
     jsonWriter->Key("extensionsRequired");
     jsonWriter->StartArray();
-    for (const std::string extension : this->extensionsRequired) {
+    for (const std::string extension : asset->extensionsRequired) {
       jsonWriter->String(extension.c_str());
     }
     jsonWriter->EndArray();
   }
-  if (this->extensionsUsed.size() > 0) {
+  if (asset->extensionsUsed.size() > 0) {
     jsonWriter->Key("extensionsUsed");
     jsonWriter->StartArray();
-    for (const std::string extension : this->extensionsUsed) {
+    for (const std::string extension : asset->extensionsUsed) {
       jsonWriter->String(extension.c_str());
     }
     jsonWriter->EndArray();
@@ -1771,7 +1773,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
   }
   materials.clear();
 
-  writeLightsJSON(this, jsonWriter, options, lights);
+  writeLightsJSON(this, jsonWriter, options, lights, usesMaterialsCommon);
 
   // Write textures and build sampler and image arrays
   std::vector<GLTF::Sampler*> samplers;
@@ -1840,9 +1842,9 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
 
   writeSamplersJSON(this, jsonWriter, options, samplers);
   std::vector<GLTF::Program*> programs =
-      writeTechniquesJSON(this, jsonWriter, techniques);
+      writeTechniquesJSON(this, jsonWriter, options, techniques);
   std::vector<GLTF::Shader*> shaders =
-      writeProgramsJSON(this, jsonWriter, programs);
+      writeProgramsJSON(this, jsonWriter, options, programs);
   writeShadersJSON(this, jsonWriter, options, shaders);
 
   std::vector<GLTF::Buffer*> buffers =
