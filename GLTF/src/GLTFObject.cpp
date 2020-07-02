@@ -1,18 +1,17 @@
 // Copyright 2020 The Khronos® Group Inc.
 #include "GLTFObject.h"
 
+#include "GLTFExtension.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-#include "GLTFExtension.h"
-
 GLTF::Object::~Object() {
-    for (auto& kv : extensions) {
-        delete kv.second;
-    }
-    for (auto& kv : extras) {
-        delete kv.second;
-    }
+  for (auto& kv : extensions) {
+    delete kv.second;
+  }
+  for (auto& kv : extras) {
+    delete kv.second;
+  }
 }
 
 std::string GLTF::Object::getStringId() {
@@ -22,9 +21,7 @@ std::string GLTF::Object::getStringId() {
   return stringId;
 }
 
-std::string GLTF::Object::typeName() {
-  return "object";
-}
+std::string GLTF::Object::typeName() { return "object"; }
 
 GLTF::Object* GLTF::Object::clone(GLTF::Object* clone) {
   clone->id = this->id;
@@ -39,7 +36,8 @@ GLTF::Object* GLTF::Object::clone(GLTF::Object* clone) {
 }
 
 void GLTF::Object::writeJSON(void* writer, GLTF::Options* options) {
-  rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter = (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
+  rapidjson::Writer<rapidjson::StringBuffer>* jsonWriter =
+      (rapidjson::Writer<rapidjson::StringBuffer>*)writer;
   if (this->name.length() > 0) {
     jsonWriter->Key("name");
     jsonWriter->String(this->name.c_str());

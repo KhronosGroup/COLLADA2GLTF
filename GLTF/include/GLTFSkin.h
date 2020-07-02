@@ -12,12 +12,11 @@ class Node;
 
 class Skin : public GLTF::Object {
  public:
-    Accessor* inverseBindMatrices = NULL;
-    Node* skeleton = NULL;
-    std::vector<Node*> joints;
+  Accessor* inverseBindMatrices = NULL;
+  Node* skeleton = NULL;
+  std::vector<Node*> joints;
 
-    virtual std::string typeName();
-    virtual void writeJSON(void* writer, GLTF::Options* options);
+  virtual std::string typeName();
+  virtual void writeJSON(void* writer, GLTF::Options* options);
 };
 }  // namespace GLTF
-

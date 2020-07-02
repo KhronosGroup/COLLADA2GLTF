@@ -8,14 +8,14 @@
 namespace GLTF {
 class Buffer : public GLTF::Object {
  public:
-    unsigned char* data = NULL;
-    int byteLength;
-    std::string uri;
+  unsigned char* data = NULL;
+  int byteLength;
+  std::string uri;
 
-    Buffer(unsigned char* data, int dataLength);
-    virtual ~Buffer();
+  Buffer(unsigned char* data, int dataLength);
+  virtual ~Buffer();
 
-    virtual std::string typeName();
-    virtual void writeJSON(void* writer, GLTF::Options* options);
+  virtual std::string typeName();
+  virtual void writeJSON(void* writer, GLTF::Options* options);
 };
 }  // namespace GLTF

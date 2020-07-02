@@ -10,9 +10,9 @@
 namespace GLTF {
 class Scene : public GLTF::Object {
  public:
-    std::vector<GLTF::Node*> nodes;
+  std::vector<GLTF::Node*> nodes;
 
-    virtual std::string typeName();
-    virtual void writeJSON(void* writer, GLTF::Options* options);
+  virtual std::string typeName();
+  virtual void writeJSON(void* writer, GLTF::Options* options);
 };
 }  // namespace GLTF
