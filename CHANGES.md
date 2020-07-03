@@ -7,6 +7,7 @@ Change Log
 
 ##### Fixes :wrench:
 * De-duplicate GLTF generated materials [#251](https://github.com/KhronosGroup/COLLADA2GLTF/issues/251)
+* Fix seg-fault exporting GLTF 1.0 [#261](https://github.com/KhronosGroup/COLLADA2GLTF/issues/261)
 
 ### v2.1.5 - 2019-05-22
 
