@@ -1454,6 +1454,10 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
                                   primitive->attributes.end();
                   GLTF::Material* materialGlsl =
                       materialCommon->getMaterial(lights, hasColor, options);
+
+                  // New material will take ownership of values
+                  materialCommon->values = nullptr;
+
                   generatedTechniques[techniqueKey] = materialGlsl->technique;
                   generatedMaterialsMap[material] = materialGlsl;
                   material = materialGlsl;
