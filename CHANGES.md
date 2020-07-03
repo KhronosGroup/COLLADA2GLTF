@@ -5,6 +5,9 @@ Change Log
 * Switch CI builds to GitHub actions [#264](https://github.com/KhronosGroup/COLLADA2GLTF/pull/264)
 * Large-scale code cleanup and add cppcheck to CI to prevent backsliding [#265](https://github.com/KhronosGroup/COLLADA2GLTF/pull/265)
 
+##### Fixes :wrench:
+* De-duplicate GLTF generated materials [#251](https://github.com/KhronosGroup/COLLADA2GLTF/issues/251)
+
 ### v2.1.5 - 2019-05-22
 
 ##### Additions :tada:

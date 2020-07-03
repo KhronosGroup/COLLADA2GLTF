@@ -1411,6 +1411,7 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
   // Write meshes and build accessor and material arrays
   std::vector<GLTF::Accessor*> accessors;
   std::vector<GLTF::BufferView*> bufferViews;
+  std::map<GLTF::Material*, GLTF::Material*> generatedMaterialsMap;
   std::vector<GLTF::Material*> materials;
   std::map<std::string, GLTF::Technique*> generatedTechniques;
   if (meshes.size() > 0) {
@@ -1424,7 +1425,11 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
       for (GLTF::Primitive* primitive : mesh->primitives) {
         if (primitive->material && primitive->material->id < 0) {
           GLTF::Material* material = primitive->material;
-          if (!options->materialsCommon) {
+          std::map<GLTF::Material*, GLTF::Material*>::iterator
+              findGeneratedMaterial = generatedMaterialsMap.find(material);
+          if (findGeneratedMaterial != generatedMaterialsMap.end()) {
+            material = findGeneratedMaterial->second;
+          } else if (!options->materialsCommon) {
             if (material->type == GLTF::Material::Type::MATERIAL_COMMON) {
               GLTF::MaterialCommon* materialCommon =
                   (GLTF::MaterialCommon*)material;
@@ -1434,25 +1439,29 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
                 std::map<std::string, GLTF::Technique*>::iterator
                     findTechnique = generatedTechniques.find(techniqueKey);
                 if (findTechnique != generatedTechniques.end()) {
-                  material = new GLTF::Material();
-                  material->name = materialCommon->name;
-                  material->technique = findTechnique->second;
+                  GLTF::Material* materialGlsl = new GLTF::Material();
+                  materialGlsl->name = materialCommon->name;
+                  materialGlsl->technique = findTechnique->second;
 
                   // New material will take ownership of values
-                  material->values = materialCommon->values;
+                  materialGlsl->values = materialCommon->values;
                   materialCommon->values = nullptr;
 
-                  delete materialCommon;
+                  generatedMaterialsMap[material] = materialGlsl;
+                  material = materialGlsl;
                 } else {
                   bool hasColor = primitive->attributes.find("COLOR_0") !=
                                   primitive->attributes.end();
-                  material =
+                  GLTF::Material* materialGlsl =
                       materialCommon->getMaterial(lights, hasColor, options);
-                  generatedTechniques[techniqueKey] = material->technique;
+                  generatedTechniques[techniqueKey] = materialGlsl->technique;
+                  generatedMaterialsMap[material] = materialGlsl;
+                  material = materialGlsl;
                 }
               } else {
                 GLTF::MaterialPBR* materialPbr =
                     materialCommon->getMaterialPBR(options);
+                materialCommon->values = nullptr;
                 if (options->lockOcclusionMetallicRoughness &&
                     materialPbr->occlusionTexture != NULL) {
                   GLTF::MaterialPBR::Texture* metallicRoughnessTexture =
@@ -1494,13 +1503,16 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
                   materialPbr->metallicRoughness->metallicRoughnessTexture =
                       metallicRoughnessTexture;
                 }
+                generatedMaterialsMap[material] = materialPbr;
                 material = materialPbr;
               }
             }
           }
           primitive->material = material;
-          material->id = materials.size();
-          materials.push_back(material);
+          if (material->id < 0) {
+            material->id = materials.size();
+            materials.push_back(material);
+          }
         }
 
         // Find bufferViews of compressed data. These bufferViews does not
@@ -1543,6 +1555,11 @@ void GLTF::Asset::writeJSON(void* writer, GLTF::Options* options) {
       jsonWriter->EndArray();
     }
   }
+
+  for (auto const& entry : generatedMaterialsMap) {
+    delete entry.first;
+  }
+  generatedMaterialsMap.clear();
 
   // Write animations and add accessors to the accessor array
   if (animations.size() > 0) {
