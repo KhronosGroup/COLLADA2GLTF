@@ -34,11 +34,10 @@ jobs:
       env:
         cache-name: build-cache
       with:
-        path: ./build
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
+        path: ${{ github.workspace }}/build
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
         restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
+          ${{ runner.os }}-${{ env.cache-name }}-
           ${{ runner.os }}-
 
     - name: Add msbuild to PATH
@@ -47,7 +46,7 @@ jobs:
     - name: Run cmake
       run: |
         cd ${{ github.workspace }}
-        if not exist build mkdir build
+        mkdir build 2>NUL
         cd build
         cmake .. -Dtest=ON
 
@@ -122,11 +121,10 @@ jobs:
       env:
         cache-name: build-cache
       with:
-        path: ./build
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
+        path: ${{ github.workspace }}/build
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
         restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
+          ${{ runner.os }}-${{ env.cache-name }}-
           ${{ runner.os }}-
 
     - name: Run cmake
@@ -209,11 +207,10 @@ jobs:
       env:
         cache-name: build-cache
       with:
-        path: ./build
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
+        path: ${{ github.workspace }}/build
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
         restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
+          ${{ runner.os }}-${{ env.cache-name }}-
           ${{ runner.os }}-
 
     - name: Run cmake
