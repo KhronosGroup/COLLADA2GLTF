@@ -42,9 +42,8 @@ jobs:
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
 
     - name: Run cmake
-      if: !steps.cache.outputs.cache-hit
-    - run: mkdir build
-    - run: |
+      run: |
+        if [ ! ${{ format('{0}', steps.cache.outputs.cache-hit) }} ]; then mkdir build fi
         cd build
         cmake .. -Dtest=ON
 
@@ -124,9 +123,8 @@ jobs:
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
 
     - name: Run cmake
-      if: !steps.cache.outputs.cache-hit
-    - run: mkdir build
-    - run: |
+      run: |
+        if [ ! ${{ format('{0}', steps.cache.outputs.cache-hit) }} ]; then mkdir build fi
         cd build
         cmake .. -Dtest=ON
 
@@ -208,9 +206,8 @@ jobs:
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
 
     - name: Run cmake
-      if: !steps.cache.outputs.cache-hit
-    - run: mkdir build
-    - run: |
+      run: |
+        if [ ! ${{ format('{0}', steps.cache.outputs.cache-hit) }} ]; then mkdir build fi
         cd build
         cmake .. -Dtest=ON
 
