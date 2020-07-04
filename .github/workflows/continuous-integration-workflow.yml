@@ -46,7 +46,7 @@ jobs:
     - name: Run cmake
       run: |
         cd ${{ github.workspace }}
-        mkdir build 2>NUL
+        mkdir build /p
         cd build
         cmake .. -Dtest=ON
 
