@@ -5,7 +5,7 @@ jobs:
   cpplint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-python@v1
     - run: pip install cpplint
     - run: cpplint --recursive .
@@ -25,9 +25,21 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       with:
-          submodules: recursive
+        submodules: recursive
+
+    - name: Load Build Cache
+      uses: actions/cache@v2
+      env:
+        cache-name: build-cache
+      with:
+        path: ./build
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.0
@@ -35,7 +47,7 @@ jobs:
     - name: Run cmake
       run: |
         cd ${{ github.workspace }}
-        mkdir build
+        mkdir -p build
         cd build
         cmake .. -Dtest=ON
 
@@ -101,9 +113,21 @@ jobs:
         node-version: 8
 
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       with:
           submodules: recursive
+
+    - name: Load Build Cache
+      uses: actions/cache@v2
+      env:
+        cache-name: build-cache
+      with:
+        path: ./build
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
 
     - name: Run cmake
       run: |
@@ -176,9 +200,21 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       with:
           submodules: recursive
+
+    - name: Load Build Cache
+      uses: actions/cache@v2
+      env:
+        cache-name: build-cache
+      with:
+        path: ./build
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
 
     - name: Run cmake
       run: |
