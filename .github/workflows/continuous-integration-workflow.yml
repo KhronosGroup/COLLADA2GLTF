@@ -47,7 +47,7 @@ jobs:
     - name: Run cmake
       run: |
         cd ${{ github.workspace }}
-        mkdir -p build
+        if not exist build mkdir build
         cd build
         cmake .. -Dtest=ON
 
@@ -132,7 +132,7 @@ jobs:
     - name: Run cmake
       run: |
         cd ${{ github.workspace }}
-        mkdir build
+        mkdir -p build
         cd build
         cmake .. -Dtest=ON
 
@@ -219,7 +219,7 @@ jobs:
     - name: Run cmake
       run: |
         cd ${{ github.workspace }}
-        mkdir build
+        mkdir -p build
         cd build
         cmake .. -Dtest=ON
 
