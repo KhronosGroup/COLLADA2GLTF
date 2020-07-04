@@ -29,24 +29,22 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.0
+
     - name: Load Build Cache
+      id: cache
       uses: actions/cache@v2
       env:
         cache-name: build-cache
       with:
-        path: ${{ github.workspace }}/build
+        path: build
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ env.cache-name }}-
-          ${{ runner.os }}-
-
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.0
 
     - name: Run cmake
-      run: |
-        cd ${{ github.workspace }}
-        mkdir build /p
+      if: !steps.cache.outputs.cache-hit
+    - run: mkdir build
+    - run: |
         cd build
         cmake .. -Dtest=ON
 
@@ -117,20 +115,18 @@ jobs:
           submodules: recursive
 
     - name: Load Build Cache
+      id: cache
       uses: actions/cache@v2
       env:
         cache-name: build-cache
       with:
-        path: ${{ github.workspace }}/build
+        path: build
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ env.cache-name }}-
-          ${{ runner.os }}-
 
     - name: Run cmake
-      run: |
-        cd ${{ github.workspace }}
-        mkdir -p build
+      if: !steps.cache.outputs.cache-hit
+    - run: mkdir build
+    - run: |
         cd build
         cmake .. -Dtest=ON
 
@@ -203,20 +199,18 @@ jobs:
           submodules: recursive
 
     - name: Load Build Cache
+      id: cache
       uses: actions/cache@v2
       env:
         cache-name: build-cache
       with:
-        path: ${{ github.workspace }}/build
+        path: build
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('CMakeLists.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ env.cache-name }}-
-          ${{ runner.os }}-
 
     - name: Run cmake
-      run: |
-        cd ${{ github.workspace }}
-        mkdir -p build
+      if: !steps.cache.outputs.cache-hit
+    - run: mkdir build
+    - run: |
         cd build
         cmake .. -Dtest=ON
 
