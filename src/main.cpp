@@ -169,8 +169,15 @@ int main(int argc, const char** argv) {
         outputPathDirURI.toNativePath(COLLADABU::Utils::getSystemType());
 
     if (options->binary && outputPathExtension != "glb") {
+      std::string glbExtension;
+      std::size_t dotIndex = outputPathExtension.rfind('.');
+      if (dotIndex == std::string::npos)
+        glbExtension = ".glb";
+      else
+        glbExtension = "." + outputPathExtension.substr(0, dotIndex) + ".glb";
+
       outputPathURI = COLLADABU::URI::nativePathToUri(
-          outputPathDir + outputPathBaseName + ".glb");
+          outputPathDir + outputPathBaseName + glbExtension);
       options->outputPath =
           outputPathURI.toNativePath(COLLADABU::Utils::getSystemType());
     }
