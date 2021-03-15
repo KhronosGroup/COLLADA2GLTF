@@ -698,6 +698,12 @@ std::string buildAttributeId(const COLLADAFW::MeshVertexData& data, int index,
  * occured
  */
 bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
+  const COLLADAFW::MeshPrimitiveArray& meshPrimitives =
+      colladaMesh->getMeshPrimitives();
+
+  if (meshPrimitives.empty()) {
+    return false;
+  }
   GLTF::Mesh* mesh = new GLTF::Mesh();
   mesh->name = colladaMesh->getName();
   mesh->stringId = colladaMesh->getOriginalId();
@@ -707,276 +713,271 @@ bool COLLADA2GLTF::Writer::writeMesh(const COLLADAFW::Mesh* colladaMesh) {
   const COLLADAFW::UniqueId& uniqueId = colladaMesh->getUniqueId();
   std::map<GLTF::Primitive*, std::vector<unsigned int>> positionMapping;
 
-  const COLLADAFW::MeshPrimitiveArray& meshPrimitives =
-      colladaMesh->getMeshPrimitives();
   std::map<int, std::set<GLTF::Primitive*>> primitiveMaterialMapping;
   std::map<unsigned int, unsigned int> texCoordSetMapping;
   size_t meshPrimitivesCount = meshPrimitives.getCount();
-  if (meshPrimitivesCount > 0) {
-    // Create primitives
-    for (size_t i = 0; i < meshPrimitivesCount; i++) {
-      std::map<std::string, std::vector<float>> buildAttributes;
-      std::map<std::string, unsigned int> attributeIndicesMapping;
-      std::vector<unsigned int> buildIndices;
-      COLLADAFW::MeshPrimitive* colladaPrimitive = meshPrimitives[i];
-      GLTF::Primitive* primitive = new GLTF::Primitive();
 
-      int materialId = colladaPrimitive->getMaterialId();
-      std::map<int, std::set<GLTF::Primitive*>>::iterator findPrimitiveSet =
-          primitiveMaterialMapping.find(materialId);
-      if (findPrimitiveSet != primitiveMaterialMapping.end()) {
-        findPrimitiveSet->second.insert(primitive);
-      } else {
-        std::set<GLTF::Primitive*> primitiveSet;
-        primitiveSet.insert(primitive);
-        primitiveMaterialMapping[materialId] = primitiveSet;
-      }
+  // Create primitives
+  for (size_t i = 0; i < meshPrimitivesCount; i++) {
+    std::map<std::string, std::vector<float>> buildAttributes;
+    std::map<std::string, unsigned int> attributeIndicesMapping;
+    std::vector<unsigned int> buildIndices;
+    COLLADAFW::MeshPrimitive* colladaPrimitive = meshPrimitives[i];
+    GLTF::Primitive* primitive = new GLTF::Primitive();
 
-      std::vector<unsigned int> mapping;
-      bool shouldTriangulate = false;
+    int materialId = colladaPrimitive->getMaterialId();
+    std::map<int, std::set<GLTF::Primitive*>>::iterator findPrimitiveSet =
+        primitiveMaterialMapping.find(materialId);
+    if (findPrimitiveSet != primitiveMaterialMapping.end()) {
+      findPrimitiveSet->second.insert(primitive);
+    } else {
+      std::set<GLTF::Primitive*> primitiveSet;
+      primitiveSet.insert(primitive);
+      primitiveMaterialMapping[materialId] = primitiveSet;
+    }
 
-      COLLADAFW::MeshPrimitive::PrimitiveType type =
-          colladaPrimitive->getPrimitiveType();
-      switch (colladaPrimitive->getPrimitiveType()) {
-        case COLLADAFW::MeshPrimitive::LINES:
-          primitive->mode = GLTF::Primitive::Mode::LINES;
-          break;
-        case COLLADAFW::MeshPrimitive::LINE_STRIPS:
-          primitive->mode = GLTF::Primitive::Mode::LINE_STRIP;
-          break;
-        // Having POLYLIST and POLYGONS map to TRIANGLES produces good output
-        // for cases where the polygons are already triangles, but in other
-        // cases, we may need to triangulate
-        case COLLADAFW::MeshPrimitive::POLYLIST:
-        case COLLADAFW::MeshPrimitive::POLYGONS:
-          shouldTriangulate = true;
-        case COLLADAFW::MeshPrimitive::TRIANGLES:
-          primitive->mode = GLTF::Primitive::Mode::TRIANGLES;
-          break;
-        case COLLADAFW::MeshPrimitive::TRIANGLE_STRIPS:
-          primitive->mode = GLTF::Primitive::Mode::TRIANGLE_STRIP;
-          break;
-        case COLLADAFW::MeshPrimitive::TRIANGLE_FANS:
-          primitive->mode = GLTF::Primitive::Mode::TRIANGLE_FAN;
-          break;
-        case COLLADAFW::MeshPrimitive::POINTS:
-          primitive->mode = GLTF::Primitive::Mode::POINTS;
-          break;
-          primitive->mode = GLTF::Primitive::Mode::TRIANGLES;
-          break;
-      }
+    std::vector<unsigned int> mapping;
+    bool shouldTriangulate = false;
 
-      if (primitive->mode == GLTF::Primitive::Mode::UNKNOWN) {
-        continue;
-      }
-      size_t count = colladaPrimitive->getPositionIndices().getCount();
-      std::map<std::string, const unsigned int*> semanticIndices;
-      std::map<std::string, const COLLADAFW::MeshVertexData*> semanticData;
-      std::string semantic = "POSITION";
+    COLLADAFW::MeshPrimitive::PrimitiveType type =
+        colladaPrimitive->getPrimitiveType();
+    switch (colladaPrimitive->getPrimitiveType()) {
+      case COLLADAFW::MeshPrimitive::LINES:
+        primitive->mode = GLTF::Primitive::Mode::LINES;
+        break;
+      case COLLADAFW::MeshPrimitive::LINE_STRIPS:
+        primitive->mode = GLTF::Primitive::Mode::LINE_STRIP;
+        break;
+      // Having POLYLIST and POLYGONS map to TRIANGLES produces good output
+      // for cases where the polygons are already triangles, but in other
+      // cases, we may need to triangulate
+      case COLLADAFW::MeshPrimitive::POLYLIST:
+      case COLLADAFW::MeshPrimitive::POLYGONS:
+        shouldTriangulate = true;
+      case COLLADAFW::MeshPrimitive::TRIANGLES:
+        primitive->mode = GLTF::Primitive::Mode::TRIANGLES;
+        break;
+      case COLLADAFW::MeshPrimitive::TRIANGLE_STRIPS:
+        primitive->mode = GLTF::Primitive::Mode::TRIANGLE_STRIP;
+        break;
+      case COLLADAFW::MeshPrimitive::TRIANGLE_FANS:
+        primitive->mode = GLTF::Primitive::Mode::TRIANGLE_FAN;
+        break;
+      case COLLADAFW::MeshPrimitive::POINTS:
+        primitive->mode = GLTF::Primitive::Mode::POINTS;
+        break;
+        primitive->mode = GLTF::Primitive::Mode::TRIANGLES;
+        break;
+    }
+
+    if (primitive->mode == GLTF::Primitive::Mode::UNKNOWN) {
+      continue;
+    }
+    size_t count = colladaPrimitive->getPositionIndices().getCount();
+    std::map<std::string, const unsigned int*> semanticIndices;
+    std::map<std::string, const COLLADAFW::MeshVertexData*> semanticData;
+    std::string semantic = "POSITION";
+    buildAttributes[semantic] = std::vector<float>();
+    semanticIndices[semantic] =
+        colladaPrimitive->getPositionIndices().getData();
+    semanticData[semantic] = &colladaMesh->getPositions();
+    primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
+    if (colladaPrimitive->hasNormalIndices()) {
+      semantic = "NORMAL";
       buildAttributes[semantic] = std::vector<float>();
       semanticIndices[semantic] =
-          colladaPrimitive->getPositionIndices().getData();
-      semanticData[semantic] = &colladaMesh->getPositions();
+          colladaPrimitive->getNormalIndices().getData();
+      semanticData[semantic] = &colladaMesh->getNormals();
       primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
-      if (colladaPrimitive->hasNormalIndices()) {
-        semantic = "NORMAL";
+    }
+    if (colladaPrimitive->hasBinormalIndices()) {
+      semantic = "BINORMAL";
+      buildAttributes[semantic] = std::vector<float>();
+      semanticIndices[semantic] =
+          colladaPrimitive->getBinormalIndices().getData();
+      semanticData[semantic] = &colladaMesh->getBinormals();
+      primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
+    }
+    if (colladaPrimitive->hasTangentIndices()) {
+      semantic = "TANGENT";
+      buildAttributes[semantic] = std::vector<float>();
+      semanticIndices[semantic] =
+          colladaPrimitive->getTangentIndices().getData();
+      semanticData[semantic] = &colladaMesh->getTangents();
+      primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
+    }
+    if (colladaPrimitive->hasUVCoordIndices()) {
+      COLLADAFW::IndexListArray& uvCoordIndicesArray =
+          colladaPrimitive->getUVCoordIndicesArray();
+      size_t uvCoordIndicesArrayCount = uvCoordIndicesArray.getCount();
+      for (size_t j = 0; j < uvCoordIndicesArrayCount; j++) {
+        semantic = "TEXCOORD_" + std::to_string(j);
+        texCoordSetMapping[uvCoordIndicesArray[j]->getSetIndex()] = j;
         buildAttributes[semantic] = std::vector<float>();
         semanticIndices[semantic] =
-            colladaPrimitive->getNormalIndices().getData();
-        semanticData[semantic] = &colladaMesh->getNormals();
+            uvCoordIndicesArray[j]->getIndices().getData();
+        semanticData[semantic] = &colladaMesh->getUVCoords();
         primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
       }
-      if (colladaPrimitive->hasBinormalIndices()) {
-        semantic = "BINORMAL";
+    }
+    if (colladaPrimitive->hasColorIndices()) {
+      COLLADAFW::IndexListArray& colorIndicesArray =
+          colladaPrimitive->getColorIndicesArray();
+      size_t colorIndicesArrayCount = colorIndicesArray.getCount();
+      for (size_t j = 0; j < colorIndicesArrayCount; j++) {
+        semantic = "COLOR_" + std::to_string(j);
         buildAttributes[semantic] = std::vector<float>();
         semanticIndices[semantic] =
-            colladaPrimitive->getBinormalIndices().getData();
-        semanticData[semantic] = &colladaMesh->getBinormals();
+            colorIndicesArray[j]->getIndices().getData();
+        semanticData[semantic] = &colladaMesh->getColors();
         primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
       }
-      if (colladaPrimitive->hasTangentIndices()) {
-        semantic = "TANGENT";
-        buildAttributes[semantic] = std::vector<float>();
-        semanticIndices[semantic] =
-            colladaPrimitive->getTangentIndices().getData();
-        semanticData[semantic] = &colladaMesh->getTangents();
-        primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
-      }
-      if (colladaPrimitive->hasUVCoordIndices()) {
-        COLLADAFW::IndexListArray& uvCoordIndicesArray =
-            colladaPrimitive->getUVCoordIndicesArray();
-        size_t uvCoordIndicesArrayCount = uvCoordIndicesArray.getCount();
-        for (size_t j = 0; j < uvCoordIndicesArrayCount; j++) {
-          semantic = "TEXCOORD_" + std::to_string(j);
-          texCoordSetMapping[uvCoordIndicesArray[j]->getSetIndex()] = j;
-          buildAttributes[semantic] = std::vector<float>();
-          semanticIndices[semantic] =
-              uvCoordIndicesArray[j]->getIndices().getData();
-          semanticData[semantic] = &colladaMesh->getUVCoords();
-          primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
-        }
-      }
-      if (colladaPrimitive->hasColorIndices()) {
-        COLLADAFW::IndexListArray& colorIndicesArray =
-            colladaPrimitive->getColorIndicesArray();
-        size_t colorIndicesArrayCount = colorIndicesArray.getCount();
-        for (size_t j = 0; j < colorIndicesArrayCount; j++) {
-          semantic = "COLOR_" + std::to_string(j);
-          buildAttributes[semantic] = std::vector<float>();
-          semanticIndices[semantic] =
-              colorIndicesArray[j]->getIndices().getData();
-          semanticData[semantic] = &colladaMesh->getColors();
-          primitive->attributes[semantic] = (GLTF::Accessor*)NULL;
-        }
-      }
+    }
 
-      unsigned int index = 0;
-      unsigned int face = 0;
-      unsigned int startFace = 0;
-      unsigned int totalVertexCount = 0;
-      unsigned int vertexCount = 0;
-      unsigned int faceVertexCount =
-          colladaPrimitive->getGroupedVerticesVertexCount(face);
-      for (int j = 0; j < count; j++) {
-        std::string attributeId;
-        if (shouldTriangulate) {
-          // This approach is very efficient in terms of runtime, but there are
-          // more correct solutions that may be worth considering. Using a 3D
-          // variant of Fortune's Algorithm or something similar to compute a
-          // mesh with no overlapping triangles would be ideal.
-          if (vertexCount >= faceVertexCount) {
-            unsigned int end = buildIndices.size() - 1;
-            if (faceVertexCount > 3) {
-              // Make a triangle with the last two points and the first one
-              buildIndices.push_back(buildIndices[end - 1]);
-              buildIndices.push_back(buildIndices[end]);
-              buildIndices.push_back(buildIndices[startFace]);
-              totalVertexCount += 3;
-            }
-            face++;
-            faceVertexCount =
-                colladaPrimitive->getGroupedVerticesVertexCount(face);
-            startFace = totalVertexCount;
-            vertexCount = 0;
-          } else if (vertexCount >= 3) {
-            // Add the previous two points to complete the triangle
-            unsigned int end = buildIndices.size() - 1;
+    unsigned int index = 0;
+    unsigned int face = 0;
+    unsigned int startFace = 0;
+    unsigned int totalVertexCount = 0;
+    unsigned int vertexCount = 0;
+    unsigned int faceVertexCount =
+        colladaPrimitive->getGroupedVerticesVertexCount(face);
+    for (int j = 0; j < count; j++) {
+      std::string attributeId;
+      if (shouldTriangulate) {
+        // This approach is very efficient in terms of runtime, but there are
+        // more correct solutions that may be worth considering. Using a 3D
+        // variant of Fortune's Algorithm or something similar to compute a
+        // mesh with no overlapping triangles would be ideal.
+        if (vertexCount >= faceVertexCount) {
+          unsigned int end = buildIndices.size() - 1;
+          if (faceVertexCount > 3) {
+            // Make a triangle with the last two points and the first one
             buildIndices.push_back(buildIndices[end - 1]);
             buildIndices.push_back(buildIndices[end]);
-            totalVertexCount += 2;
+            buildIndices.push_back(buildIndices[startFace]);
+            totalVertexCount += 3;
           }
+          face++;
+          faceVertexCount =
+              colladaPrimitive->getGroupedVerticesVertexCount(face);
+          startFace = totalVertexCount;
+          vertexCount = 0;
+        } else if (vertexCount >= 3) {
+          // Add the previous two points to complete the triangle
+          unsigned int end = buildIndices.size() - 1;
+          buildIndices.push_back(buildIndices[end - 1]);
+          buildIndices.push_back(buildIndices[end]);
+          totalVertexCount += 2;
         }
-        for (const auto& entry : semanticIndices) {
+      }
+      for (const auto& entry : semanticIndices) {
+        semantic = entry.first;
+        unsigned int numberOfComponents = 3;
+        if (semantic.find("TEXCOORD") == 0) {
+          numberOfComponents = 2;
+        }
+        attributeId +=
+            buildAttributeId(*semanticData[semantic],
+                             semanticIndices[semantic][j], numberOfComponents);
+      }
+      std::map<std::string, unsigned int>::iterator search =
+          attributeIndicesMapping.find(attributeId);
+      if (search != attributeIndicesMapping.end()) {
+        buildIndices.push_back(search->second);
+      } else {
+        for (const auto& entry : buildAttributes) {
           semantic = entry.first;
           unsigned int numberOfComponents = 3;
+          bool flipY = false;
+          bool position = false;
           if (semantic.find("TEXCOORD") == 0) {
             numberOfComponents = 2;
+            flipY = true;
           }
-          attributeId += buildAttributeId(*semanticData[semantic],
-                                          semanticIndices[semantic][j],
-                                          numberOfComponents);
-        }
-        std::map<std::string, unsigned int>::iterator search =
-            attributeIndicesMapping.find(attributeId);
-        if (search != attributeIndicesMapping.end()) {
-          buildIndices.push_back(search->second);
-        } else {
-          for (const auto& entry : buildAttributes) {
-            semantic = entry.first;
-            unsigned int numberOfComponents = 3;
-            bool flipY = false;
-            bool position = false;
-            if (semantic.find("TEXCOORD") == 0) {
-              numberOfComponents = 2;
-              flipY = true;
-            }
-            unsigned int semanticIndex = semanticIndices[semantic][j];
-            if (semantic == "POSITION") {
-              position = true;
-              mapping.push_back(semanticIndex);
-            }
-            const COLLADAFW::MeshVertexData* vertexData =
-                semanticData[semantic];
-            unsigned int stride = numberOfComponents;
-            if (vertexData->getNumInputInfos() > 0) {
-              stride = vertexData->getStride(0);
-            }
-            for (unsigned int k = 0; k < numberOfComponents; k++) {
-              float value = getMeshVertexDataAtIndex(
-                  *vertexData, semanticIndex * stride + k);
-              if (flipY && k == 1) {
-                value = 1 - value;
-              }
-              if (position) {
-                value = value * _assetScale;
-              }
-              buildAttributes[semantic].push_back(value);
-            }
+          unsigned int semanticIndex = semanticIndices[semantic][j];
+          if (semantic == "POSITION") {
+            position = true;
+            mapping.push_back(semanticIndex);
           }
-          attributeIndicesMapping[attributeId] = index;
-          buildIndices.push_back(index);
-          index++;
-        }
-        totalVertexCount++;
-        vertexCount++;
-      }
-      if (shouldTriangulate && faceVertexCount > 3) {
-        // Close the last polyshape
-        int end = buildIndices.size() - 1;
-        buildIndices.push_back(buildIndices[end - 1]);
-        buildIndices.push_back(buildIndices[end]);
-        buildIndices.push_back(buildIndices[startFace]);
-      }
-      if (_options->dracoCompression) {
-        // Currently only support triangles.
-        if (primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
-          if (!addAttributesToDracoMesh(primitive, buildAttributes,
-                                        buildIndices)) {
-            // Error adding attributes to draco mesh.
-            return false;
+          const COLLADAFW::MeshVertexData* vertexData = semanticData[semantic];
+          unsigned int stride = numberOfComponents;
+          if (vertexData->getNumInputInfos() > 0) {
+            stride = vertexData->getStride(0);
+          }
+          for (unsigned int k = 0; k < numberOfComponents; k++) {
+            float value = getMeshVertexDataAtIndex(*vertexData,
+                                                   semanticIndex * stride + k);
+            if (flipY && k == 1) {
+              value = 1 - value;
+            }
+            if (position) {
+              value = value * _assetScale;
+            }
+            buildAttributes[semantic].push_back(value);
           }
         }
+        attributeIndicesMapping[attributeId] = index;
+        buildIndices.push_back(index);
+        index++;
       }
-
-      // Create indices accessor
-      GLTF::Accessor* indices = NULL;
-      if (index < 65536) {
-        // We can fit this in an UNSIGNED_SHORT
-        std::vector<uint16_t> unsignedShortIndices(buildIndices.begin(),
-                                                   buildIndices.end());
-        indices =
-            new GLTF::Accessor(GLTF::Accessor::Type::SCALAR,
-                               GLTF::Constants::WebGL::UNSIGNED_SHORT,
-                               (unsigned char*)&unsignedShortIndices[0],
-                               unsignedShortIndices.size(),
-                               GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
-      } else {
-        // Leave as UNSIGNED_INT
-        indices = new GLTF::Accessor(
-            GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_INT,
-            (unsigned char*)&buildIndices[0], buildIndices.size(),
-            GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
-      }
-      primitive->indices = indices;
-      mesh->primitives.push_back(primitive);
-      // Create attribute accessors
-      for (const auto& entry : buildAttributes) {
-        std::string semantic = entry.first;
-        std::vector<float> attributeData = entry.second;
-        GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC3;
-        if (semantic.find("TEXCOORD") == 0) {
-          type = GLTF::Accessor::Type::VEC2;
-        }
-        GLTF::Accessor* accessor = new GLTF::Accessor(
-            type, GLTF::Constants::WebGL::FLOAT,
-            (unsigned char*)&attributeData[0],
-            attributeData.size() / GLTF::Accessor::getNumberOfComponents(type),
-            GLTF::Constants::WebGL::ARRAY_BUFFER);
-        primitive->attributes[semantic] = accessor;
-      }
-      positionMapping[primitive] = mapping;
+      totalVertexCount++;
+      vertexCount++;
     }
+    if (shouldTriangulate && faceVertexCount > 3) {
+      // Close the last polyshape
+      int end = buildIndices.size() - 1;
+      buildIndices.push_back(buildIndices[end - 1]);
+      buildIndices.push_back(buildIndices[end]);
+      buildIndices.push_back(buildIndices[startFace]);
+    }
+    if (_options->dracoCompression) {
+      // Currently only support triangles.
+      if (primitive->mode == GLTF::Primitive::Mode::TRIANGLES) {
+        if (!addAttributesToDracoMesh(primitive, buildAttributes,
+                                      buildIndices)) {
+          // Error adding attributes to draco mesh.
+          return false;
+        }
+      }
+    }
+
+    // Create indices accessor
+    GLTF::Accessor* indices = NULL;
+    if (index < 65536) {
+      // We can fit this in an UNSIGNED_SHORT
+      std::vector<uint16_t> unsignedShortIndices(buildIndices.begin(),
+                                                 buildIndices.end());
+      indices = new GLTF::Accessor(
+          GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_SHORT,
+          (unsigned char*)&unsignedShortIndices[0], unsignedShortIndices.size(),
+          GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
+    } else {
+      // Leave as UNSIGNED_INT
+      indices = new GLTF::Accessor(
+          GLTF::Accessor::Type::SCALAR, GLTF::Constants::WebGL::UNSIGNED_INT,
+          (unsigned char*)&buildIndices[0], buildIndices.size(),
+          GLTF::Constants::WebGL::ELEMENT_ARRAY_BUFFER);
+    }
+    primitive->indices = indices;
+    mesh->primitives.push_back(primitive);
+    // Create attribute accessors
+    for (const auto& entry : buildAttributes) {
+      std::string semantic = entry.first;
+      std::vector<float> attributeData = entry.second;
+      GLTF::Accessor::Type type = GLTF::Accessor::Type::VEC3;
+      if (semantic.find("TEXCOORD") == 0) {
+        type = GLTF::Accessor::Type::VEC2;
+      }
+      GLTF::Accessor* accessor = new GLTF::Accessor(
+          type, GLTF::Constants::WebGL::FLOAT,
+          (unsigned char*)&attributeData[0],
+          attributeData.size() / GLTF::Accessor::getNumberOfComponents(type),
+          GLTF::Constants::WebGL::ARRAY_BUFFER);
+      primitive->attributes[semantic] = accessor;
+    }
+    positionMapping[primitive] = mapping;
   }
+
   _meshMaterialPrimitiveMapping[uniqueId] = primitiveMaterialMapping;
   _meshPositionMapping[uniqueId] = positionMapping;
   _meshTexCoordSetMapping[mesh] = texCoordSetMapping;
