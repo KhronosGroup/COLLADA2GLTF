@@ -904,7 +904,7 @@ GLTF::MaterialPBR::~MaterialPBR() {
   delete normalTexture;
   delete occlusionTexture;
   delete emissiveTexture;
-  delete emissiveFactor;
+  delete[] emissiveFactor;
 }
 
 GLTF::MaterialPBR::MaterialPBR() {
